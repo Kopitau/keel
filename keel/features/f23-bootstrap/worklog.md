@@ -14,3 +14,7 @@
 
 - 进度：用户要求回滚不完整规划下的代码。Python 自举脚本归档到 `tools/archive/w1-python-bootstrap.py`，已迁入的 DEC/REQ/RES **不删**（不重写历史）。
 - 实现决定：记录层保留；只替换运行时与测试。
+
+## 2026-08-21（W5）
+
+- 进度：框架级验收冒烟 `tests/w5-smoke.test.ts`：临时样例走实现（v1 问候）/红灯修 bug/CHG+需求 v2（空名抛错）/handoff 接力。样例内核 `samples/greet/greet.js` 为 v2。

@@ -23,18 +23,18 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-W4 刚落地：16 个 `k-*` 技能在 `.agents/skills/`，镜像 `.claude/skills/`。`gate check` 含 X-skills。
+W5 刚落地：`samples/greet` 全流程冒烟（实现/修 bug/CHG 空名抛错/交接）；`gate triggers` 探测五主力+Pi；`grok inspect` 载入 16/16 k-*；DEC-148 哈希夹具。
 
-下一波 W5：样例项目全流程 + 五主力触发实测 + Pi 冒烟。
+下一波 W6：真实功能试点 + 初值校准 + 门禁年检（C-105）。
 
 ## 风险与暂定
 
 - 暂定决策计数：0
 - 人类身份未配 → APR 停在 draft
 - 远端未配
-- DEC-148 三平台一致性尚未在 macOS/Linux 实测（W3/W5）
+- DEC-148 夹具已入仓；macOS/Linux digest 由 CI 矩阵对账
 - §8/9 未进 C 记录
 
 ## 主要外部依赖
 
-gate **运行时**零第三方依赖（DEC-154）。开发/CI 唯一白名单 devDependency：typescript（OSS 待登记）。pytest 曾用于第一次 W1，已退役（OSS-001）。映射表引用 Trellis（AGPL-3.0-only，不复制代码）与 Superpowers（MIT，不复制技能正文）。
+gate **运行时**零第三方依赖（DEC-154）。开发/CI 唯一白名单 devDependency：typescript（OSS-002）。pytest 曾用于第一次 W1，已退役（OSS-001）。映射表引用 Trellis（AGPL-3.0-only，不复制代码）与 Superpowers（MIT，不复制技能正文）。

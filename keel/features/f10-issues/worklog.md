@@ -8,3 +8,7 @@
 ## 2026-08-21（W2）
 
 - 进度：`gate new iss <title>` 分配 ISS-nnn 并复制模板。status 统计 open issues。
+
+## 2026-08-21（W5）
+
+- 进度：冒烟先让 greet 断言红灯，开 ISS，再修回绿灯。

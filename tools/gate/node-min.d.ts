@@ -57,6 +57,7 @@ declare module "node:process" {
   const process: {
     argv: string[];
     pid: number;
+    platform: string;
     execPath: string;
     versions: { node: string };
     exitCode: number | undefined;
@@ -88,6 +89,13 @@ declare module "node:child_process" {
   export function spawnSync(
     cmd: string,
     args: string[],
-    opts?: { encoding?: "utf8"; cwd?: string; env?: { [k: string]: string | undefined } },
+    opts?: {
+      encoding?: "utf8";
+      cwd?: string;
+      env?: { [k: string]: string | undefined };
+      timeout?: number;
+      shell?: boolean;
+      maxBuffer?: number;
+    },
   ): { status: number | null; stdout: string; stderr: string };
 }

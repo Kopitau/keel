@@ -11,7 +11,7 @@ import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceFresh, readEvidence } from "./evidence.ts";
-import { inspectSkills } from "./skills.ts";
+import { inspectSkills, listSkillDirs } from "./skills.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -205,6 +205,9 @@ function xSkills(ctx: Ctx): CheckItem {
     skill_description_max_chars?: number;
     skill_count_cap?: number;
   };
+  if (listSkillDirs(join(ctx.root, ".agents", "skills")).length === 0) {
+    return skip("X-skills", "no k-* skills installed yet");
+  }
   const issues = inspectSkills(
     ctx.root,
     budget.skill_max_lines ?? 500,

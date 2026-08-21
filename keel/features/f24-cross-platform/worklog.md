@@ -9,3 +9,7 @@
 ## 2026-08-21（W3）
 
 - 进度：CI 矩阵 ubuntu/windows/macos × Node 22/24（DEC-148/150）。
+
+## 2026-08-21（W5）
+
+- 进度：`tests/fixtures/dec148-lf.txt` 规范化哈希夹具，三 OS CI 应得到同一 digest。
