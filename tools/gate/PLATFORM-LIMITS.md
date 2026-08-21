@@ -10,7 +10,7 @@ Numbers have sources. Update when a vendor changes them. Soft budget over = warn
 | Anthropic CLAUDE.md guidance | ≤200 lines (guidance) | R5 [C3] Anthropic docs |
 | SKILL.md lines | 500 soft | C-118 |
 | Skill `description` | 1024 characters | C-95 / C-118 (Agent Skills standard field) |
-| Autoload (root + catalog) | 10 KiB initial | C-26 / C-118; Trellis SessionStart ~29 KB truncation lesson (R3a) |
+| Autoload (root + catalog) | 10 KiB soft (W6 KEEP; measured 6427 bytes on 2026-08-21) | C-26 / C-118; Trellis SessionStart ~29 KB truncation lesson (R3a) |
 | Skill count | ~16 cap | C-121; DESIGN §9 working list is 16 |
 | Node (gate runtime) | **≥22.18.0** hard | DEC-150; type stripping unflagged in 22.18.0 (2025-07-31). CI matrix: Node 22 LTS + 24 LTS × three OS |
 
