@@ -116,6 +116,11 @@
       "req": "REQ-023",
       "slug": "f23-bootstrap",
       "title": "框架自举（自己管理自己）"
+    },
+    "F24": {
+      "req": "REQ-024",
+      "slug": "f24-cross-platform",
+      "title": "跨平台支持（Windows + macOS + Linux）"
     }
   },
   "decisions": {

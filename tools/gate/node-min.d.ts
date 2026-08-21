@@ -1,0 +1,72 @@
+/* Minimal Node builtin typings so tsc needs no @types/node (DEC-154 whitelist = typescript only). */
+
+interface ImportMeta {
+  url: string;
+}
+
+declare module "node:fs" {
+  export function readFileSync(path: string, encoding: "utf8"): string;
+  export function readFileSync(path: string): Uint8Array;
+  export function existsSync(path: string): boolean;
+  export function readdirSync(path: string, opts?: { recursive?: boolean }): string[];
+}
+
+declare module "node:path" {
+  export function join(...parts: string[]): string;
+  export function dirname(p: string): string;
+  export function resolve(...parts: string[]): string;
+  export function basename(p: string): string;
+}
+
+declare module "node:url" {
+  export function fileURLToPath(url: string | URL): string;
+}
+
+declare module "node:buffer" {
+  export class Buffer {
+    static from(data: Uint8Array | string, enc?: string): Buffer;
+    toString(enc: "utf8"): string;
+  }
+}
+
+declare module "node:crypto" {
+  export function createHash(alg: string): {
+    update(data: string, encoding: "utf8"): { digest(enc: "hex"): string };
+  };
+}
+
+declare module "node:process" {
+  const process: {
+    argv: string[];
+    execPath: string;
+    versions: { node: string };
+    exitCode: number | undefined;
+    cwd(): string;
+    exit(code?: number): never;
+    stdout: { write(s: string): void };
+    stderr: { write(s: string): void };
+  };
+  export default process;
+}
+
+declare module "node:assert/strict" {
+  const assert: {
+    equal(a: unknown, b: unknown, msg?: string): void;
+    deepEqual(a: unknown, b: unknown, msg?: string): void;
+    ok(v: unknown, msg?: string): void;
+    match(s: string, r: RegExp, msg?: string): void;
+  };
+  export default assert;
+}
+
+declare module "node:test" {
+  export function test(name: string, fn: () => void | Promise<void>): void;
+}
+
+declare module "node:child_process" {
+  export function spawnSync(
+    cmd: string,
+    args: string[],
+    opts?: { encoding?: "utf8"; cwd?: string },
+  ): { status: number | null; stdout: string; stderr: string };
+}

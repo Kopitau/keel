@@ -1,16 +1,16 @@
 # keel
 
-keel is a repo-local process layer: numbered Chinese records, English skills, one stdlib gate, thin platform bridges. It does not orchestrate the model and does not bind a vendor.
+keel is a repo-local process layer: numbered Chinese records, English skills, one stdlib-free gate, thin platform bridges. It does not orchestrate the model and does not bind a vendor.
 
 ## Session start (three jumps)
 
-1. Run `python -X utf8 tools/gate/gate.py status`.
+1. Run `tools/gate/gate.sh status` (macOS/Linux) or `tools/gate/gate.ps1 status` (Windows). Direct: `node tools/gate/gate.ts status`.
 2. Read the handoff path it prints (see CONTEXT.md for the records-dir name).
 3. Read the current feature plan + worklog named there.
 
 Then follow its navigation. Read more if you need it. Do **not** bulk-load the records directory.
 
-Until W2 implements real `status`, the stub still prints those paths.
+Until W2 implements real checks, the stub still prints those paths. Node **≥22.18.0** is required (DEC-150); launchers refuse older versions.
 
 ## Map
 
@@ -20,8 +20,8 @@ Until W2 implements real `status`, the stub still prints those paths.
 | Config | records dir `/config.json` |
 | Skills (W4) | `.agents/skills/k-*/SKILL.md` — catalog below; bodies on demand |
 | Design norms | `DESIGN.md` §5 (confirmed). §8–9 are advisory. |
-| Gate | `tools/gate/gate.py` (W1 = `status` stub; W2 = checks) |
-| Platform limits | `tools/gate/PLATFORM-LIMITS.md` |
+| Gate | `tools/gate/gate.ts` (W1 = `status` + `hash`; W2 = checks) |
+| Platform limits | `tools/gate/platform-limits.md` |
 | Claude Code bridge | `CLAUDE.md` is exactly `@AGENTS.md` |
 
 ## Confirmed rules (do not silently change)
@@ -30,7 +30,8 @@ Until W2 implements real `status`, the stub still prints those paths.
 - Confirmed artifacts are immutable. Iterate = new version file + reindex (C-24/C-63).
 - Intelligence and the feature come first. Do not save tokens by making either worse (C-69).
 - English: this file, skills, field names, script output. Chinese: record bodies, easy to read (C-124/C-09).
-- Gate = Python ≥3.11, stdlib only. Authority is CI rerun, not hooks (C-101/C-100).
+- Gate = Node + TypeScript, run `.ts` directly, Node builtins only at runtime (DEC-149/151). Authority is CI rerun, not hooks (C-100).
+- Hashes run on normalized text: UTF-8, no BOM, LF (DEC-144). Paths use the runtime API (DEC-145).
 - Touching a confirmed interface, requirement boundary, unplanned dependency, or test obligation: stop and ask (C-21).
 - Done = evidence (command, exit, tree hash), not a claim (C-33). W3 lands verify.
 - One feature, one branch, one worktree (C-112). Overlapping files → serialize (C-114).
@@ -47,11 +48,12 @@ Until those files exist, implement from `DESIGN.md` §5 and the current feature 
 
 L0 this file (advisory) → L1 platform hooks → L2 `.githooks/` → **L3 CI rerun of gate (authority)** → L4 human APR.
 
-This repo is **local tier** until remotes exist: hooks + run gate before merge + hash APR files. Label: deters mistakes, not malice (C-48/C-111).
+This repo is **local tier** until remotes exist. OS matrix: Windows + macOS (dev) + Linux (CI) (DEC-143). Label: deters mistakes, not malice (C-48/C-111).
 
 ## Do not
 
 - Auto-inject records into context (C-120).
 - Rewrite confirmed files in place.
-- Skip research by “remembering” a stack (C-12).
+- Hash raw disk bytes (DEC-144).
 - Submit APR commits with an agent git identity (C-107).
+- Add runtime npm dependencies. New **dev** dependencies need a DEC (DEC-154).

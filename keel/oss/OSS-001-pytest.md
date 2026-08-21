@@ -5,21 +5,23 @@ repo: https://github.com/pytest-dev/pytest
 version: 9.1.1
 license: MIT
 reuse_kind: dependency
+status: retired
+retired_reason: CHG-001 / DEC-152. keel gate tests use node:test. Consumer python-cli profile may still use pytest; this repo no longer depends on it.
 features: [F6, F21, F23]
 review_days: 28
-next_review: 2026-09-18
+next_review: none
 ---
 
-# OSS-001 pytest
+# OSS-001 pytest（已退役）
 
 ## 复用点
 
-本仓 python-cli 画像的测试运行器（C-126）。W1 格式测试 `tests/test_w1_skeleton.py` 通过 `python -m pytest` 调用。声明文件：`tests/requirements.txt`。gate 脚本本身零第三方依赖（C-101）。
+第一次 W1 曾用 pytest 跑 `tests/test_w1_skeleton.py`。CHG-001 后该测试已删除，本仓不再声明 pytest。
 
 ## 本地差异
 
-无 fork、无 vendoring。
+无。
 
 ## 追踪计划
 
-关注发行说明与安全公告。只读复查，不自动升级。传递依赖（pluggy/packaging/iniconfig/pygments/colorama）不单独登记（C-89）。
+不再复查。消费项目若选 python-cli 画像，在该项目自己的 OSS 表登记。

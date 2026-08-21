@@ -9,3 +9,8 @@
 - 验证：`python -m pytest -q` → 10 passed（2026-08-21）。id-map：23 F、142 C、8 RES。
 - 实现决定：本地 git 身份 `keel-agent <agent@keel.local>`，仅非 APR 提交；APR-001 保持 draft（C-107）。
 - git：`init` + `core.hooksPath=.githooks` + `autocrlf=false`。首提交 `0bb57ad`（W1 树）。本环境 `git` 写 stdout 会 `Bad file descriptor`，提交仍成功（见 `.git/refs/heads/master`）。
+
+## 2026-08-21（W1 重做）
+
+- 进度：用户要求回滚不完整规划下的代码。Python 自举脚本归档到 `tools/archive/w1-python-bootstrap.py`，已迁入的 DEC/REQ/RES **不删**（不重写历史）。
+- 实现决定：记录层保留；只替换运行时与测试。

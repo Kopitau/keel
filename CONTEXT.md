@@ -9,7 +9,7 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | keel | 框架名与可见记录目录 `keel/`（C-99） | kk, trellis-compat, “the framework” when a precise name is needed |
 | records dir | 本仓库为 `keel/`。Root instructions must not bulk-load it (C-120). | injecting `keel/` into always-on context |
 | AGENTS.md | English root map ≤150 lines, ≤32KiB chain (C-118) | duplicating skill bodies here |
-| gate | `tools/gate/gate.py`, Python ≥3.11 stdlib only (C-101) | a second checker script per platform |
+| gate | `tools/gate/gate.ts`, Node+TS, run `.ts` directly, Node builtins only (DEC-149) | a second checker script per platform; Python stdlib gate (superseded C-101) |
 | three jumps | status script → handoff → current feature plan+worklog (C-27) | relying on compacted chat memory |
 | REQ | requirement id in `keel/requirements/vN.md` | recycling retired numbers |
 | DEC | one decision, one file (C-13) | a rolling `decisions.md` dump |
@@ -25,6 +25,8 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | tree hash | `git write-tree`; mismatch invalidates evidence (C-33) | trusting a transcript “tests passed” |
 | enforcement tier | `github` / `gitee` / `local` (C-48). This repo starts at `local`. | claiming GitHub protection without remotes |
 | W1–W6 | implementation waves from DESIGN §8 (advisory, adopted as working order 2026-08-21) | treating §8 as a confirmed C-record |
+| normalized hash | SHA-256 of UTF-8 / no BOM / LF (DEC-144) | hashing raw on-disk bytes |
+| strip-types | Node ≥22.18.0 runs `.ts` without a build (DEC-150/151) | tsx / tsc emit as the runtime path |
 
 ## Banned near-synonyms
 

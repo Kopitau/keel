@@ -1,7 +1,7 @@
 # requirements index (generated)
 
-- generator: tools/bootstrap/w1_bootstrap.py
-- current: v1.md
-- versions: v1.md
+- generator: W1 redo after CHG-001 (manual until W2 `gate index`)
+- current: v2.md
+- versions: v1.md, v2.md
 
-W2 `gate index` 将接管生成。禁止手写第二份 current。
+v1 保留为审计链。CHG-001 出 v2。禁止第二份 current。

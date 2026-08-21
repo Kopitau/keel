@@ -1,3 +1,4 @@
 #!/bin/sh
-# keel W1 placeholder. W2 may call gate check; W3 CI remains authority (C-100).
+root=$(git rev-parse --show-toplevel) || exit 1
+"$root/tools/gate/gate.sh" status >/dev/null || exit 1
 exit 0

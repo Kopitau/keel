@@ -1,12 +1,17 @@
 # keel
 
-A repo-local process layer for multi-agent development: numbered Chinese records, English skills, one stdlib gate script, thin harness bridges.
+A repo-local process layer for multi-agent development: numbered Chinese records, English skills, one Node+TS gate (no runtime dependencies), thin harness bridges.
 
-This repository is the framework itself (it bootstrapped its own records in W1). Design norms: `DESIGN.md`. Living picture: `keel/OVERVIEW.md`.
+This repository is the framework itself. Design norms: `DESIGN.md`. Living picture: `keel/OVERVIEW.md`.
+
+Requires **Node ≥ 22.18.0**.
 
 ```text
-python -X utf8 tools/gate/gate.py status
-python -m pytest -q
+node tools/gate/gate.ts status
+npm test
+npm run typecheck
 ```
 
-Enforcement tier today: **local** (no remotes yet).
+Windows: `tools/gate/gate.ps1 status`. macOS/Linux: `tools/gate/gate.sh status`.
+
+Enforcement tier today: **local** (no remotes yet). OS matrix: Windows + macOS + Linux.

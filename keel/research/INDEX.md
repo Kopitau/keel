@@ -12,3 +12,4 @@
 | RES-008 | R7 | no-mistakes 评估 | `RES-008-R7.md` |
 
 SUMMARY（`docs/research/SUMMARY.md`）是导航件，不成 RES。
+| RES-901 | 跨平台支持与 gate 运行时选型（Python vs Node+TS） | standard | `RES-901-cross-platform-and-runtime.md` |

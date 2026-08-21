@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""W1 one-shot: migrate design-round artifacts into keel records (F23/C-137).
+"""ARCHIVED (CHG-001 / DEC-149). Do not evolve.
 
-Does not rewrite history. Sources stay in place with a migrated marker.
-Python ≥3.11, stdlib only.
+Original W1 one-shot: migrate design-round artifacts into keel records (F23/C-137).
+Mission complete; Python gate runtime superseded by Node+TS.
 """
 
 from __future__ import annotations

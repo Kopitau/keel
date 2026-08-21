@@ -7,11 +7,20 @@
   "_comment_tier": "github | gitee | local. Remotes not configured in W1; local = hooks + gate-before-merge + hash APR. Honest label: deters mistakes, not malice (C-48).",
   "profiles": {
     "_comment": "Test profiles (C-126/C-128). Gate verify (W3) selects by touched paths.",
-    "active": ["python-cli"],
+    "active": ["keel-gate"],
+    "keel-gate": {
+      "language": "typescript",
+      "runtime": "node",
+      "node_min": "22.18.0",
+      "test_command": "node --test tests/*.test.ts",
+      "typecheck": "tsc --noEmit",
+      "core_marker": "core"
+    },
     "python-cli": {
       "language": "python",
       "test_command": "python -m pytest -q",
-      "core_marker": "core"
+      "core_marker": "core",
+      "note": "Consumer-project profile (DEC-126). Not used for keel's own gate tests (DEC-152)."
     },
     "ds-ml": {
       "language": "python",
@@ -44,7 +53,8 @@
   "platforms": {
     "primary": ["claude-code", "codex", "opencode", "grok-build", "deepseek-harness"],
     "compatible": ["pi"],
-    "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows."
+    "os_matrix": ["windows", "macos", "linux"],
+    "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001)."
   },
   "budget": {
     "_comment": "Initial values (C-118). Soft over = warn; platform hard over = fail (C-119). Calibrate in W6.",

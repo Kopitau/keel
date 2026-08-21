@@ -4,35 +4,37 @@
 
 ## 项目是什么
 
-keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记录 + 英文技能 + 零依赖门禁脚本 + 平台薄桥。不是 CLI 产品，不接管编排，不绑定厂商。
+keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记录 + 英文技能 + 零运行时依赖的门禁 + 平台薄桥。不是 CLI 产品，不接管编排，不绑定厂商。
 
 本仓库是框架自身（F23 自举）。消费项目稍后用 tag + 复制文件接入。
 
 ## 整体技术路线图
 
-确认规范在 `DESIGN.md` §5（C-01~C-142）。实施按 `keel/plan/overview-v1.md`：W1 骨架 → W2 gate → W3 证据/CI → W4 技能 → W5 五平台实测 → W6 试点校准。
+确认规范在 `DESIGN.md` §5（C-01~C-154，含 CHG-001）。实施按 `keel/plan/overview-v2.md`：W1 骨架（Node+TS）→ W2 gate → W3 证据/CI 三平台矩阵 → W4 技能 → W5 五平台实测 → W6 试点校准。
 
-权威执法在 CI 复算；本仓目前是 **本地档**（无远端）：hooks 占位 + 合并前跑 gate + 哈希 APR。防呆不防恶。
+权威执法在 CI 复算；本仓目前是 **本地档**。OS 矩阵：Windows + macOS + Linux（DEC-143）。
 
 ## 能力清单
 
 | 功能 | 状态 | 总结 |
 |---|---|---|
-| F1–F23 | 规范已确认；W1 迁入记录与规划 | 尚未有 `summary.md`（未合并） |
+| F1–F23 | 规范已确认；记录已迁入 | 尚未有 `summary.md` |
+| F24 | 规范已确认（CHG-001）；W1 哈希/启动器 | 尚未有 `summary.md` |
 
 ## 在途功能
 
-W1（进行中）：F4 规划落盘、F16/F21 骨架、F22 映射表、F23 自举、F12 交接、F5/F20 地图与预算初值、F18 APR 草稿。
+W1 重做（进行中）：Python gate 已回滚；Node+TS 桩、F24 规范化哈希、双启动器。
 
-下一波 W2：F17 gate 真身。
+下一波 W2：F17 六门禁真身。
 
 ## 风险与暂定
 
-- 暂定决策计数：0（设计假设 PV 已在确认中转正或取代）。
-- 人类身份未配 → 无法把 APR 从 draft 提交为重确认（C-107）。
-- 远端未配 → 无 GitHub 完整档 / Gitee 降级档。
-- §8/9 未进 C 记录，仅作工作顺序。
+- 暂定决策计数：0
+- 人类身份未配 → APR 停在 draft
+- 远端未配
+- DEC-148 三平台一致性尚未在 macOS/Linux 实测（W3/W5）
+- §8/9 未进 C 记录
 
 ## 主要外部依赖
 
-gate 运行时零第三方依赖（C-101）。测试画像直接依赖 pytest 9.1.1（MIT）→ `keel/oss/OSS-001-pytest.md`。映射表引用 Trellis（AGPL-3.0-only，不复制代码）与 Superpowers（MIT，不复制技能正文）。
+gate **运行时**零第三方依赖（DEC-154）。开发/CI 唯一白名单 devDependency：typescript（OSS 待登记）。pytest 曾用于第一次 W1，已退役（OSS-001）。映射表引用 Trellis（AGPL-3.0-only，不复制代码）与 Superpowers（MIT，不复制技能正文）。

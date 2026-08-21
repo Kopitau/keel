@@ -1,6 +1,7 @@
 # decisions index (generated)
 
-- count: 142
+- count: 154
+- pending_regeneration: true (CHG-001 手工追加 DEC-143~149；W2 `gate index` 接管)
 - generator: tools/bootstrap/w1_bootstrap.py
 
 | ID | source | title | status | file |
@@ -105,7 +106,7 @@
 | DEC-098 | C-98 | F16.5 headless | confirmed | `DEC-098-C-98.md` |
 | DEC-099 | C-99 | F16.6 命名正式确认 | confirmed | `DEC-099-C-99.md` |
 | DEC-100 | C-100 | F17.1 五层模型 | confirmed | `DEC-100-C-100.md` |
-| DEC-101 | C-101 | F17.2 gate 运行时 | confirmed | `DEC-101-C-101.md` |
+| DEC-101 | C-101 | F17.2 gate 运行时 | **superseded→DEC-149** | `DEC-101-C-101.md` |
 | DEC-102 | C-102 | F17.3 git hooks 基座 | confirmed | `DEC-102-C-102.md` |
 | DEC-103 | C-103 | F17.4 门禁清单 | confirmed | `DEC-103-C-103.md` |
 | DEC-104 | C-104 | F17.5 三档落地 | confirmed | `DEC-104-C-104.md` |
@@ -147,3 +148,15 @@
 | DEC-140 | C-140 | F23.4 演化走自己流程 | confirmed | `DEC-140-C-140.md` |
 | DEC-141 | C-141 | F23.5 消费项目升级从简 | confirmed | `DEC-141-C-141.md` |
 | DEC-142 | C-142 | F23.6 本会话=第一批账本 | confirmed | `DEC-142-C-142.md` |
+| DEC-143 | C-143 | F24.1 正式支持矩阵 | confirmed | `DEC-143-C-143.md` |
+| DEC-144 | C-144 | F24.2 跨平台哈希一致性 | confirmed | `DEC-144-C-144.md` |
+| DEC-145 | C-145 | F24.3 路径与大小写 | confirmed | `DEC-145-C-145.md` |
+| DEC-146 | C-146 | F24.4 启动器与 git hooks | confirmed | `DEC-146-C-146.md` |
+| DEC-147 | C-147 | F24.5 技能镜像统一用复制 | confirmed | `DEC-147-C-147.md` |
+| DEC-148 | C-148 | F24.6 跨平台一致性测试 | confirmed | `DEC-148-C-148.md` |
+| DEC-149 | C-149 | gate 运行时改为 Node+TS（adr，取代 DEC-101） | confirmed | `DEC-149-C-149.md` |
+| DEC-150 | C-150 | Node 版本基线 ≥22.18.0 | confirmed | `DEC-150-C-150.md` |
+| DEC-151 | C-151 | 免构建：直接运行 .ts | confirmed | `DEC-151-C-151.md` |
+| DEC-152 | C-152 | 测试运行器：内置 node:test | confirmed | `DEC-152-C-152.md` |
+| DEC-153 | C-153 | 分发方式：v1 仓库内随项目走 | confirmed | `DEC-153-C-153.md` |
+| DEC-154 | C-154 | 类型检查进门禁；零依赖边界定义（adr） | confirmed | `DEC-154-C-154.md` |

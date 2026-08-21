@@ -1,4 +1,4 @@
 #!/bin/sh
-# keel W1 placeholder. W2 injects Feature/Agent/Session trailers (C-102/C-115).
+# W2 injects Feature/Agent/Session trailers (C-102/C-115).
 # prepare-commit-msg is not suppressed by --no-verify.
 exit 0

@@ -5,7 +5,14 @@
   "records_dir": "keel",
   "enforcement_tier": "local",
   "profiles": {
-    "active": ["python-cli"],
+    "active": ["keel-gate"],
+    "keel-gate": {
+      "language": "typescript",
+      "runtime": "node",
+      "node_min": "22.18.0",
+      "test_command": "node --test tests/*.test.ts",
+      "typecheck": "tsc --noEmit"
+    },
     "python-cli": {
       "language": "python",
       "test_command": "python -m pytest -q",
