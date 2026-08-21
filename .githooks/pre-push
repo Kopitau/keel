@@ -1,0 +1,3 @@
+#!/bin/sh
+# keel W1 placeholder. W2 may call gate check; W3 CI remains authority (C-100).
+exit 0

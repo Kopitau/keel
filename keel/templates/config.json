@@ -1,0 +1,39 @@
+{
+  "_comment": "Copy to keel/config.json and edit. Gate ignores keys starting with _.",
+  "schema_version": 1,
+  "project_name": "example",
+  "records_dir": "keel",
+  "enforcement_tier": "local",
+  "profiles": {
+    "active": ["python-cli"],
+    "python-cli": {
+      "language": "python",
+      "test_command": "python -m pytest -q",
+      "core_marker": "core"
+    }
+  },
+  "identities": {
+    "humans": [{"name": "YOUR-NAME", "email": "you@example.com"}],
+    "agents": [{"name": "keel-agent", "email": "agent@keel.local"}]
+  },
+  "platforms": {
+    "primary": ["claude-code", "codex", "opencode", "grok-build", "deepseek-harness"],
+    "compatible": ["pi"]
+  },
+  "budget": {
+    "agents_md_max_lines": 150,
+    "agents_md_chain_max_bytes": 32768,
+    "skill_max_lines": 500,
+    "skill_description_max_chars": 1024,
+    "autoload_max_bytes": 10240,
+    "skill_count_cap": 16
+  },
+  "optional": {
+    "no_mistakes": false,
+    "heterogeneous_review": false,
+    "recorder_medium_for_longform": true
+  },
+  "oss_review_days": 28,
+  "knowledge_cap": 100,
+  "rules_area_cap": null
+}

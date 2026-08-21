@@ -1,0 +1,67 @@
+{
+  "_comment": "keel/config.json (C-129). Keys starting with _ are comments; gate (W2) must ignore them.",
+  "schema_version": 1,
+  "project_name": "keel",
+  "records_dir": "keel",
+  "enforcement_tier": "local",
+  "_comment_tier": "github | gitee | local. Remotes not configured in W1; local = hooks + gate-before-merge + hash APR. Honest label: deters mistakes, not malice (C-48).",
+  "profiles": {
+    "_comment": "Test profiles (C-126/C-128). Gate verify (W3) selects by touched paths.",
+    "active": ["python-cli"],
+    "python-cli": {
+      "language": "python",
+      "test_command": "python -m pytest -q",
+      "core_marker": "core"
+    },
+    "ds-ml": {
+      "language": "python",
+      "test_command": "python -m pytest -q",
+      "notebook": "nbmake/nbval (not wired in W1)",
+      "metrics_json_in_evidence": true
+    },
+    "ts-js": {
+      "language": "typescript",
+      "test_command": "npx vitest run",
+      "e2e": "npx playwright test"
+    },
+    "other": {
+      "language": "other",
+      "test_command": "echo 'configure junit-compatible command'",
+      "junit_compatible": true
+    }
+  },
+  "identities": {
+    "_comment": "Humans submit APR (C-107). Agent names must not appear as APR commit authors. Fill humans after git identity is known.",
+    "humans": [],
+    "agents": [
+      {
+        "name": "keel-agent",
+        "email": "agent@keel.local",
+        "note": "W1 local git identity for non-APR commits. Not allowed to land APR."
+      }
+    ]
+  },
+  "platforms": {
+    "primary": ["claude-code", "codex", "opencode", "grok-build", "deepseek-harness"],
+    "compatible": ["pi"],
+    "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows."
+  },
+  "budget": {
+    "_comment": "Initial values (C-118). Soft over = warn; platform hard over = fail (C-119). Calibrate in W6.",
+    "agents_md_max_lines": 150,
+    "agents_md_chain_max_bytes": 32768,
+    "skill_max_lines": 500,
+    "skill_description_max_chars": 1024,
+    "autoload_max_bytes": 10240,
+    "skill_count_cap": 16
+  },
+  "optional": {
+    "no_mistakes": false,
+    "heterogeneous_review": false,
+    "recorder_medium_for_longform": true
+  },
+  "oss_review_days": 28,
+  "knowledge_cap": 100,
+  "rules_area_cap": null,
+  "_comment_caps": "oss_review_days / knowledge_cap / rules_area_cap are initials; W6 pilot recalibrates (DESIGN appendix B)."
+}

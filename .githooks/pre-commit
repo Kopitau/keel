@@ -1,0 +1,4 @@
+#!/bin/sh
+# keel W1 placeholder. Real gate check lands in W2 (C-102).
+# Local tier: this hook is fail-open until gate check exists.
+exit 0

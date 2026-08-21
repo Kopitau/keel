@@ -1,0 +1,15 @@
+{
+  "_comment": "F6 evidence object (C-33). W3 verify writes this. Tree mismatch invalidates the file.",
+  "command": "",
+  "exit_code": 0,
+  "started": "",
+  "finished": "",
+  "git_commit": "",
+  "tree_hash": "",
+  "dirty": false,
+  "report_hash": "",
+  "counts": {"passed": 0, "failed": 0, "skipped": 0},
+  "req_coverage": {},
+  "stdout_tail_2kb": "",
+  "actor": {"harness": "", "model": "", "session": ""}
+}
