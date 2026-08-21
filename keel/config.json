@@ -12,7 +12,7 @@
       "language": "typescript",
       "runtime": "node",
       "node_min": "22.18.0",
-      "test_command": "node --test tests/*.test.ts",
+      "test_command": "node --test",
       "typecheck": "tsc --noEmit",
       "core_marker": "core"
     },

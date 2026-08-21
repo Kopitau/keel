@@ -1,0 +1,45 @@
+name: gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install
+        run: npm ci
+      - name: Trunk gate (DEC-138)
+        shell: bash
+        run: bash tools/gate/ci-trunk.sh
+      - name: check
+        run: node tools/gate/gate.ts check
+      - name: verify
+        run: node tools/gate/gate.ts verify
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-${{ matrix.os }}-node${{ matrix.node }}
+          path: keel/evidence/
+          if-no-files-found: warn
+
+  gate-ok:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: All matrix cells green
+        run: test "${{ needs.verify.result }}" = "success"

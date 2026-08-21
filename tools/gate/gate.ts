@@ -14,6 +14,7 @@ import { fail, ok, usage, type CmdResult } from "./result.ts";
 import { runStatus } from "./status.ts";
 import { runSync } from "./sync.ts";
 import { runTrace } from "./trace.ts";
+import { runVerify } from "./verify.ts";
 import { runWorktree } from "./worktree.ts";
 
 function writeOut(text: string): void {
@@ -69,6 +70,7 @@ function help(): CmdResult {
       "  worktree add|rm Fnn     one feature, one branch, one worktree (C-112)",
       "  approve APR-nnn         hash artifacts; human identity only (C-107)",
       "  hash <file>             SHA-256 of normalized text (DEC-144)",
+      "  verify                  rerun tests, write evidence JSON bound to tree hash (C-33)",
       "  hook prepare-commit-msg <file>",
       "",
     ].join("\n") + "\n",
@@ -89,6 +91,7 @@ function dispatch(root: string, args: string[]): CmdResult {
   if (cmd === "worktree") return runWorktree(ctx, rest);
   if (cmd === "approve") return runApprove(ctx, rest);
   if (cmd === "hash") return cmdHash(root, rest);
+  if (cmd === "verify") return runVerify(ctx);
   if (cmd === "hook") return runHook(ctx, rest);
   return usage(`unknown command ${cmd}; see --help\n`);
 }

@@ -23,9 +23,9 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-W2 刚落地：`gate check/new/index/trace/sync/worktree/approve` + hooks。G-完成重跑测试仍是 W3。
+W3 刚落地：`gate verify`、GitHub 矩阵 CI、三档指引。证据 JSON 不入库（gitignore），CI 上传附件。
 
-下一波 W3：verify 证据、GitHub workflow、三平台 CI 矩阵。
+下一波 W4：16 个 k-* 技能。
 
 ## 风险与暂定
 

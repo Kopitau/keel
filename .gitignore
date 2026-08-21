@@ -11,6 +11,8 @@ venv/
 htmlcov/
 artifacts/tmp/
 .keel-worktrees/
+keel/evidence/*.json
+keel/evidence/*.xml
 *.orig
 Thumbs.db
 .DS_Store

@@ -10,6 +10,7 @@ import { listNumbers } from "./ids.ts";
 import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
+import { evidenceFresh, readEvidence } from "./evidence.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -98,20 +99,38 @@ function gPlan(ctx: Ctx): CheckItem {
 
 function gDone(ctx: Ctx): CheckItem {
   const feats = join(ctx.records, "features");
-  if (!existsSync(feats)) return skip("G-done", "no features dir");
   const summaries: string[] = [];
-  for (const name of readdirSync(feats)) {
-    const s = join(feats, name, "summary.md");
-    if (existsSync(s)) summaries.push(name);
+  if (existsSync(feats)) {
+    for (const name of readdirSync(feats)) {
+      const s = join(feats, name, "summary.md");
+      if (existsSync(s)) summaries.push(name);
+    }
   }
+  const ev = readEvidence(ctx);
   if (summaries.length === 0) {
-    return skip("G-done", "no completion claims; test rerun is gate verify (W3 / C-33)");
+    return skip("G-done", "no completion claims (C-33)");
   }
-  return fail(
-    "G-done",
-    `summary.md present (${summaries.join(", ")}) but evidence/verify is W3`,
-    "run gate verify after W3 lands, or remove premature summary.md",
-  );
+  if (!evidenceFresh(ctx, ev)) {
+    return fail(
+      "G-done",
+      `summary.md present (${summaries.join(", ")}) but evidence missing or stale`,
+      "run: gate verify (C-33)",
+    );
+  }
+  return pass("G-done", "fresh evidence matches current tree hash");
+}
+
+function xEvidence(ctx: Ctx): CheckItem {
+  const ev = readEvidence(ctx);
+  if (!ev) return skip("X-evidence", "no verify.json; run gate verify before merge");
+  if (!ev.tree_hash) return fail("X-evidence", "evidence has empty tree_hash", "run: gate verify");
+  if (!evidenceFresh(ctx, ev)) {
+    return fail("X-evidence", "evidence stale (tree hash mismatch)", "run: gate verify (C-33)");
+  }
+  if (ev.exit_code !== 0) {
+    return fail("X-evidence", `evidence exit_code=${ev.exit_code}`, "fix tests and re-verify");
+  }
+  return pass("X-evidence", `fresh tree ${ev.tree_hash.slice(0, 12)}…`);
 }
 
 function gMerge(ctx: Ctx): CheckItem {
@@ -127,7 +146,14 @@ function gMerge(ctx: Ctx): CheckItem {
   if (approved === 0) {
     return skip("G-merge", "no approved APR; merge gate applies at merge time (C-45)");
   }
-  return pass("G-merge", `${approved} approved APR file(s) on disk`);
+  if (!evidenceFresh(ctx, readEvidence(ctx))) {
+    return fail(
+      "G-merge",
+      "approved APR present but evidence missing or stale",
+      "run: gate verify (C-45)",
+    );
+  }
+  return pass("G-merge", `${approved} approved APR file(s) + fresh evidence`);
 }
 
 function gRetro(ctx: Ctx): CheckItem {
@@ -271,6 +297,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
     items.push(gDone(ctx));
     items.push(gMerge(ctx));
     items.push(gRetro(ctx));
+    items.push(xEvidence(ctx));
     items.push(xTypes(ctx));
     items.push(xHooks(ctx));
   }
