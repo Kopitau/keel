@@ -15,13 +15,13 @@
 - 工作单元：功能，不是任务票
 - 执法档：local
 - 规划指针：`keel/plan/INDEX.md` → overview-v1.md
+- 初始提交：`0bb57ad87156f76c6a29375494c150ecf2713891`（agent 身份，非 APR）
 
 ## 下一步
 
-1. 跑 `python -m pytest -q` 确认 W1 格式测试。
-2. 用户把 git 人类身份写入 `keel/config.json` identities.humans 后，用该身份提交 APR 草稿（W2 有 `gate approve` 前可手提交）。
-3. 提供 GitHub/Gitee URL 后再配远端与完整/降级档。
-4. W2：实现 `tools/gate/gate.py` 的 check/new/index/trace/approve + 真 hooks。
+1. 用户把 git 人类身份写入 `keel/config.json` identities.humans 后，用该身份提交 APR-001（目前 draft；W2 有 `gate approve`）。
+2. 提供 GitHub/Gitee URL 后再配远端与完整/降级档。
+3. W2：实现 `tools/gate/gate.py` 的 check/new/index/trace/approve + 真 hooks。
 
 ## 未决问题
 
