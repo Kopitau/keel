@@ -1,4 +1,4 @@
 #!/bin/sh
-# W2 injects Feature/Agent/Session trailers (C-102/C-115).
-# prepare-commit-msg is not suppressed by --no-verify.
-exit 0
+# Not suppressed by --no-verify (C-102).
+root=$(git rev-parse --show-toplevel) || exit 1
+exec "$root/tools/gate/gate.sh" hook prepare-commit-msg "$1" "$2" "$3"

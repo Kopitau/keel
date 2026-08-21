@@ -23,9 +23,9 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-W1 重做（进行中）：Python gate 已回滚；Node+TS 桩、F24 规范化哈希、双启动器。
+W2 刚落地：`gate check/new/index/trace/sync/worktree/approve` + hooks。G-完成重跑测试仍是 W3。
 
-下一波 W2：F17 六门禁真身。
+下一波 W3：verify 证据、GitHub workflow、三平台 CI 矩阵。
 
 ## 风险与暂定
 

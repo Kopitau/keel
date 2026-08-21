@@ -10,7 +10,7 @@ keel is a repo-local process layer: numbered Chinese records, English skills, on
 
 Then follow its navigation. Read more if you need it. Do **not** bulk-load the records directory.
 
-Until W2 implements real checks, the stub still prints those paths. Node **≥22.18.0** is required (DEC-150); launchers refuse older versions.
+Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gate check` is the local six-gate command; CI reruns it (W3).
 
 ## Map
 
@@ -20,7 +20,7 @@ Until W2 implements real checks, the stub still prints those paths. Node **≥22
 | Config | records dir `/config.json` |
 | Skills (W4) | `.agents/skills/k-*/SKILL.md` — catalog below; bodies on demand |
 | Design norms | `DESIGN.md` §5 (confirmed). §8–9 are advisory. |
-| Gate | `tools/gate/gate.ts` (W1 = `status` + `hash`; W2 = checks) |
+| Gate | `tools/gate/gate.ts` (`status` `check` `new` `index` `trace` `sync` `worktree` `approve` `hash`) |
 | Platform limits | `tools/gate/platform-limits.md` |
 | Claude Code bridge | `CLAUDE.md` is exactly `@AGENTS.md` |
 

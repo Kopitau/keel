@@ -7,19 +7,36 @@ interface ImportMeta {
 declare module "node:fs" {
   export function readFileSync(path: string, encoding: "utf8"): string;
   export function readFileSync(path: string): Uint8Array;
+  export function writeFileSync(path: string, data: string, encoding: "utf8"): void;
   export function existsSync(path: string): boolean;
+  export function mkdirSync(path: string, opts?: { recursive?: boolean }): string | undefined;
+  export function copyFileSync(src: string, dest: string): void;
   export function readdirSync(path: string, opts?: { recursive?: boolean }): string[];
+  export function statSync(path: string): { isDirectory(): boolean; isFile(): boolean; mtimeMs: number };
+  export function rmSync(path: string, opts?: { recursive?: boolean; force?: boolean }): void;
+  export function mkdtempSync(prefix: string): string;
+  export function cpSync(
+    src: string,
+    dest: string,
+    opts?: { recursive?: boolean; force?: boolean },
+  ): void;
 }
 
 declare module "node:path" {
   export function join(...parts: string[]): string;
   export function dirname(p: string): string;
   export function resolve(...parts: string[]): string;
-  export function basename(p: string): string;
+  export function basename(p: string, ext?: string): string;
+  export function relative(from: string, to: string): string;
+  export const sep: string;
 }
 
 declare module "node:url" {
   export function fileURLToPath(url: string | URL): string;
+}
+
+declare module "node:os" {
+  export function tmpdir(): string;
 }
 
 declare module "node:buffer" {
@@ -41,6 +58,7 @@ declare module "node:process" {
     execPath: string;
     versions: { node: string };
     exitCode: number | undefined;
+    env: { [key: string]: string | undefined };
     cwd(): string;
     exit(code?: number): never;
     stdout: { write(s: string): void };
@@ -55,6 +73,7 @@ declare module "node:assert/strict" {
     deepEqual(a: unknown, b: unknown, msg?: string): void;
     ok(v: unknown, msg?: string): void;
     match(s: string, r: RegExp, msg?: string): void;
+    doesNotMatch(s: string, r: RegExp, msg?: string): void;
   };
   export default assert;
 }
@@ -67,6 +86,6 @@ declare module "node:child_process" {
   export function spawnSync(
     cmd: string,
     args: string[],
-    opts?: { encoding?: "utf8"; cwd?: string },
+    opts?: { encoding?: "utf8"; cwd?: string; env?: { [k: string]: string | undefined } },
   ): { status: number | null; stdout: string; stderr: string };
 }
