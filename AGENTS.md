@@ -36,13 +36,13 @@ Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gat
 - Done = evidence (command, exit, tree hash), not a claim (C-33). W3 lands verify.
 - One feature, one branch, one worktree (C-112). Overlapping files → serialize (C-114).
 
-## Skill catalog (W4; names from DESIGN §9, working list)
+## Skill catalog (bodies in `.agents/skills/k-*/SKILL.md`; Claude mirror via `gate sync`)
 
 User: `k-init` `k-migrate` `k-new` `k-impl` `k-bugfix` `k-change` `k-review` `k-accept` `k-retro` `k-handoff` `k-status`
 
 Model: `k-grill` `k-research` `k-decide` `k-evidence` `k-log`
 
-Until those files exist, implement from `DESIGN.md` §5 and the current feature plan. Do not invent platform-private process commands.
+Load the matching skill before that work. Do not invent platform-private process commands.
 
 ## Enforcement
 

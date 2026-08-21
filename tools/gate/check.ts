@@ -11,6 +11,7 @@ import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceFresh, readEvidence } from "./evidence.ts";
+import { inspectSkills } from "./skills.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -198,6 +199,28 @@ function xBudget(ctx: Ctx): CheckItem {
   return pass("X-budget", `AGENTS.md ${n} lines / ${bytes} bytes`);
 }
 
+function xSkills(ctx: Ctx): CheckItem {
+  const budget = (ctx.config.budget ?? {}) as {
+    skill_max_lines?: number;
+    skill_description_max_chars?: number;
+    skill_count_cap?: number;
+  };
+  const issues = inspectSkills(
+    ctx.root,
+    budget.skill_max_lines ?? 500,
+    budget.skill_description_max_chars ?? 1024,
+    budget.skill_count_cap ?? 16,
+  );
+  if (issues.length === 0) return pass("X-skills", "16 k-* skills within C-95/C-118/C-121");
+  const first = issues[0];
+  const extra = issues.length > 1 ? ` (+${issues.length - 1} more)` : "";
+  return fail(
+    "X-skills",
+    `${first?.skill}: ${first?.message}${extra}`,
+    "fix SKILL.md frontmatter and size (C-95/C-118)",
+  );
+}
+
 function xCasefold(ctx: Ctx): CheckItem {
   const seen = new Map<string, string>();
   const collisions: string[] = [];
@@ -293,6 +316,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(xBudget(ctx));
   items.push(xCasefold(ctx));
   items.push(xIds(ctx));
+  items.push(xSkills(ctx));
   if (!quick) {
     items.push(gDone(ctx));
     items.push(gMerge(ctx));

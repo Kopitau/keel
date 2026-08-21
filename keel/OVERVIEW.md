@@ -23,9 +23,9 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-W3 刚落地：`gate verify`、GitHub 矩阵 CI、三档指引。证据 JSON 不入库（gitignore），CI 上传附件。
+W4 刚落地：16 个 `k-*` 技能在 `.agents/skills/`，镜像 `.claude/skills/`。`gate check` 含 X-skills。
 
-下一波 W4：16 个 k-* 技能。
+下一波 W5：样例项目全流程 + 五主力触发实测 + Pi 冒烟。
 
 ## 风险与暂定
 
