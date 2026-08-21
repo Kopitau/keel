@@ -15,6 +15,7 @@ import { runStatus } from "./status.ts";
 import { runSync } from "./sync.ts";
 import { runTrace } from "./trace.ts";
 import { runTriggers } from "./triggers.ts";
+import { runReview } from "./review.ts";
 import { runVerify } from "./verify.ts";
 import { runWorktree } from "./worktree.ts";
 
@@ -73,7 +74,8 @@ function help(): CmdResult {
       "  hash <file>             SHA-256 of normalized text (DEC-144)",
       "  verify                  rerun tests, write evidence JSON bound to tree hash (C-33)",
       "  triggers [--write]      probe harness CLIs; skill trigger ledger (W5)",
-      "  hook prepare-commit-msg <file>",
+      "  review [--quick] [--write]  C-105 gate checklist inventory",
+      "  hook prepare-commit-msg <file> | hook pre-push [refs-file]",
       "",
     ].join("\n") + "\n",
   );
@@ -95,6 +97,7 @@ function dispatch(root: string, args: string[]): CmdResult {
   if (cmd === "hash") return cmdHash(root, rest);
   if (cmd === "verify") return runVerify(ctx);
   if (cmd === "triggers") return runTriggers(ctx, rest);
+  if (cmd === "review") return runReview(ctx, rest);
   if (cmd === "hook") return runHook(ctx, rest);
   return usage(`unknown command ${cmd}; see --help\n`);
 }

@@ -20,7 +20,7 @@ Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gat
 | Config | records dir `/config.json` |
 | Skills (W4) | `.agents/skills/k-*/SKILL.md` — catalog below; bodies on demand |
 | Design norms | `DESIGN.md` §5 (confirmed). §8–9 are advisory. |
-| Gate | `tools/gate/gate.ts` (`status` `check` `new` `index` `trace` `sync` `worktree` `approve` `hash` `verify` `triggers`) |
+| Gate | `tools/gate/gate.ts` (`status` `check` `new` `index` `trace` `sync` `worktree` `approve` `hash` `verify` `triggers` `review`) |
 | Platform limits | `tools/gate/platform-limits.md` |
 | Claude Code bridge | `CLAUDE.md` is exactly `@AGENTS.md` |
 

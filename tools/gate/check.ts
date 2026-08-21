@@ -12,6 +12,10 @@ import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceFresh, readEvidence } from "./evidence.ts";
 import { inspectSkills, listSkillDirs } from "./skills.ts";
+import { measureAutoload } from "./autoload.ts";
+import { collectBypassFindings } from "./bypass.ts";
+import { countKnowledge } from "./knowledge.ts";
+import { inspectOss } from "./osscheck.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -111,10 +115,13 @@ function gDone(ctx: Ctx): CheckItem {
   if (summaries.length === 0) {
     return skip("G-done", "no completion claims (C-33)");
   }
+  if (!ev) {
+    return skip("G-done", `summary.md present (${summaries.join(", ")}); run gate verify (C-33)`);
+  }
   if (!evidenceFresh(ctx, ev)) {
     return fail(
       "G-done",
-      `summary.md present (${summaries.join(", ")}) but evidence missing or stale`,
+      `summary.md present (${summaries.join(", ")}) but evidence stale`,
       "run: gate verify (C-33)",
     );
   }
@@ -174,9 +181,11 @@ function xBudget(ctx: Ctx): CheckItem {
   const budget = (ctx.config.budget ?? {}) as {
     agents_md_max_lines?: number;
     agents_md_chain_max_bytes?: number;
+    autoload_max_bytes?: number;
   };
   const maxLines = budget.agents_md_max_lines ?? 150;
   const maxBytes = budget.agents_md_chain_max_bytes ?? 32768;
+  const autoMax = budget.autoload_max_bytes ?? 10240;
   const agents = join(ctx.root, "AGENTS.md");
   if (!existsSync(agents)) return fail("X-budget", "AGENTS.md missing", "restore the root map");
   const raw = readFileSync(agents);
@@ -193,10 +202,70 @@ function xBudget(ctx: Ctx): CheckItem {
   if (bytes > maxBytes) {
     return fail("X-budget", `AGENTS.md ${bytes} bytes > ${maxBytes} hard`, "sink content (C-119)");
   }
+  const auto = measureAutoload(ctx.root);
   if (n > maxLines) {
     return warn("X-budget", `AGENTS.md ${n} lines > ${maxLines} soft`, "sink content (C-118)");
   }
-  return pass("X-budget", `AGENTS.md ${n} lines / ${bytes} bytes`);
+  if (auto.total > autoMax) {
+    return warn(
+      "X-budget",
+      `autoload ${auto.total} bytes > ${autoMax} soft (C-26/C-118)`,
+      "sink catalog or AGENTS.md; raising the cap needs a DEC (C-123)",
+    );
+  }
+  return pass("X-budget", `AGENTS.md ${n} lines / ${bytes} bytes; autoload ${auto.total}/${autoMax}`);
+}
+
+function xBypass(ctx: Ctx): CheckItem {
+  const findings = collectBypassFindings(ctx);
+  if (findings.length === 0) return pass("X-bypass", "no --no-verify / CI / tests-dir reminders");
+  const first = findings[0];
+  const extra = findings.length > 1 ? ` (+${findings.length - 1} more)` : "";
+  return warn("X-bypass", `${first?.summary ?? "bypass"}${extra}`, first?.fix ?? "C-105");
+}
+
+function xOss(ctx: Ctx): CheckItem {
+  const pkg = join(ctx.root, "package.json");
+  if (!existsSync(pkg)) return skip("X-oss", "no package.json");
+  const report = inspectOss(ctx);
+  if (report.deps.length === 0) return skip("X-oss", "no direct npm dependencies");
+  if (report.missing.length > 0) {
+    return fail(
+      "X-oss",
+      `direct deps missing OSS records: ${report.missing.join(", ")}`,
+      "gate new oss <name> and fill C-88 fields (C-89)",
+    );
+  }
+  if (report.due.length > 0) {
+    return warn(
+      "X-oss",
+      `OSS review due: ${report.due.map((r) => r.id).join(", ")}`,
+      "read-only compare upstream; conclusion in the OSS file (C-90)",
+    );
+  }
+  if (report.versionMismatch.length > 0) {
+    const m = report.versionMismatch[0];
+    return warn(
+      "X-oss",
+      `OSS ${m?.project} version ${m?.oss} != lock ${m?.lock}`,
+      "update the OSS record or file a CHG (C-90)",
+    );
+  }
+  return pass("X-oss", `${report.deps.length} direct dep(s) registered`);
+}
+
+function xKnowledge(ctx: Ctx): CheckItem {
+  const cap = typeof ctx.config.knowledge_cap === "number" ? ctx.config.knowledge_cap : 100;
+  const kn = countKnowledge();
+  if (!kn.exists) return skip("X-knowledge", "~/.keel/knowledge absent");
+  if (kn.count > cap) {
+    return warn(
+      "X-knowledge",
+      `${kn.count} KLES files > cap ${cap}`,
+      "distill or delete expired entries (C-86)",
+    );
+  }
+  return pass("X-knowledge", `${kn.count} / ${cap} KLES files`);
 }
 
 function xSkills(ctx: Ctx): CheckItem {
@@ -320,6 +389,9 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(xCasefold(ctx));
   items.push(xIds(ctx));
   items.push(xSkills(ctx));
+  items.push(xBypass(ctx));
+  items.push(xOss(ctx));
+  items.push(xKnowledge(ctx));
   if (!quick) {
     items.push(gDone(ctx));
     items.push(gMerge(ctx));

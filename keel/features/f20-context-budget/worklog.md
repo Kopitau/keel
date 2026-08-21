@@ -10,3 +10,8 @@
 ## 2026-08-21（W2）
 
 - 进度：`gate check` 含 X-budget：超软预算警告、超 32KiB 硬限失败、CLAUDE.md 必须是 `@AGENTS.md`。
+
+## 2026-08-21（W6）
+
+- 进度：测量常驻装载 6427/10240。校准结论 KEEP 全部初值，见 `calibration-w6.md`。X-budget 增加 autoload 软警告。
+

@@ -57,7 +57,7 @@
     "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001)."
   },
   "budget": {
-    "_comment": "Initial values (C-118). Soft over = warn; platform hard over = fail (C-119). Calibrate in W6.",
+    "_comment": "C-118 values. W6 2026-08-21 measured autoload 6427/10240 and KEPT all numbers. Soft over = warn; platform hard over = fail (C-119).",
     "agents_md_max_lines": 150,
     "agents_md_chain_max_bytes": 32768,
     "skill_max_lines": 500,
@@ -73,5 +73,5 @@
   "oss_review_days": 28,
   "knowledge_cap": 100,
   "rules_area_cap": null,
-  "_comment_caps": "oss_review_days / knowledge_cap / rules_area_cap are initials; W6 pilot recalibrates (DESIGN appendix B)."
+  "_comment_caps": "W6 2026-08-21 KEEP: oss_review_days=28, knowledge_cap=100, rules_area_cap=null (no rules dir). See keel/features/f20-context-budget/calibration-w6.md."
 }

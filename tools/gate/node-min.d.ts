@@ -7,6 +7,7 @@ interface ImportMeta {
 declare module "node:fs" {
   export function readFileSync(path: string, encoding: "utf8"): string;
   export function readFileSync(path: string): Uint8Array;
+  export function readFileSync(fd: number, encoding: "utf8"): string;
   export function writeFileSync(path: string, data: string, encoding: "utf8"): void;
   export function unlinkSync(path: string): void;
   export function existsSync(path: string): boolean;
@@ -38,12 +39,14 @@ declare module "node:url" {
 
 declare module "node:os" {
   export function tmpdir(): string;
+  export function homedir(): string;
 }
 
 declare module "node:buffer" {
   export class Buffer {
     static from(data: Uint8Array | string, enc?: string): Buffer;
     toString(enc: "utf8"): string;
+    byteLength: number;
   }
 }
 
@@ -66,6 +69,7 @@ declare module "node:process" {
     exit(code?: number): never;
     stdout: { write(s: string): void };
     stderr: { write(s: string): void };
+    stdin: { isTTY?: boolean };
   };
   export default process;
 }

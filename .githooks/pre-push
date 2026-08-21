@@ -1,4 +1,6 @@
 #!/bin/sh
 root=$(git rev-parse --show-toplevel) || exit 1
+# C-105: force-push is reminder-level (does not block). Then verify + check still run.
+"$root/tools/gate/gate.sh" hook pre-push || true
 "$root/tools/gate/gate.sh" verify || exit 1
 exec "$root/tools/gate/gate.sh" check
