@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 5
+- count: 12
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -10,3 +10,10 @@
 | ISS-003 | ISS-003 追溯对账未接入门禁，10/24 需求零测试覆盖而门禁全绿 | closed | `ISS-003.md` |
 | ISS-004 | ISS-004 .githooks 缺可执行位，macOS/Linux 上 L2 强制层完全失效 | closed | `ISS-004-githooks-mac-linux.md` |
 | ISS-005 | ISS-005 警告可由自己写的一行 worklog 永久消除 | closed | `ISS-005.md` |
+| ISS-006 | ISS-006 G-done/G-merge/G-retro 判据不全且证据字段未对账（P1-2/P1-3） | closed | `ISS-006-p1-gate-criteria.md` |
+| ISS-007 | ISS-007 --no-verify 检测器被 C-102 抹平（P1-4） | closed | `ISS-007-precommit-stamp.md` |
+| ISS-008 | ISS-008 - Given 行豁免使验收标准里的澄清标记隐形（P1-5） | closed | `ISS-008-given-clarification-backdoor.md` |
+| ISS-009 | ISS-009 G-调研不校验 RES 文件存在（P1-6） | closed | `ISS-009-research-exists.md` |
+| ISS-010 | ISS-010 C-107 只查本地 git config，不查提交作者（P1-7） | closed | `ISS-010-apr-author.md` |
+| ISS-011 | ISS-011 链接 worktree 里 gitWriteTree 恒空（P1-8） | closed | `ISS-011-worktree-write-tree.md` |
+| ISS-012 | ISS-012 测试把漏洞写成合格断言且部分非 hermetic（P1-9） | closed | `ISS-012-tests-encoded-holes.md` |

@@ -9,9 +9,13 @@ import { fail, ok, usage, type CmdResult } from "./result.ts";
 type Agent = { name?: string; email?: string };
 
 function agentList(ctx: Ctx): Agent[] {
-  const cfg = ctx.config;
-  const identities = (cfg.identities ?? {}) as { agents?: Agent[] };
+  const identities = (ctx.config.identities ?? {}) as { agents?: Agent[] };
   return identities.agents ?? [];
+}
+
+function humanList(ctx: Ctx): Agent[] {
+  const identities = (ctx.config.identities ?? {}) as { humans?: Agent[] };
+  return identities.humans ?? [];
 }
 
 function isAgent(ident: { name: string; email: string }, agents: Agent[]): boolean {
@@ -41,6 +45,15 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   if (isAgent(ident, agentList(ctx))) {
     return fail(
       `refuse: git identity ${ident.name} <${ident.email}> is on the agent list (C-107). Run gate approve as a human.\n`,
+    );
+  }
+  const humans = humanList(ctx);
+  if (humans.length === 0) {
+    return fail("refuse: identities.humans is empty; fill a human git identity before approve (C-107).\n");
+  }
+  if (!isAgent(ident, humans)) {
+    return fail(
+      `refuse: ${ident.name} <${ident.email}> is not in identities.humans (C-107).\n`,
     );
   }
   const dir = join(ctx.records, "approvals");

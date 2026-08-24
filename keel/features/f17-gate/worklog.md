@@ -33,5 +33,12 @@
 - 问题链接：ISS-001 ISS-002 ISS-003 ISS-004 ISS-005
 - 不要用 `gate-warn:` 消本清单。
 
+## 2026-08-24（P1 返工）
+
+- 进度：P1-1 已由 P0/CHG-002 覆盖。P1-2~P1-9：对账、stamp、GWT 豁免、RES existsSync、X-apr、worktree git-dir、测试不再保护漏洞。
+- 问题链接：ISS-006 ~ ISS-012（本波立）
+- 实现决定：`--no-verify` 不再看 Feature 尾注（C-102 使其恒在）；改看 `Keel-Precommit: skipped`。push --no-verify 的权威在 CI（写进 enforcement-tiers）。
+
+
 
 

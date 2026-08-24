@@ -28,6 +28,7 @@ export const CHECK_IDS = [
   "X-oss",
   "X-knowledge",
   "X-trace",
+  "X-apr",
 ] as const;
 
 export function formatReview(ctx: Ctx): string {

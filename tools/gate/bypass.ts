@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Ctx } from "./ctx.ts";
-import { git, gitHooksPath } from "./git.ts";
+import { git, gitHooksPath, gitLogBodies } from "./git.ts";
 
 export type BypassFinding = { code: string; summary: string; fix: string };
 
@@ -74,17 +74,22 @@ export function collectBypassFindings(ctx: Ctx): BypassFinding[] {
       });
     }
   }
+  const skipped = gitLogBodies(ctx, 50).filter((b) => /^Keel-Precommit:\s*skipped\b/m.test(b));
+  if (skipped.length > 0) {
+    out.push({
+      code: "no-verify",
+      summary: `${skipped.length} commit(s) in last 50 have Keel-Precommit: skipped (pre-commit did not run)`,
+      fix: "do not pass --no-verify; pre-commit must stamp before prepare-commit-msg (C-105)",
+    });
+  }
   const hp = gitHooksPath(ctx);
   const hooksOn = hp === ".githooks" || hp.split("\\").join("/").endsWith("/.githooks");
-  if (hooksOn) {
-    const body = git(ctx, ["log", "-1", "--format=%B"]).stdout;
-    if (body && !/^Feature:\s/m.test(body)) {
-      out.push({
-        code: "no-verify",
-        summary: "HEAD commit has no Feature trailer (prepare-commit-msg may have been skipped with --no-verify)",
-        fix: "commit without --no-verify so .githooks/prepare-commit-msg runs (C-105)",
-      });
-    }
+  if (!hooksOn && hp) {
+    out.push({
+      code: "hooksPath",
+      summary: `core.hooksPath=${hp} is not .githooks`,
+      fix: "git config core.hooksPath .githooks (C-102/C-105)",
+    });
   }
   const wf = join(ctx.root, ".github", "workflows", "gate.yml");
   if (existsSync(wf)) {

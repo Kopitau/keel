@@ -44,7 +44,7 @@ test("REQ-017 C-105 force-update is when remote is not an ancestor", () => {
   assert.equal(parsed?.remoteSha, a);
 });
 
-test("REQ-017 C-105 missing Feature trailer warns when hooksPath is set", () => {
+test("REQ-017 C-105 Keel-Precommit skipped is a bypass finding", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-w6-bypass-"));
   mkdirSync(join(dir, "keel"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -52,9 +52,8 @@ test("REQ-017 C-105 missing Feature trailer warns when hooksPath is set", () => 
   git(dir, ["init"]);
   git(dir, ["config", "user.email", "w6@example.com"]);
   git(dir, ["config", "user.name", "w6"]);
-  git(dir, ["config", "core.hooksPath", ".githooks"]);
   git(dir, ["add", "-A"]);
-  git(dir, ["commit", "--no-verify", "-m", "no trailer"]);
+  git(dir, ["commit", "-m", "first\n\nKeel-Precommit: skipped\n"]);
   const ctx = makeCtx(dir);
   const findings = collectBypassFindings(ctx);
   assert.ok(findings.some((f) => f.code === "no-verify"), JSON.stringify(findings));
@@ -108,7 +107,7 @@ test("REQ-015 direct npm deps have OSS records", () => {
 test("REQ-017 C-105 review inventory lists every check id", () => {
   const text = formatReview(makeCtx(repo));
   assert.deepEqual(reviewMentionsAllIds(text), []);
-  assert.equal(CHECK_IDS.length, 17);
+  assert.equal(CHECK_IDS.length, 18);
 });
 
 test("REQ-017 W6 annual review and F17 summary exist", () => {

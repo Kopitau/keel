@@ -30,6 +30,7 @@ declare module "node:path" {
   export function resolve(...parts: string[]): string;
   export function basename(p: string, ext?: string): string;
   export function relative(from: string, to: string): string;
+  export function isAbsolute(p: string): boolean;
   export const sep: string;
 }
 

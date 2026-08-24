@@ -130,7 +130,7 @@ export function runVerify(ctx: Ctx): CmdResult {
 
   const tree = currentTree(ctx);
   const actor = {
-    harness: process.env.KEEL_HARNESS || (process.env.GITHUB_ACTIONS ? "github-actions" : ""),
+    harness: process.env.KEEL_HARNESS || (process.env.GITHUB_ACTIONS ? "github-actions" : "local"),
     model: process.env.KEEL_MODEL || "",
     session: process.env.KEEL_SESSION || process.env.GITHUB_RUN_ID || "",
   };

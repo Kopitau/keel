@@ -5,12 +5,14 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { makeCtx } from "../tools/gate/ctx.ts";
 import { runSync } from "../tools/gate/sync.ts";
-import { inspectSkills, SKILL_CATALOG } from "../tools/gate/skills.ts";
+import { inspectSkills, listSkillDirs, SKILL_CATALOG } from "../tools/gate/skills.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("REQ-016 catalog is 16 k-* skills", () => {
-  assert.equal(SKILL_CATALOG.length, 16);
+test("REQ-016 catalog matches k-* directories on disk", () => {
+  const dirs = listSkillDirs(join(root, ".agents", "skills"));
+  assert.equal(dirs.length, SKILL_CATALOG.length);
+  assert.deepEqual([...dirs].sort(), [...SKILL_CATALOG].sort());
 });
 
 test("REQ-016 every skill exists with matching name and Use when description", () => {

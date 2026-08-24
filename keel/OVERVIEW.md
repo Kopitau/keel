@@ -24,9 +24,9 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-独立评审后 **P0（ISS-001~005）已修**：fail-closed、test_command 白名单、X-trace、hooks 100755、gate-warn 须引用记录。CHG-002 proposed。
+独立评审后 **P0+P1 已修**。CHG-002 / CHG-003 proposed。
 
-**P1/P2 未修。** 远端、人类 APR、C-139 技能验收仍开着。
+**P2 未修**（含 C-139 技能验收须用户裁决）。远端、人类 APR 仍开着。
 
 ## 风险与暂定
 

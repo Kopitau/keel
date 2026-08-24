@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { sha256Normalized } from "./hash.ts";
 import { gitDirty, gitHead, gitWriteTree } from "./git.ts";
+import { isAllowedTestArgv, splitCmd } from "./testcmd.ts";
 
 export type Evidence = {
   command: string;
@@ -50,6 +51,35 @@ export function evidenceFresh(ctx: Ctx, ev: Evidence | null): boolean {
   if (!ev) return false;
   const tree = gitWriteTree(ctx);
   return Boolean(tree) && ev.tree_hash === tree && ev.exit_code === 0;
+}
+
+/** C-33 对账: fields must match junit + allowlisted command; dirty tree is not done. */
+export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
+  if (!ev) return ["verify.json missing"];
+  const gaps: string[] = [];
+  if (!ev.tree_hash) gaps.push("empty tree_hash");
+  if (!evidenceFresh(ctx, ev)) gaps.push("stale tree_hash or nonzero exit_code");
+  if (ev.dirty) gaps.push("dirty working tree");
+  if (!isAllowedTestArgv(splitCmd(ev.command || ""))) {
+    gaps.push(`command not allowlisted: ${ev.command}`);
+  }
+  const passed = ev.counts?.passed ?? 0;
+  const failed = ev.counts?.failed ?? 0;
+  if (passed === 0 && failed === 0) gaps.push("zero tests");
+  if (failed > 0) gaps.push(`counts.failed=${failed}`);
+  const junit = junitPath(ctx);
+  if (!existsSync(junit)) {
+    gaps.push("junit.xml missing");
+  } else {
+    const xml = readFileSync(junit, "utf8");
+    if (sha256Normalized(xml) !== ev.report_hash) gaps.push("report_hash != sha256(junit.xml)");
+    const rec = parseJunit(xml);
+    if (rec.passed !== passed || rec.failed !== failed) {
+      gaps.push("counts do not match junit.xml");
+    }
+  }
+  if (passed > 0 && !(ev.stdout_tail_2kb ?? "").trim()) gaps.push("empty stdout_tail_2kb");
+  return gaps;
 }
 
 export function parseJunit(xml: string): { passed: number; failed: number; skipped: number } {

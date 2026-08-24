@@ -49,7 +49,10 @@ function fixture(): string {
     JSON.stringify({
       records_dir: "keel",
       enforcement_tier: "local",
-      identities: { agents: [{ name: "keel-agent", email: "agent@keel.local" }], humans: [] },
+      identities: {
+        agents: [{ name: "keel-agent", email: "agent@keel.local" }],
+        humans: [{ name: "Ada", email: "ada@example.com" }],
+      },
       budget: { agents_md_max_lines: 150, agents_md_chain_max_bytes: 32768 },
     }),
     "utf8",

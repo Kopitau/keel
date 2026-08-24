@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
@@ -10,14 +10,14 @@ import { listNumbers } from "./ids.ts";
 import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
-import { evidenceFresh, readEvidence } from "./evidence.ts";
+import { evidenceGaps, readEvidence } from "./evidence.ts";
+import { gitLastAuthor } from "./git.ts";
 import { inspectSkills, listSkillDirs } from "./skills.ts";
 import { measureAutoload } from "./autoload.ts";
 import { collectBypassFindings } from "./bypass.ts";
 import { countKnowledge } from "./knowledge.ts";
 import { inspectOss } from "./osscheck.ts";
 import { execModeGaps } from "./execmode.ts";
-import { isAllowedTestArgv, splitCmd } from "./testcmd.ts";
 import { buildTrace, claimedReqs } from "./trace.ts";
 
 function pass(id: string, summary: string): CheckItem {
@@ -37,7 +37,8 @@ export function liveClarifications(text: string): number {
   let n = 0;
   for (const line of text.split(/\n/)) {
     if (!line.includes("[NEEDS-CLARIFICATION")) continue;
-    if (/^\s*-\s+Given\b/.test(line)) continue;
+    if (/`[^`]*\[NEEDS-CLARIFICATION/.test(line)) continue;
+    if (/标\s*\[NEEDS-CLARIFICATION/.test(line)) continue;
     n += 1;
   }
   return n;
@@ -69,15 +70,28 @@ function gReq(ctx: Ctx): CheckItem {
   return pass("G-req", "no NEEDS-CLARIFICATION in current requirements");
 }
 
+function resExists(ctx: Ctx, id: string): boolean {
+  const token = id.replace(/^\[/, "").replace(/\]$/, "").trim();
+  if (!token) return false;
+  return mdFiles(join(ctx.records, "research"), "RES-").some((f) => {
+    const base = basename(f);
+    return base.startsWith(token) || base.startsWith(`${token}.`) || base.startsWith(`${token}-`);
+  });
+}
+
 function gResearch(ctx: Ctx): CheckItem {
   const dir = join(ctx.records, "decisions");
   const missing: string[] = [];
+  const dangling: string[] = [];
   for (const f of mdFiles(dir, "DEC-")) {
     const { attrs } = parseFrontmatter(readFileSync(f, "utf8"));
     if ((attrs.adr ?? "") !== "true") continue;
     const research = readAttrList(attrs.research);
     const exemption = attrs.research_exemption ?? "";
     if (research.length === 0 && !exemption) missing.push(attrs.id || f);
+    for (const id of research) {
+      if (!resExists(ctx, id)) dangling.push(`${attrs.id ?? f}:${id}`);
+    }
   }
   if (missing.length > 0) {
     return fail(
@@ -86,7 +100,14 @@ function gResearch(ctx: Ctx): CheckItem {
       "add research: [RES-…] or research_exemption (C-10)",
     );
   }
-  return pass("G-research", "adr decisions have RES or a written exemption");
+  if (dangling.length > 0) {
+    return fail(
+      "G-research",
+      `research pointer missing on disk: ${dangling.join(", ")}`,
+      "point research: at an existing RES-*.md (C-10)",
+    );
+  }
+  return pass("G-research", "adr decisions have RES files or a written exemption");
 }
 
 function gPlan(ctx: Ctx): CheckItem {
@@ -125,40 +146,50 @@ function gDone(ctx: Ctx): CheckItem {
       "run: gate verify (C-33). Missing evidence is fail, not skip (ISS-002)",
     );
   }
-  if (!evidenceFresh(ctx, ev)) {
-    return fail(
-      "G-done",
-      `summary.md present (${summaries.join(", ")}) but evidence stale`,
-      "run: gate verify (C-33)",
-    );
+  const gaps = evidenceGaps(ctx, ev);
+  if (gaps.length > 0) {
+    return fail("G-done", gaps.join("; "), "run: gate verify (C-33 对账)");
   }
-  return pass("G-done", "fresh evidence matches current tree hash");
+  const claimed = claimedReqs(ctx);
+  const { rows } = buildTrace(ctx);
+  const missing = claimed.filter((id) => {
+    const row = rows.find((r) => r.req === id);
+    return !row || row.tests.length === 0;
+  });
+  if (missing.length > 0) {
+    return fail("G-done", `claimed REQs uncovered: ${missing.join(", ")}`, "C-33 trace must be green");
+  }
+  return pass("G-done", "evidence 对账 + claimed trace green");
 }
 
 function xEvidence(ctx: Ctx): CheckItem {
   const ev = readEvidence(ctx);
-  if (!ev) {
-    return fail("X-evidence", "verify.json missing", "run: gate verify (ISS-002 fail-closed)");
+  const gaps = evidenceGaps(ctx, ev);
+  if (gaps.length > 0) {
+    return fail("X-evidence", gaps.join("; "), "run: gate verify (C-33 对账 / ISS-002)");
   }
-  if (!ev.tree_hash) return fail("X-evidence", "evidence has empty tree_hash", "run: gate verify");
-  if (!evidenceFresh(ctx, ev)) {
-    return fail("X-evidence", "evidence stale (tree hash mismatch)", "run: gate verify (C-33)");
+  return pass("X-evidence", `fresh tree ${ev?.tree_hash.slice(0, 12) ?? ""}…; junit 对账`);
+}
+
+function openIssueIds(ctx: Ctx): string[] {
+  const dir = join(ctx.records, "issues");
+  const out: string[] = [];
+  for (const f of mdFiles(dir, "ISS-")) {
+    const { attrs } = parseFrontmatter(readFileSync(f, "utf8"));
+    const st = (attrs.status ?? "").toLowerCase();
+    if (st === "open" || st === "") out.push(attrs.id || basename(f));
   }
-  if (ev.exit_code !== 0) {
-    return fail("X-evidence", `evidence exit_code=${ev.exit_code}`, "fix tests and re-verify");
+  return out;
+}
+
+function provisionalDecs(ctx: Ctx): string[] {
+  const out: string[] = [];
+  for (const f of mdFiles(join(ctx.records, "decisions"), "DEC-")) {
+    const { attrs } = parseFrontmatter(readFileSync(f, "utf8"));
+    const st = (attrs.status ?? "").toLowerCase();
+    if (st === "proposed" || st === "provisional") out.push(attrs.id || basename(f));
   }
-  const cmdOk = isAllowedTestArgv(splitCmd(ev.command || ""));
-  if (!cmdOk) {
-    return fail(
-      "X-evidence",
-      `evidence.command not allowlisted: ${ev.command}`,
-      "re-verify with an allowlisted test_command (ISS-001)",
-    );
-  }
-  if (ev.counts && ev.counts.passed === 0 && ev.counts.failed === 0) {
-    return fail("X-evidence", "evidence ran zero tests", "ISS-001: empty run is not PASS");
-  }
-  return pass("X-evidence", `fresh tree ${ev.tree_hash.slice(0, 12)}…`);
+  return out;
 }
 
 function gMerge(ctx: Ctx): CheckItem {
@@ -174,27 +205,108 @@ function gMerge(ctx: Ctx): CheckItem {
   if (approved === 0) {
     return skip("G-merge", "no approved APR; merge gate applies at merge time (C-45)");
   }
-  if (!evidenceFresh(ctx, readEvidence(ctx))) {
-    return fail(
-      "G-merge",
-      "approved APR present but evidence missing or stale",
-      "run: gate verify (C-45)",
-    );
+  const gaps = evidenceGaps(ctx, readEvidence(ctx));
+  if (gaps.length > 0) {
+    return fail("G-merge", `evidence: ${gaps.join("; ")}`, "run: gate verify (C-45)");
   }
-  return pass("G-merge", `${approved} approved APR file(s) + fresh evidence`);
+  const claimed = claimedReqs(ctx);
+  const { rows } = buildTrace(ctx);
+  const missing = claimed.filter((id) => {
+    const row = rows.find((r) => r.req === id);
+    return !row || row.tests.length === 0;
+  });
+  if (missing.length > 0) {
+    return fail("G-merge", `trace not green: ${missing.join(", ")}`, "C-45");
+  }
+  const blocking = openIssueIds(ctx);
+  if (blocking.length > 0) {
+    return fail("G-merge", `open issues: ${blocking.join(", ")}`, "close or wontfix blocking ISS (C-45)");
+  }
+  return pass("G-merge", `${approved} approved APR; evidence+trace green; no open ISS`);
 }
 
 function gRetro(ctx: Ctx): CheckItem {
   const feats = join(ctx.records, "features");
   if (!existsSync(feats)) return skip("G-retro", "no features dir");
-  let summaries = 0;
+  const summaryFiles: string[] = [];
   for (const name of readdirSync(feats)) {
-    if (existsSync(join(feats, name, "summary.md"))) summaries += 1;
+    const s = join(feats, name, "summary.md");
+    if (existsSync(s)) summaryFiles.push(s);
   }
-  if (summaries === 0) return skip("G-retro", "no feature summaries yet (C-56)");
+  if (summaryFiles.length === 0) return skip("G-retro", "no feature summaries yet (C-56)");
   const overview = join(ctx.records, "OVERVIEW.md");
   if (!existsSync(overview)) return fail("G-retro", "OVERVIEW.md missing", "write the living picture (C-53)");
-  return pass("G-retro", `OVERVIEW present; ${summaries} summaries`);
+  let newestSummary = 0;
+  for (const s of summaryFiles) {
+    try {
+      newestSummary = Math.max(newestSummary, statSync(s).mtimeMs);
+    } catch {
+      /* ignore */
+    }
+  }
+  const ovM = statSync(overview).mtimeMs;
+  if (newestSummary > 0 && ovM + 2000 < newestSummary) {
+    return fail(
+      "G-retro",
+      "OVERVIEW is older than a feature summary",
+      "update OVERVIEW at retro (C-56)",
+    );
+  }
+  const blocking = openIssueIds(ctx);
+  if (blocking.length > 0) {
+    return fail("G-retro", `open issues: ${blocking.join(", ")}`, "close-out ISS before 已完成 (C-56)");
+  }
+  const prov = provisionalDecs(ctx);
+  if (prov.length > 0) {
+    const blob = readFileSync(overview, "utf8");
+    if (!blob.includes("销项") && !blob.includes("暂定")) {
+      return fail(
+        "G-retro",
+        `provisional DECs ${prov.join(", ")} not closed out in OVERVIEW`,
+        "record 销项 (C-56)",
+      );
+    }
+  }
+  return pass("G-retro", `OVERVIEW current; ${summaryFiles.length} summaries; issues closed`);
+}
+
+function xApr(ctx: Ctx): CheckItem {
+  const aprDir = join(ctx.records, "approvals");
+  if (!existsSync(aprDir)) return skip("X-apr", "no approvals dir");
+  const identities = (ctx.config.identities ?? {}) as {
+    agents?: { name?: string; email?: string }[];
+    humans?: { name?: string; email?: string }[];
+  };
+  const agents = identities.agents ?? [];
+  const approved: string[] = [];
+  for (const n of readdirSync(aprDir)) {
+    if (!n.startsWith("APR-") || !n.endsWith(".md")) continue;
+    const rel = join("keel", "approvals", n).split("\\").join("/");
+    const abs = join(aprDir, n);
+    const { attrs } = parseFrontmatter(readFileSync(abs, "utf8"));
+    if ((attrs.status ?? "") !== "approved") continue;
+    approved.push(n);
+    if ((identities.humans ?? []).length === 0) {
+      return fail("X-apr", `${n} is approved but identities.humans is empty`, "C-107");
+    }
+    const author = gitLastAuthor(ctx, rel);
+    const email = author.email.toLowerCase();
+    const name = author.name.toLowerCase();
+    const agentHit = agents.some(
+      (a) =>
+        (a.email && a.email.toLowerCase() === email) ||
+        (a.name && a.name.toLowerCase() === name),
+    );
+    if (agentHit) {
+      return fail(
+        "X-apr",
+        `${n} last commit author ${author.name} <${author.email}> is an agent`,
+        "rewrite the APR commit with a human identity (C-107)",
+      );
+    }
+  }
+  if (approved.length === 0) return pass("X-apr", "no approved APR commits to check");
+  return pass("X-apr", `${approved.length} approved APR author(s) not on the agent list`);
 }
 
 function xBudget(ctx: Ctx): CheckItem {
@@ -238,7 +350,9 @@ function xBudget(ctx: Ctx): CheckItem {
 
 function xBypass(ctx: Ctx): CheckItem {
   const findings = collectBypassFindings(ctx);
-  if (findings.length === 0) return pass("X-bypass", "no --no-verify / CI / tests-dir reminders");
+  if (findings.length === 0) {
+    return pass("X-bypass", "no Keel-Precommit: skipped in last 50; CI/tests-dir intact");
+  }
   const first = findings[0];
   const extra = findings.length > 1 ? ` (+${findings.length - 1} more)` : "";
   return warn("X-bypass", `${first?.summary ?? "bypass"}${extra}`, first?.fix ?? "C-105");
@@ -478,6 +592,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
     items.push(xEvidence(ctx));
     items.push(xTypes(ctx));
     items.push(xHooks(ctx));
+    items.push(xApr(ctx));
   }
   return formatCheck(warnWorklogCovered(ctx, items));
 }
