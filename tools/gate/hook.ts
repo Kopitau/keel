@@ -82,8 +82,19 @@ export function runHook(ctx: Ctx, args: string[]): CmdResult {
   if (!/^Feature:\s/m.test(text)) {
     const ident = gitIdentity(ctx);
     const branch = gitBranch(ctx);
-    const feature = process.env.KEEL_FEATURE || featureFromBranch(branch);
-    const agent = process.env.KEEL_AGENT || "unknown";
+    const agents = ((ctx.config.identities ?? {}) as { agents?: { name?: string; email?: string }[] })
+      .agents ?? [];
+    const listed = agents.find(
+      (a) => a.email && a.email.toLowerCase() === ident.email.toLowerCase(),
+    );
+    const agent = process.env.KEEL_AGENT || listed?.name || "unknown";
+    const feature =
+      process.env.KEEL_FEATURE ||
+      (featureFromBranch(branch) !== "unknown"
+        ? featureFromBranch(branch)
+        : /^(master|main)$/.test(branch)
+          ? "trunk"
+          : "unknown");
     const session = process.env.KEEL_SESSION || "unknown";
     const trailers = [
       `Feature: ${feature}`,

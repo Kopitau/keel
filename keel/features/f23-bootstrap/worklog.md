@@ -18,3 +18,8 @@
 ## 2026-08-21（W5）
 
 - 进度：框架级验收冒烟 `tests/w5-smoke.test.ts`：临时样例走实现（v1 问候）/红灯修 bug/CHG+需求 v2（空名抛错）/handoff 接力。样例内核 `samples/greet/greet.js` 为 v2。
+
+## 2026-08-24（P2）
+
+- 进度：ISS-014 补记 W1 回滚；LES-001。C-139 v1 见 DEC-156。
+

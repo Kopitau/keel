@@ -11,7 +11,7 @@ import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceGaps, readEvidence } from "./evidence.ts";
-import { gitLastAuthor } from "./git.ts";
+import { casefoldCollisions, gitDir, gitLastAuthor, gitLsFiles } from "./git.ts";
 import { inspectSkills, listSkillDirs } from "./skills.ts";
 import { measureAutoload } from "./autoload.ts";
 import { collectBypassFindings } from "./bypass.ts";
@@ -428,19 +428,42 @@ function xSkills(ctx: Ctx): CheckItem {
 }
 
 function xCasefold(ctx: Ctx): CheckItem {
-  const seen = new Map<string, string>();
-  const collisions: string[] = [];
-  for (const f of listFiles(ctx.root)) {
-    const rel = posixRel(ctx.root, f);
-    const key = rel.toLowerCase();
-    const prev = seen.get(key);
-    if (prev && prev !== rel) collisions.push(`${prev} vs ${rel}`);
-    else seen.set(key, rel);
-  }
+  const indexed = gitDir(ctx) ? gitLsFiles(ctx) : [];
+  const rels =
+    indexed.length > 0
+      ? indexed
+      : listFiles(ctx.root).map((f) => posixRel(ctx.root, f));
+  const collisions = casefoldCollisions(rels);
   if (collisions.length > 0) {
     return fail("X-casefold", collisions.join("; "), "rename so Linux sees one file (DEC-145)");
   }
-  return pass("X-casefold", "no case-only filename collisions");
+  return pass("X-casefold", `no case-only collisions (${indexed.length > 0 ? "git index" : "workdir"})`);
+}
+
+function xOwners(ctx: Ctx): CheckItem {
+  const tier = String(ctx.config.enforcement_tier ?? "local");
+  const file = join(ctx.root, ".github", "CODEOWNERS");
+  if (tier === "local") {
+    return skip("X-owners", "local tier: CODEOWNERS is documentation only (C-108)");
+  }
+  if (!existsSync(file)) {
+    return fail("X-owners", "CODEOWNERS missing", "add .github/CODEOWNERS covering keel/approvals/ (C-108)");
+  }
+  const text = readFileSync(file, "utf8");
+  if (/@YOUR-GITHUB-USERNAME/i.test(text)) {
+    return fail(
+      "X-owners",
+      "CODEOWNERS still has the placeholder @YOUR-GITHUB-USERNAME",
+      "put a real GitHub login on keel/approvals/ (C-108)",
+    );
+  }
+  if (!/keel\/approvals\//.test(text)) {
+    return fail("X-owners", "keel/approvals/ not in CODEOWNERS", "C-108");
+  }
+  if (!/@[A-Za-z0-9-]/.test(text)) {
+    return fail("X-owners", "CODEOWNERS has no @owner", "C-108");
+  }
+  return pass("X-owners", "CODEOWNERS names a real owner for approvals");
 }
 
 function xIds(ctx: Ctx): CheckItem {
@@ -585,6 +608,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(xOss(ctx));
   items.push(xKnowledge(ctx));
   items.push(xTrace(ctx));
+  items.push(xOwners(ctx));
   if (!quick) {
     items.push(gDone(ctx));
     items.push(gMerge(ctx));

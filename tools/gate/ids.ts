@@ -1,6 +1,7 @@
 import { basename, join } from "node:path";
 import { existsSync, readdirSync } from "node:fs";
 import type { Ctx } from "./ctx.ts";
+import { sha256Normalized } from "./hash.ts";
 
 export type Kind = "dec" | "res" | "iss" | "chg" | "oss" | "les" | "apr" | "feature";
 
@@ -64,7 +65,8 @@ export function asciiSlug(title: string, fallback: string): string {
     .replace(/-{2,}/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
-  return s || fallback;
+  if (s) return s;
+  return `${fallback}-${sha256Normalized(title).slice(0, 8)}`;
 }
 
 export function findFeatureDir(ctx: Ctx, featureId: string): string | null {

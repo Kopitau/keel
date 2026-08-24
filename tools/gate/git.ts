@@ -57,6 +57,24 @@ export function gitLogBodies(ctx: Ctx, n = 50): string[] {
   return r.stdout.split("\x1e").map((s) => s.trim()).filter(Boolean);
 }
 
+export function gitLsFiles(ctx: Ctx): string[] {
+  const r = git(ctx, ["ls-files", "-z"]);
+  if (r.status !== 0 || !r.stdout) return [];
+  return r.stdout.split("\0").map((s) => s.replace(/\\/g, "/")).filter(Boolean);
+}
+
+export function casefoldCollisions(rels: string[]): string[] {
+  const seen = new Map<string, string>();
+  const collisions: string[] = [];
+  for (const rel of rels) {
+    const key = rel.toLowerCase();
+    const prev = seen.get(key);
+    if (prev && prev !== rel) collisions.push(`${prev} vs ${rel}`);
+    else seen.set(key, rel);
+  }
+  return collisions;
+}
+
 export function gitLastAuthor(ctx: Ctx, rel: string): { name: string; email: string } {
   const r = git(ctx, ["log", "-1", "--format=%an%x09%ae", "--", rel]);
   const [name, email] = r.stdout.split("\t");

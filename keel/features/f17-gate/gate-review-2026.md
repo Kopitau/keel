@@ -34,6 +34,7 @@ C-105：拦 `--no-verify` / 强推 / 改 hooksPath / 改 CI / 改测试目录（
 | X-knowledge | KEEP | **W6 新增**，~100 条封顶提醒（C-86）；目录不存在 skip |
 | X-trace | KEEP | **P0 返工新增**（ISS-003 / C-32）：有 summary 的功能其 REQ 必须在 tests/ 被点名 |
 | X-apr | KEEP | **P1 返工新增**（C-107）：已批准 APR 的提交作者不得在 agent 清单 |
+| X-owners | KEEP | **P2**：local 档 skip；github 档禁止 CODEOWNERS 占位符 |
 
 ## 已删除 / 不恢复
 

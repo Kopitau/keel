@@ -40,7 +40,7 @@ export function runStatus(ctx: Ctx): CmdResult {
   }
   const lines = [
     "keel status",
-    "wave: W2",
+    `wave: ${typeof cfg.wave === "string" && cfg.wave ? cfg.wave : "unknown"}`,
     `runtime: node+ts ${process.versions.node}`,
     `root: ${ctx.root}`,
     `records_dir: ${ctx.records}`,

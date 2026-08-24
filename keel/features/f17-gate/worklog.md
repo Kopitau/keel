@@ -39,6 +39,12 @@
 - 问题链接：ISS-006 ~ ISS-012（本波立）
 - 实现决定：`--no-verify` 不再看 Feature 尾注（C-102 使其恒在）；改看 `Keel-Precommit: skipped`。push --no-verify 的权威在 CI（写进 enforcement-tiers）。
 
+## 2026-08-24（P2 返工）
+
+- 进度：wave 配置化；index 大小写；中文 slug；X-owners local skip；C-139 v1 协议测试。#经验候选 回滚 / git BFD / 无 CI。
+- 问题链接：ISS-013~017
+
+
 
 
 

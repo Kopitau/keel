@@ -62,7 +62,7 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
   }
   const prefix = kind.toUpperCase();
   const idFull = `${prefix}-${pad3(n)}`;
-  const slug = asciiSlug(title, "item");
+  const slug = asciiSlug(title, "z");
   const dirMap: { [k: string]: string } = {
     dec: "decisions",
     res: "research",
@@ -74,7 +74,7 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
   };
   const dir = join(ctx.records, dirMap[kind] ?? kind);
   mkdirSync(dir, { recursive: true });
-  const fname = slug === "item" ? `${idFull}.md` : `${idFull}-${slug}.md`;
+  const fname = `${idFull}-${slug}.md`;
   const dest = join(dir, fname);
   if (existsSync(dest)) return fail(`already exists: ${fname}\n`);
   const tplName: { [k: string]: string } = {

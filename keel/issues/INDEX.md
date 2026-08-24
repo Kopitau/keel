@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 12
+- count: 17
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -17,3 +17,8 @@
 | ISS-010 | ISS-010 C-107 只查本地 git config，不查提交作者（P1-7） | closed | `ISS-010-apr-author.md` |
 | ISS-011 | ISS-011 链接 worktree 里 gitWriteTree 恒空（P1-8） | closed | `ISS-011-worktree-write-tree.md` |
 | ISS-012 | ISS-012 测试把漏洞写成合格断言且部分非 hermetic（P1-9） | closed | `ISS-012-tests-encoded-holes.md` |
+| ISS-013 | ISS-013 五家 harness live 点技能（C-139 剩余） | wontfix | `ISS-013-c139-live-invoke.md` |
+| ISS-014 | ISS-014 用户令回滚第一次 Python W1（C-76 用户纠正） | closed | `ISS-014-w1-python-rollback.md` |
+| ISS-015 | ISS-015 本环境 git 写 stdout 报 Bad file descriptor | closed | `ISS-015-git-stdout-bfd.md` |
+| ISS-016 | ISS-016 无远端因此 CI 从未运行（P2-6）；CODEOWNERS 无真人（P2-7） | wontfix | `ISS-016-no-remote-ci.md` |
+| ISS-017 | ISS-017 W1–W6 测试均为事后补，违反 C-31/C-35（P2-4） | wontfix | `ISS-017-tdd-order-past-waves.md` |
