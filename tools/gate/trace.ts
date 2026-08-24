@@ -7,15 +7,29 @@ import { listFiles } from "./walk.ts";
 
 const REQ = /REQ-\d{3}/g;
 
-export type TraceRow = { req: string; tests: string[]; criteria: number };
+export type TraceRow = {
+  req: string;
+  tests: string[];
+  criteria: number;
+  uncoveredAc: number[];
+};
 
-function countCriteria(body: string, req: string): number {
+function criteriaLines(body: string, req: string): string[] {
   const parts = body.split(/^## /m);
   for (const part of parts) {
     if (!part.startsWith(req)) continue;
-    return (part.match(/^\s*-\s+Given\b/gm) ?? []).length;
+    return (part.match(/^\s*-\s+Given\b.*$/gm) ?? []).map((l) => l.trim());
   }
-  return 0;
+  return [];
+}
+
+function countCriteria(body: string, req: string): number {
+  return criteriaLines(body, req).length;
+}
+
+export function acCoveredIn(text: string, req: string, ac: number): boolean {
+  const re = new RegExp(`${req}(?:\\/AC-|\\s+AC-)${ac}\\b`);
+  return re.test(text);
 }
 
 /** REQs of features that have summary.md (completion claim = 验收范围, C-32). */
@@ -75,12 +89,43 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
     }
   }
   const reqBody = existsSync(reqPath) ? readFileSync(reqPath, "utf8") : "";
-  const rows: TraceRow[] = reqs.map((req) => ({
-    req,
-    tests: [...(hits.get(req) ?? [])].sort(),
-    criteria: countCriteria(reqBody, req),
-  }));
+  const rows: TraceRow[] = reqs.map((req) => {
+    const tests = [...(hits.get(req) ?? [])].sort();
+    const n = countCriteria(reqBody, req);
+    const blob = tests.map((f) => {
+      try {
+        return readFileSync(f, "utf8");
+      } catch {
+        return "";
+      }
+    }).join("\n");
+    const uncoveredAc: number[] = [];
+    for (let i = 1; i <= n; i++) {
+      if (!acCoveredIn(blob, req, i)) uncoveredAc.push(i);
+    }
+    return { req, tests, criteria: n, uncoveredAc };
+  });
   return { rows, reqFile };
+}
+
+/** Claimed REQs missing REQ-id hits or missing REQ-nnn/AC-i markers (C-32). */
+export function uncoveredClaimed(ctx: Ctx): string[] {
+  const claimed = claimedReqs(ctx);
+  const { rows } = buildTrace(ctx);
+  const missing: string[] = [];
+  for (const id of claimed) {
+    const row = rows.find((r) => r.req === id);
+    if (!row) {
+      missing.push(id);
+      continue;
+    }
+    if (row.criteria > 0) {
+      for (const ac of row.uncoveredAc) missing.push(`${id}/AC-${ac}`);
+    } else if (row.tests.length === 0) {
+      missing.push(id);
+    }
+  }
+  return missing;
 }
 
 export function runTrace(ctx: Ctx): CmdResult {
@@ -94,14 +139,16 @@ export function runTrace(ctx: Ctx): CmdResult {
     `- requirements: ${reqFile}`,
     `- generator: gate trace`,
     "",
-    "| REQ | tests |",
-    "|---|---|",
+    "| REQ | tests | criteria | uncovered AC |",
+    "|---|---|---|---|",
   ];
   let uncovered = 0;
   for (const r of rows) {
-    if (r.tests.length === 0) uncovered += 1;
+    const acGap = r.criteria > 0 ? r.uncoveredAc.length > 0 : r.tests.length === 0;
+    if (acGap) uncovered += 1;
     const cell = r.tests.length === 0 ? "_none_" : r.tests.map((t) => "`" + t.replace(ctx.root, "").split("\\").join("/").replace(/^\//, "") + "`").join("<br>");
-    lines.push(`| ${r.req} | ${cell} |`);
+    const ac = r.uncoveredAc.length === 0 ? "—" : r.uncoveredAc.map((n) => `AC-${n}`).join(", ");
+    lines.push(`| ${r.req} | ${cell} | ${r.criteria} | ${ac} |`);
   }
   lines.push("");
   lines.push(`uncovered: ${uncovered} / ${rows.length}`);

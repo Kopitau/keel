@@ -89,7 +89,7 @@ test("REQ-006 P1-3 evidenceGaps flags missing junit and dirty", () => {
     counts: { passed: 3, failed: 0, skipped: 0 },
     req_coverage: {},
     stdout_tail_2kb: "ok",
-    actor: { harness: "local", model: "", session: "" },
+    actor: { harness: "local", model: "unspecified", session: "local-1" },
   });
   assert.ok(gaps.some((g) => /dirty/.test(g)), gaps.join(";"));
   assert.ok(gaps.some((g) => /junit/.test(g)), gaps.join(";"));

@@ -75,6 +75,12 @@ export function casefoldCollisions(rels: string[]): string[] {
   return collisions;
 }
 
+export function gitCommitUnix(ctx: Ctx, rel: string): number {
+  const r = git(ctx, ["log", "-1", "--format=%ct", "--", rel]);
+  const n = Number.parseInt(r.stdout, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
 export function gitLastAuthor(ctx: Ctx, rel: string): { name: string; email: string } {
   const r = git(ctx, ["log", "-1", "--format=%an%x09%ae", "--", rel]);
   const [name, email] = r.stdout.split("\t");

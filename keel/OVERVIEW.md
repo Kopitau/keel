@@ -24,13 +24,13 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-独立评审后 **P0+P1+P2 已修**（P2-1 按 DEC-156 推荐：协议机检，不做五家付费实点）。CHG-002/003/004 proposed。DEC-155/156 proposed。
+独立评审 P0–P2 与 **R2（ISS-018/019/020）已修**。DEC-155/156 已 confirmed。CHG-002～005 proposed，待 R2 复审后人类批准。
 
-远端、人类 APR、GitHub CODEOWNERS 真人、CI runner 仍开着（ISS-016 wontfix until remote）。
+远端、人类 APR、CODEOWNERS 真人仍开着（ISS-016）。
 
 ## 风险与暂定
 
-- 暂定决策计数：2（DEC-155 本地单人 trunk；DEC-156 C-139 v1 技能验收范围）
+- 暂定决策计数：0（DEC-155/156 已 confirmed）
 - 人类身份未配 → APR 停在 draft
 - 远端未配
 - DEC-148 夹具已入仓；macOS/Linux digest 由 CI 矩阵对账

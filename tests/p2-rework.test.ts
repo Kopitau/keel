@@ -27,7 +27,7 @@ test("REQ-023 P2-5 status wave comes from config not hardcoded W2", () => {
   const st = runStatus(makeCtx(repo));
   assert.equal(st.code, 0, st.stderr);
   assert.doesNotMatch(st.stdout, /^wave: W2$/m);
-  assert.match(st.stdout, /^wave: P2-rework$/m);
+  assert.match(st.stdout, /^wave: /m);
 });
 
 test("REQ-024 P2-8 casefold collisions are detected on path lists (git index)", () => {

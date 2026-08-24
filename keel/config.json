@@ -4,7 +4,7 @@
   "project_name": "keel",
   "records_dir": "keel",
   "enforcement_tier": "local",
-  "wave": "P2-rework",
+  "wave": "R2-rework",
   "_comment_tier": "github | gitee | local. Remotes not configured in W1; local = hooks + gate-before-merge + hash APR. Honest label: deters mistakes, not malice (C-48).",
   "profiles": {
     "_comment": "Test profiles (C-126/C-128). Gate verify (W3) selects by touched paths.",

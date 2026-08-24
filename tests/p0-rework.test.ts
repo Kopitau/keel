@@ -53,7 +53,8 @@ function skeleton(dir: string): void {
 test("REQ-017 ISS-001 git --version is not an allowlisted test_command", () => {
   assert.equal(isAllowedTestCommand("git --version", "keel-gate"), false);
   assert.equal(isAllowedTestCommand("node --test", "keel-gate"), true);
-  assert.equal(isAllowedTestCommand("node --test tests/ok.test.js", "keel-gate"), true);
+  assert.equal(isAllowedTestCommand("node --test tests/ok.test.js", "keel-gate"), false);
+  assert.equal(isAllowedTestCommand("node --test tests/fake/x.test.ts", "keel-gate"), false);
   assert.equal(isAllowedTestCommand("node --test tests", "keel-gate"), false);
 });
 

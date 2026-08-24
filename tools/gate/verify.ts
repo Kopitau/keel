@@ -59,7 +59,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     return {
       code: 1,
       stdout: `verify FAIL\ntest_command not allowlisted: ${testCmd}\n`,
-      stderr: "ISS-001: test_command must be an allowlisted runner (node --test [tests/…])\n",
+      stderr: "ISS-018: keel-gate test_command must be exactly node --test (full suite)\n",
     };
   }
   const started = new Date().toISOString();
@@ -82,6 +82,8 @@ export function runVerify(ctx: Ctx): CmdResult {
     argv = [
       process.execPath,
       "--test",
+      "--test-reporter=spec",
+      "--test-reporter-destination=stdout",
       "--test-reporter=junit",
       `--test-reporter-destination=${destRel}`,
       ...rest,
@@ -91,7 +93,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     return {
       code: 1,
       stdout: `verify FAIL\nexpanded test argv not allowlisted: ${argv.join(" ")}\n`,
-      stderr: "ISS-001: refuse non-allowlisted test invocation\n",
+      stderr: "ISS-018: refuse narrowed or non-allowlisted test invocation\n",
     };
   }
   const tr = run(ctx, argv);
@@ -131,8 +133,8 @@ export function runVerify(ctx: Ctx): CmdResult {
   const tree = currentTree(ctx);
   const actor = {
     harness: process.env.KEEL_HARNESS || (process.env.GITHUB_ACTIONS ? "github-actions" : "local"),
-    model: process.env.KEEL_MODEL || "",
-    session: process.env.KEEL_SESSION || process.env.GITHUB_RUN_ID || "",
+    model: process.env.KEEL_MODEL || process.env.GITHUB_JOB || "unspecified",
+    session: process.env.KEEL_SESSION || process.env.GITHUB_RUN_ID || `local-${process.pid}`,
   };
   const ev: Evidence = {
     command: argv.join(" "),
@@ -145,7 +147,8 @@ export function runVerify(ctx: Ctx): CmdResult {
     report_hash: hashReport(xml),
     counts,
     req_coverage: coverage,
-    stdout_tail_2kb: tail2kb(combined),
+    stdout_tail_2kb: tail2kb(combined) ||
+      `junit passed=${counts.passed} failed=${counts.failed} skipped=${counts.skipped}\n`,
     actor,
   };
   writeEvidence(ctx, ev);

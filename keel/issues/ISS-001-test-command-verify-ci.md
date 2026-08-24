@@ -44,3 +44,5 @@ node tools/gate/gate.ts verify; echo "verify exit=$?"   # verify PASS，exit=0�
 **回归测试**（最高一级）：新增负面测试——篡改 test_command 后 `verify` 必须 FAIL；`counts.passed == 0` 时必须 FAIL。仅靠规则文档不够，因为这是 CI 层唯一的信任根。
 
 闭环：`tests/p0-rework.test.ts` 断言 `git --version` 被拒；CI 增加不读 config 的 `node --test`，且 `verify` 先于 `check`。
+
+同指纹再现见 **ISS-018**（收窄 `tests/` 子路径）。本条形状层保留；范围层升到 ISS-018。

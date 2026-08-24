@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 17
+- count: 20
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -22,3 +22,6 @@
 | ISS-015 | ISS-015 本环境 git 写 stdout 报 Bad file descriptor | closed | `ISS-015-git-stdout-bfd.md` |
 | ISS-016 | ISS-016 无远端因此 CI 从未运行（P2-6）；CODEOWNERS 无真人（P2-7） | wontfix | `ISS-016-no-remote-ci.md` |
 | ISS-017 | ISS-017 W1–W6 测试均为事后补，违反 C-31/C-35（P2-4） | wontfix | `ISS-017-tdd-order-past-waves.md` |
+| ISS-018 | ISS-018 test_command 范围未固定：ISS-001 关闭过早，同类绕过仍可穿透 CI | closed | `ISS-018-test-command.md` |
+| ISS-019 | ISS-019 verify 产出的证据必然被 check 拒绝，CI 每次都会红 | closed | `ISS-019-verify-check-ci.md` |
+| ISS-020 | ISS-020 X-trace 仍是逐需求对账，未落实 C-32 的「按验收标准逐条对账」 | closed | `ISS-020-x-trace.md` |

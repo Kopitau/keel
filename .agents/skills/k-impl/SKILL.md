@@ -11,8 +11,13 @@ Autonomous implementation of one confirmed feature (C-20/C-21). Work unit = feat
 
 ```
 node tools/gate/gate.ts status
-node tools/gate/gate.ts worktree add Fnn
 ```
+
+Branch policy (DEC-155):
+
+- Daily / solo local work: trunk is allowed.
+- **New major feature: recommend** `node tools/gate/gate.ts worktree add Fnn` (not enforced).
+- Second feature in parallel, or a second person: **must** `worktree add Fnn` (C-112).
 
 Read that feature’s `plan/vN.md` and `worklog.md`. Read the coupling table in the current overview.
 

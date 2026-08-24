@@ -15,13 +15,7 @@ function isNodeBin(bin: string): boolean {
   return /node(\.exe)?$/i.test(bin.replace(/\\/g, "/"));
 }
 
-function testsPathOk(arg: string): boolean {
-  const n = arg.replace(/\\/g, "/");
-  if (n === "tests") return false;
-  return n.startsWith("tests/");
-}
-
-/** Config string or expanded argv: node --test plus optional tests/... paths. Reporter flags ignored. */
+/** ISS-018: no extra path args — the full default suite only. */
 export function isAllowedTestArgv(argv: string[]): boolean {
   if (argv.length === 0) return false;
   if (isNodeBin(argv[0] ?? "")) {
@@ -29,7 +23,7 @@ export function isAllowedTestArgv(argv: string[]): boolean {
     const rest = argv.slice(1).filter(
       (a) => a !== "--test" && !a.startsWith("--test-reporter"),
     );
-    return rest.every((a) => testsPathOk(a));
+    return rest.length === 0;
   }
   const joined = argv.join(" ");
   for (const list of Object.values(EXACT)) {
@@ -44,7 +38,9 @@ export function isAllowedTestCommand(command: string, profileName: string): bool
   if (profileName === "python-cli" || profileName === "ds-ml" || profileName === "ts-js") {
     return (EXACT[profileName] ?? []).includes(cmd);
   }
-  return isAllowedTestArgv(splitCmd(cmd));
+  const argv = splitCmd(cmd);
+  if (argv.length === 2 && isNodeBin(argv[0] ?? "") && argv[1] === "--test") return true;
+  return false;
 }
 
 export function emptyRunIsFailure(counts: { passed: number; failed: number; skipped: number }): boolean {

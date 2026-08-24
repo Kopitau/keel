@@ -78,7 +78,10 @@ export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
       gaps.push("counts do not match junit.xml");
     }
   }
-  if (passed > 0 && !(ev.stdout_tail_2kb ?? "").trim()) gaps.push("empty stdout_tail_2kb");
+  const actor = ev.actor ?? { harness: "", model: "", session: "" };
+  if (!(actor.harness ?? "").trim()) gaps.push("actor.harness empty");
+  if (!(actor.model ?? "").trim()) gaps.push("actor.model empty");
+  if (!(actor.session ?? "").trim()) gaps.push("actor.session empty");
   return gaps;
 }
 

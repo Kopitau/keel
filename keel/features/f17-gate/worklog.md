@@ -44,6 +44,12 @@
 - 进度：wave 配置化；index 大小写；中文 slug；X-owners local skip；C-139 v1 协议测试。#经验候选 回滚 / git BFD / 无 CI。
 - 问题链接：ISS-013~017
 
+## 2026-08-24（R2）
+
+- 进度：ISS-018 全量 suite 钉死；ISS-019 spec+junit 与 hermetic verify→check；ISS-020 AC 标记。旧防线 ISS-001 只拦形状，同类收窄范围穿透 → 升一级钉死无路径参数。
+- 问题链接：ISS-018 ISS-019 ISS-020
+
+
 
 
 

@@ -53,6 +53,7 @@ export function runStatus(ctx: Ctx): CmdResult {
     `provisional_decisions: ${provisional}`,
     `open_issues: ${openIssues}`,
     `needs_clarification: ${openQuestions}`,
+    "branch_policy: daily→trunk; new major feature→recommend worktree; parallel→C-112 (DEC-155)",
   ];
   return ok(lines.join("\n") + "\n");
 }

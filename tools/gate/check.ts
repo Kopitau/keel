@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
@@ -11,14 +11,14 @@ import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceGaps, readEvidence } from "./evidence.ts";
-import { casefoldCollisions, gitDir, gitLastAuthor, gitLsFiles } from "./git.ts";
+import { casefoldCollisions, gitCommitUnix, gitDir, gitLastAuthor, gitLsFiles } from "./git.ts";
 import { inspectSkills, listSkillDirs } from "./skills.ts";
 import { measureAutoload } from "./autoload.ts";
 import { collectBypassFindings } from "./bypass.ts";
 import { countKnowledge } from "./knowledge.ts";
 import { inspectOss } from "./osscheck.ts";
 import { execModeGaps } from "./execmode.ts";
-import { buildTrace, claimedReqs } from "./trace.ts";
+import { claimedReqs, uncoveredClaimed } from "./trace.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -150,16 +150,11 @@ function gDone(ctx: Ctx): CheckItem {
   if (gaps.length > 0) {
     return fail("G-done", gaps.join("; "), "run: gate verify (C-33 对账)");
   }
-  const claimed = claimedReqs(ctx);
-  const { rows } = buildTrace(ctx);
-  const missing = claimed.filter((id) => {
-    const row = rows.find((r) => r.req === id);
-    return !row || row.tests.length === 0;
-  });
+  const missing = uncoveredClaimed(ctx);
   if (missing.length > 0) {
-    return fail("G-done", `claimed REQs uncovered: ${missing.join(", ")}`, "C-33 trace must be green");
+    return fail("G-done", `claimed ACs uncovered: ${missing.join(", ")}`, "C-33/C-32 mark tests REQ-nnn/AC-i");
   }
-  return pass("G-done", "evidence 对账 + claimed trace green");
+  return pass("G-done", "evidence 对账 + claimed AC trace green");
 }
 
 function xEvidence(ctx: Ctx): CheckItem {
@@ -209,12 +204,7 @@ function gMerge(ctx: Ctx): CheckItem {
   if (gaps.length > 0) {
     return fail("G-merge", `evidence: ${gaps.join("; ")}`, "run: gate verify (C-45)");
   }
-  const claimed = claimedReqs(ctx);
-  const { rows } = buildTrace(ctx);
-  const missing = claimed.filter((id) => {
-    const row = rows.find((r) => r.req === id);
-    return !row || row.tests.length === 0;
-  });
+  const missing = uncoveredClaimed(ctx);
   if (missing.length > 0) {
     return fail("G-merge", `trace not green: ${missing.join(", ")}`, "C-45");
   }
@@ -238,17 +228,13 @@ function gRetro(ctx: Ctx): CheckItem {
   if (!existsSync(overview)) return fail("G-retro", "OVERVIEW.md missing", "write the living picture (C-53)");
   let newestSummary = 0;
   for (const s of summaryFiles) {
-    try {
-      newestSummary = Math.max(newestSummary, statSync(s).mtimeMs);
-    } catch {
-      /* ignore */
-    }
+    newestSummary = Math.max(newestSummary, gitCommitUnix(ctx, posixRel(ctx.root, s)));
   }
-  const ovM = statSync(overview).mtimeMs;
-  if (newestSummary > 0 && ovM + 2000 < newestSummary) {
+  const ovT = gitCommitUnix(ctx, posixRel(ctx.root, overview));
+  if (newestSummary > 0 && ovT > 0 && ovT < newestSummary) {
     return fail(
       "G-retro",
-      "OVERVIEW is older than a feature summary",
+      "OVERVIEW last commit is older than a feature summary",
       "update OVERVIEW at retro (C-56)",
     );
   }
@@ -523,24 +509,18 @@ function xHooks(ctx: Ctx): CheckItem {
 }
 
 function xTrace(ctx: Ctx): CheckItem {
-  const claimed = claimedReqs(ctx);
-  const { rows } = buildTrace(ctx);
-  if (claimed.length === 0) {
+  const missing = uncoveredClaimed(ctx);
+  if (claimedReqs(ctx).length === 0) {
     return pass("X-trace", "no claimed-done features (C-32 scope = 验收范围)");
-  }
-  const missing: string[] = [];
-  for (const id of claimed) {
-    const row = rows.find((r) => r.req === id);
-    if (!row || row.tests.length === 0) missing.push(id);
   }
   if (missing.length > 0) {
     return fail(
       "X-trace",
-      `claimed REQs with zero hits in tests/: ${missing.join(", ")}`,
-      "add tests named/marked REQ-nnn under tests/ (C-32 / ISS-003)",
+      `uncovered acceptance criteria: ${missing.join(", ")}`,
+      "mark tests REQ-nnn/AC-i (C-32 / ISS-020)",
     );
   }
-  return pass("X-trace", `${claimed.length} claimed REQ(s) covered in tests/`);
+  return pass("X-trace", "claimed acceptance criteria covered in tests/");
 }
 
 const NO_WAIVE = new Set(["X-evidence", "X-types", "X-trace", "G-done", "G-merge", "X-bypass"]);

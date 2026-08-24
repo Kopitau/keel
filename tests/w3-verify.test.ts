@@ -49,7 +49,7 @@ function miniGitRepo(): string {
       enforcement_tier: "local",
       profiles: {
         active: ["keel-gate"],
-        "keel-gate": { test_command: "node --test tests/ok.test.js" },
+        "keel-gate": { test_command: "node --test" },
       },
       budget: { agents_md_max_lines: 150, agents_md_chain_max_bytes: 32768 },
     }),
