@@ -27,6 +27,7 @@ export const CHECK_IDS = [
   "X-bypass",
   "X-oss",
   "X-knowledge",
+  "X-trace",
 ] as const;
 
 export function formatReview(ctx: Ctx): string {

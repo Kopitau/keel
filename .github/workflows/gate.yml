@@ -24,10 +24,14 @@ jobs:
       - name: Trunk gate (DEC-138)
         shell: bash
         run: bash tools/gate/ci-trunk.sh
-      - name: check
-        run: node tools/gate/gate.ts check
+      - name: Tests (not via config)
+        run: node --test
+      - name: Typecheck (not via config)
+        run: npx tsc --noEmit
       - name: verify
         run: node tools/gate/gate.ts verify
+      - name: check
+        run: node tools/gate/gate.ts check
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4

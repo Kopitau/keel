@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { readCurrent } from "./indexgen.ts";
@@ -7,7 +7,35 @@ import { listFiles } from "./walk.ts";
 
 const REQ = /REQ-\d{3}/g;
 
-export type TraceRow = { req: string; tests: string[] };
+export type TraceRow = { req: string; tests: string[]; criteria: number };
+
+function countCriteria(body: string, req: string): number {
+  const parts = body.split(/^## /m);
+  for (const part of parts) {
+    if (!part.startsWith(req)) continue;
+    return (part.match(/^\s*-\s+Given\b/gm) ?? []).length;
+  }
+  return 0;
+}
+
+/** REQs of features that have summary.md (completion claim = 验收范围, C-32). */
+export function claimedReqs(ctx: Ctx): string[] {
+  const feats = join(ctx.records, "features");
+  if (!existsSync(feats)) return [];
+  const out: string[] = [];
+  for (const name of readdirSync(feats)) {
+    if (!existsSync(join(feats, name, "summary.md"))) continue;
+    const planDir = join(feats, name, "plan");
+    if (!existsSync(planDir)) continue;
+    for (const p of readdirSync(planDir)) {
+      if (!p.endsWith(".md")) continue;
+      const text = readFileSync(join(planDir, p), "utf8");
+      const m = /^req:\s*(REQ-\d{3})\b/m.exec(text);
+      if (m?.[1] && !out.includes(m[1])) out.push(m[1]);
+    }
+  }
+  return out.sort();
+}
 
 export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
   const cur = readCurrent(join(ctx.records, "requirements", "INDEX.md"));
@@ -27,7 +55,7 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
   }
   const hits = new Map<string, Set<string>>();
   for (const id of reqs) hits.set(id, new Set());
-  const testRoots = [join(ctx.root, "tests"), join(ctx.root, "tools", "gate")];
+  const testRoots = [join(ctx.root, "tests")];
   for (const root of testRoots) {
     if (!existsSync(root)) continue;
     for (const f of listFiles(root)) {
@@ -46,9 +74,11 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
       }
     }
   }
+  const reqBody = existsSync(reqPath) ? readFileSync(reqPath, "utf8") : "";
   const rows: TraceRow[] = reqs.map((req) => ({
     req,
     tests: [...(hits.get(req) ?? [])].sort(),
+    criteria: countCriteria(reqBody, req),
   }));
   return { rows, reqFile };
 }

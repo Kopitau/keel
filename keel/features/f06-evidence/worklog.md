@@ -9,3 +9,8 @@
 
 - 进度：`gate verify` 写 `keel/evidence/verify.json`（gitignore）。树哈希用临时 index 的 `git write-tree`，排除 `keel/evidence/`。过期证据使 X-evidence / G-done / G-merge 失败。
 - 实现决定：JUnit reporter 写入相对路径；解析失败则回退 TAP `# pass`。不把证据打进树哈希，避免 JSON 自污染。
+
+## 2026-08-24（P0）
+
+- 进度：ISS-002 无证据 = FAIL；ISS-003 `X-trace` 只扫 `tests/`，范围=已宣称完成的功能。
+

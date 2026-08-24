@@ -32,6 +32,7 @@ C-105：拦 `--no-verify` / 强推 / 改 hooksPath / 改 CI / 改测试目录（
 | X-bypass | KEEP | **W6 新增**，C-105 提醒级 |
 | X-oss | KEEP | **W6 新增**，直接依赖对账 + 到期提醒（C-89/C-90） |
 | X-knowledge | KEEP | **W6 新增**，~100 条封顶提醒（C-86）；目录不存在 skip |
+| X-trace | KEEP | **P0 返工新增**（ISS-003 / C-32）：有 summary 的功能其 REQ 必须在 tests/ 被点名 |
 
 ## 已删除 / 不恢复
 

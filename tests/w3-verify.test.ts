@@ -183,11 +183,11 @@ test("REQ-006 stale evidence fails X-evidence", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-017 this repo check still passes without committed evidence", () => {
+test("REQ-017 this repo full check fails without evidence (ISS-002)", () => {
   const r = spawnSync(process.execPath, ["tools/gate/gate.ts", "check"], {
     encoding: "utf8",
     cwd: repo,
   });
-  assert.equal(r.status, 0, (r.stdout ?? "") + (r.stderr ?? ""));
-  assert.match(r.stdout ?? "", /SKIP X-evidence|PASS X-evidence/);
+  assert.equal(r.status, 1, (r.stdout ?? "") + (r.stderr ?? ""));
+  assert.match(r.stdout ?? "", /FAIL X-evidence|FAIL G-done/);
 });

@@ -26,4 +26,12 @@
 - 实现决定：提醒不阻断；无 Feature 尾注只在 hooksPath=.githooks 时查 HEAD；G-done 在无 verify.json 时 skip。常驻装载进 X-budget 软警告。
 - 验证：见 `tests/w6-pilot.test.ts`。
 
+## 2026-08-24（P0 返工）
+
+- 进度：ISS-001~005。fail-closed；test_command 白名单；X-trace；hooks 100755；gate-warn 须 ref。CHG-002 proposed。
+- 实现决定：X-trace 范围=有 summary 的功能（C-32 验收范围），未宣称完成的流程 REQ 不在本条 P0 强行盖测试（P2-1 / C-139 待用户）。
+- 问题链接：ISS-001 ISS-002 ISS-003 ISS-004 ISS-005
+- 不要用 `gate-warn:` 消本清单。
+
+
 

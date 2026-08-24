@@ -13,8 +13,9 @@ import {
   writeEvidence,
   type Evidence,
 } from "./evidence.ts";
-import { fail, ok, type CmdResult } from "./result.ts";
+import { ok, type CmdResult } from "./result.ts";
 import { buildTrace } from "./trace.ts";
+import { emptyRunIsFailure, isAllowedTestArgv, isAllowedTestCommand, splitCmd } from "./testcmd.ts";
 
 function activeProfile(cfg: JsonMap): JsonMap {
   const profiles = (cfg.profiles ?? {}) as JsonMap;
@@ -24,8 +25,10 @@ function activeProfile(cfg: JsonMap): JsonMap {
   return p && typeof p === "object" ? (p as JsonMap) : {};
 }
 
-function splitCmd(s: string): string[] {
-  return (s.match(/"[^"]+"|\S+/g) ?? []).map((t) => t.replace(/^"|"$/g, ""));
+function activeProfileName(cfg: JsonMap): string {
+  const profiles = (cfg.profiles ?? {}) as JsonMap;
+  const active = profiles.active;
+  return Array.isArray(active) ? String(active[0] ?? "") : "";
 }
 
 function childEnv(): { [k: string]: string | undefined } {
@@ -50,9 +53,15 @@ function run(ctx: Ctx, argv: string[]): { status: number; stdout: string; stderr
 
 export function runVerify(ctx: Ctx): CmdResult {
   const profile = activeProfile(ctx.config);
-  const testCmd = typeof profile.test_command === "string"
-    ? profile.test_command
-    : `${process.execPath} --test tests`;
+  const profileName = activeProfileName(ctx.config);
+  const testCmd = typeof profile.test_command === "string" ? profile.test_command : "node --test";
+  if (!isAllowedTestCommand(testCmd, profileName || "keel-gate")) {
+    return {
+      code: 1,
+      stdout: `verify FAIL\ntest_command not allowlisted: ${testCmd}\n`,
+      stderr: "ISS-001: test_command must be an allowlisted runner (node --test [tests/…])\n",
+    };
+  }
   const started = new Date().toISOString();
   let combined = "";
   let exitCode = 0;
@@ -78,6 +87,13 @@ export function runVerify(ctx: Ctx): CmdResult {
       ...rest,
     ];
   }
+  if (!isAllowedTestArgv(argv)) {
+    return {
+      code: 1,
+      stdout: `verify FAIL\nexpanded test argv not allowlisted: ${argv.join(" ")}\n`,
+      stderr: "ISS-001: refuse non-allowlisted test invocation\n",
+    };
+  }
   const tr = run(ctx, argv);
   combined += tr.stdout + tr.stderr;
   if (tr.status !== 0 && exitCode === 0) exitCode = tr.status;
@@ -100,7 +116,11 @@ export function runVerify(ctx: Ctx): CmdResult {
           failed: Number((combined.match(/# fail (\d+)/) ?? [])[1] ?? 0),
           skipped: Number((combined.match(/# skipped (\d+)/) ?? [])[1] ?? 0),
         }
-      : { passed: exitCode === 0 ? 0 : 0, failed: exitCode === 0 ? 0 : 1, skipped: 0 };
+      : { passed: 0, failed: 1, skipped: 0 };
+  if (emptyRunIsFailure(counts)) {
+    counts.failed = Math.max(counts.failed, 1);
+    if (exitCode === 0) exitCode = 1;
+  }
 
   const coverage: { [req: string]: number } = {};
   const { rows } = buildTrace(ctx);

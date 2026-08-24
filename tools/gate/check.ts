@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 import type { Ctx } from "./ctx.ts";
@@ -16,6 +16,9 @@ import { measureAutoload } from "./autoload.ts";
 import { collectBypassFindings } from "./bypass.ts";
 import { countKnowledge } from "./knowledge.ts";
 import { inspectOss } from "./osscheck.ts";
+import { execModeGaps } from "./execmode.ts";
+import { isAllowedTestArgv, splitCmd } from "./testcmd.ts";
+import { buildTrace, claimedReqs } from "./trace.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -116,7 +119,11 @@ function gDone(ctx: Ctx): CheckItem {
     return skip("G-done", "no completion claims (C-33)");
   }
   if (!ev) {
-    return skip("G-done", `summary.md present (${summaries.join(", ")}); run gate verify (C-33)`);
+    return fail(
+      "G-done",
+      `summary.md present (${summaries.join(", ")}) but verify.json missing`,
+      "run: gate verify (C-33). Missing evidence is fail, not skip (ISS-002)",
+    );
   }
   if (!evidenceFresh(ctx, ev)) {
     return fail(
@@ -130,13 +137,26 @@ function gDone(ctx: Ctx): CheckItem {
 
 function xEvidence(ctx: Ctx): CheckItem {
   const ev = readEvidence(ctx);
-  if (!ev) return skip("X-evidence", "no verify.json; run gate verify before merge");
+  if (!ev) {
+    return fail("X-evidence", "verify.json missing", "run: gate verify (ISS-002 fail-closed)");
+  }
   if (!ev.tree_hash) return fail("X-evidence", "evidence has empty tree_hash", "run: gate verify");
   if (!evidenceFresh(ctx, ev)) {
     return fail("X-evidence", "evidence stale (tree hash mismatch)", "run: gate verify (C-33)");
   }
   if (ev.exit_code !== 0) {
     return fail("X-evidence", `evidence exit_code=${ev.exit_code}`, "fix tests and re-verify");
+  }
+  const cmdOk = isAllowedTestArgv(splitCmd(ev.command || ""));
+  if (!cmdOk) {
+    return fail(
+      "X-evidence",
+      `evidence.command not allowlisted: ${ev.command}`,
+      "re-verify with an allowlisted test_command (ISS-001)",
+    );
+  }
+  if (ev.counts && ev.counts.passed === 0 && ev.counts.failed === 0) {
+    return fail("X-evidence", "evidence ran zero tests", "ISS-001: empty run is not PASS");
   }
   return pass("X-evidence", `fresh tree ${ev.tree_hash.slice(0, 12)}…`);
 }
@@ -354,7 +374,65 @@ function xHooks(ctx: Ctx): CheckItem {
   if (norm !== ".githooks" && !norm.endsWith("/.githooks")) {
     return warn("X-hooks", `core.hooksPath=${hp}`, "point it at .githooks");
   }
-  return pass("X-hooks", `core.hooksPath=${hp}`);
+  const gaps = execModeGaps(ctx);
+  if (gaps.length > 0) {
+    return fail(
+      "X-hooks",
+      gaps.join("; "),
+      "git update-index --chmod=+x on hooks and gate.sh (ISS-004 / DEC-104)",
+    );
+  }
+  return pass("X-hooks", `core.hooksPath=${hp}; exec bits 100755`);
+}
+
+function xTrace(ctx: Ctx): CheckItem {
+  const claimed = claimedReqs(ctx);
+  const { rows } = buildTrace(ctx);
+  if (claimed.length === 0) {
+    return pass("X-trace", "no claimed-done features (C-32 scope = 验收范围)");
+  }
+  const missing: string[] = [];
+  for (const id of claimed) {
+    const row = rows.find((r) => r.req === id);
+    if (!row || row.tests.length === 0) missing.push(id);
+  }
+  if (missing.length > 0) {
+    return fail(
+      "X-trace",
+      `claimed REQs with zero hits in tests/: ${missing.join(", ")}`,
+      "add tests named/marked REQ-nnn under tests/ (C-32 / ISS-003)",
+    );
+  }
+  return pass("X-trace", `${claimed.length} claimed REQ(s) covered in tests/`);
+}
+
+const NO_WAIVE = new Set(["X-evidence", "X-types", "X-trace", "G-done", "G-merge", "X-bypass"]);
+
+function recordRefExists(ctx: Ctx, ref: string): boolean {
+  if (ref.startsWith("ISS-")) {
+    return mdFiles(join(ctx.records, "issues"), "ISS-").some((f) => basename(f).startsWith(ref));
+  }
+  if (ref.startsWith("DEC-")) {
+    return mdFiles(join(ctx.records, "decisions"), "DEC-").some((f) => basename(f).startsWith(ref));
+  }
+  return false;
+}
+
+function refIsOpenIss(ctx: Ctx, ref: string): boolean {
+  if (!ref.startsWith("ISS-")) return true;
+  const file = mdFiles(join(ctx.records, "issues"), "ISS-").find((f) => basename(f).startsWith(ref));
+  if (!file) return false;
+  const { attrs } = parseFrontmatter(readFileSync(file, "utf8"));
+  return (attrs.status ?? "") === "open";
+}
+
+function warnAcknowledged(ctx: Ctx, id: string, blob: string): boolean {
+  if (NO_WAIVE.has(id)) return false;
+  const re = new RegExp(`gate-warn:\\s*${id}\\s+ref=(ISS-\\d+|DEC-\\d+)`);
+  const m = blob.match(re);
+  if (!m?.[1]) return false;
+  const ref = m[1];
+  return recordRefExists(ctx, ref) && refIsOpenIss(ctx, ref);
 }
 
 function warnWorklogCovered(ctx: Ctx, items: CheckItem[]): CheckItem[] {
@@ -369,12 +447,12 @@ function warnWorklogCovered(ctx: Ctx, items: CheckItem[]): CheckItem[] {
   const blob = logs.join("\n");
   return items.map((it) => {
     if (it.verdict !== "warn") return it;
-    if (blob.includes(`gate-warn: ${it.id}`)) return it;
+    if (warnAcknowledged(ctx, it.id, blob)) return it;
     return {
       ...it,
       verdict: "fail" as const,
       summary: `${it.summary} (warn not acknowledged)`,
-      fix: `${it.fix ?? ""} record 'gate-warn: ${it.id}' in the feature worklog to pass a warning (C-103)`,
+      fix: `${it.fix ?? ""} worklog line 'gate-warn: ${it.id} ref=ISS-nnn' citing an open ISS or a DEC (C-103/ISS-005)`,
     };
   });
 }
@@ -392,6 +470,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(xBypass(ctx));
   items.push(xOss(ctx));
   items.push(xKnowledge(ctx));
+  items.push(xTrace(ctx));
   if (!quick) {
     items.push(gDone(ctx));
     items.push(gMerge(ctx));

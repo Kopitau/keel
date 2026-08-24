@@ -44,6 +44,14 @@ export function ciWorkflowGaps(root: string): string[] {
   if (!/matrix:/.test(text) || !/ubuntu-latest/.test(text) || !/windows-latest/.test(text) || !/macos-latest/.test(text)) {
     gaps.push("CI matrix no longer covers ubuntu/windows/macos");
   }
+  if (!/(^|\n)\s*run:\s*node --test\s*(\n|$)/.test(text)) {
+    gaps.push("CI missing config-independent node --test (ISS-001)");
+  }
+  const verifyAt = text.indexOf("gate.ts verify");
+  const checkAt = text.indexOf("gate.ts check");
+  if (verifyAt >= 0 && checkAt >= 0 && checkAt < verifyAt) {
+    gaps.push("CI runs check before verify (ISS-002)");
+  }
   return gaps;
 }
 

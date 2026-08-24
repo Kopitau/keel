@@ -84,8 +84,8 @@ function fixture(): string {
   return dir;
 }
 
-test("REQ-017 gate check on this repo exits 0", () => {
-  const r = gate(["check"]);
+test("REQ-017 gate check --quick on this repo exits 0", () => {
+  const r = gate(["check", "--quick"]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /PASS G-plan/);
   assert.match(r.stdout, /PASS G-req/);
