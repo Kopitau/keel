@@ -5,6 +5,25 @@ import { sha256Normalized } from "./hash.ts";
 import { gitDirty, gitHead, gitWriteTree } from "./git.ts";
 import { isAllowedTestArgv, splitCmd } from "./testcmd.ts";
 
+export type EvidenceReviewRun = {
+  iss: string;
+  command: string;
+  exit_code: number;
+  refused: boolean;
+};
+
+export type EvidenceReview = {
+  status: string;
+  lens?: string;
+  implementer_harness?: string;
+  reviewer_harness?: string;
+  heterogeneous_required?: boolean;
+  heterogeneous_ok?: boolean;
+  blocking_iss?: string[];
+  repro_runs?: EvidenceReviewRun[];
+  round?: number;
+};
+
 export type Evidence = {
   command: string;
   exit_code: number;
@@ -18,6 +37,7 @@ export type Evidence = {
   req_coverage: { [req: string]: number };
   stdout_tail_2kb: string;
   actor: { harness: string; model: string; session: string };
+  review?: EvidenceReview;
 };
 
 export function evidencePath(ctx: Ctx): string {
@@ -82,6 +102,21 @@ export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
   if (!(actor.harness ?? "").trim()) gaps.push("actor.harness empty");
   if (!(actor.model ?? "").trim()) gaps.push("actor.model empty");
   if (!(actor.session ?? "").trim()) gaps.push("actor.session empty");
+  if (ev.review && ev.review.status === "passed") {
+    if (ev.review.heterogeneous_required && !ev.review.heterogeneous_ok) {
+      gaps.push("heterogeneous review required; same harness is not a silent fallback (DEC-159)");
+    }
+    for (const id of ev.review.blocking_iss ?? []) {
+      const run = (ev.review.repro_runs ?? []).find((r) => r.iss === id);
+      if (!run) gaps.push(`review missing repro run for ${id}`);
+      else if (!run.refused) gaps.push(`${id} repro still succeeds; cannot clear (REQ-027)`);
+    }
+    for (const run of ev.review.repro_runs ?? []) {
+      if (run.refused === false || run.exit_code === 0) {
+        gaps.push(`${run.iss} repro exit=${run.exit_code}; not refused`);
+      }
+    }
+  }
   return gaps;
 }
 

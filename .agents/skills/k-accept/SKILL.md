@@ -17,7 +17,8 @@ F7.5 + F18. The user nods; you do not.
 
 ## Procedure
 
-1. `node tools/gate/gate.ts verify` then `check`.
-2. Draft `gate new apr ...` if needed; fill artifact paths.
-3. Ask the user to run `node tools/gate/gate.ts approve APR-nnn` with a **human** git identity (C-107). Agent identities are rejected.
-4. Stop. Merge is F8 (`G-merge`): APR + fresh evidence + green trace + no blocking ISS (C-45).
+1. `node tools/gate/gate.ts loop status` must be `passed`. If not, stop — review is required before acceptance (REQ-027). **Do not automate the human nod.**
+2. `node tools/gate/gate.ts verify` then `check`.
+3. Draft `gate new apr ...` if needed; fill artifact paths.
+4. Ask the user to run `node tools/gate/gate.ts approve APR-nnn` with a **human** git identity (C-107). Agent identities are rejected.
+5. Stop. Merge is F8 (`G-merge`): APR + fresh evidence + green trace + no blocking ISS (C-45).

@@ -16,6 +16,7 @@ import { runSync } from "./sync.ts";
 import { runTrace } from "./trace.ts";
 import { runTriggers } from "./triggers.ts";
 import { runReview } from "./review.ts";
+import { runLoop } from "./reviewloop.ts";
 import { runVerify } from "./verify.ts";
 import { runWorktree } from "./worktree.ts";
 
@@ -75,6 +76,7 @@ function help(): CmdResult {
       "  verify                  rerun tests, write evidence JSON bound to tree hash (C-33)",
       "  triggers [--write]      probe harness CLIs; skill trigger ledger (W5)",
       "  review [--quick] [--write]  C-105 gate checklist inventory",
+      "  loop status|pack|ingest|append-attack   F7 auto review loop (REQ-027)",
       "  hook prepare-commit-msg <file> | hook pre-push [refs-file]",
       "",
     ].join("\n") + "\n",
@@ -98,6 +100,7 @@ function dispatch(root: string, args: string[]): CmdResult {
   if (cmd === "verify") return runVerify(ctx);
   if (cmd === "triggers") return runTriggers(ctx, rest);
   if (cmd === "review") return runReview(ctx, rest);
+  if (cmd === "loop") return runLoop(ctx, rest);
   if (cmd === "hook") return runHook(ctx, rest);
   return usage(`unknown command ${cmd}; see --help\n`);
 }

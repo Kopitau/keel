@@ -37,4 +37,6 @@ Internal small adjustments: log an implementation decision in the worklog (C-17/
 
 ## Done
 
-`gate verify` green on this tree; worklog current; no undocumented interface drift. Then k-review, then k-accept. Merge is separate (C-44).
+`gate verify` green on this tree; worklog current; no undocumented interface drift.
+
+**Claiming done starts the review loop (REQ-027).** Do not go to k-accept until `node tools/gate/gate.ts loop status` is `passed`. Pack the five C-39 inputs and run k-review in a **new** context (or spawn a subagent that has not seen this chat). You do not review your own implementation.

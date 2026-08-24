@@ -101,6 +101,19 @@
     "REQ-026/AC-1 vacuum project SKIPs G-req and G-plan",
     "REQ-026/AC-2 feature dir without a requirements baseline FAILs G-req",
     "REQ-026/AC-3 activity without a coupling table FAILs G-plan",
-    "REQ-026/AC-4 live NEEDS-CLARIFICATION still FAILs G-req"
+    "REQ-026/AC-4 live NEEDS-CLARIFICATION still FAILs G-req",
+    "REQ-027 evidenceGaps flags a passed review whose repro still exits 0",
+    "REQ-027/AC-1 claiming done without a passed loop is a G-done gap",
+    "REQ-027/AC-2 pack with implementation-chat field is refused",
+    "REQ-027/AC-3 heterogeneous required for attack; same harness is not ok",
+    "REQ-027/AC-4 blocking without a repro command does not open an ISS",
+    "REQ-027/AC-5 repro that still succeeds cannot clear",
+    "REQ-027/AC-6 three uncleared rounds fuse",
+    "REQ-028 checklists exist with section headings",
+    "REQ-028 cross-category uses the strictest lens",
+    "REQ-028/AC-1 attack lens for gate and test-mechanism paths",
+    "REQ-028/AC-2 robustness lens for core feature samples",
+    "REQ-028/AC-3 auxiliary lens for skills and records",
+    "REQ-028/AC-5 appending a new attack grows the living list"
   ]
 }

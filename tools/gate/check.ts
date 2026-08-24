@@ -20,6 +20,7 @@ import { inspectOss } from "./osscheck.ts";
 import { execModeGaps } from "./execmode.ts";
 import { claimedReqs, uncoveredClaimed } from "./trace.ts";
 import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
+import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -193,7 +194,17 @@ function gDone(ctx: Ctx): CheckItem {
   if (missing.length > 0) {
     return fail("G-done", `claimed ACs uncovered: ${missing.join(", ")}`, "C-33/C-32 mark tests REQ-nnn/AC-i");
   }
-  return pass("G-done", "evidence 对账 + claimed AC trace green");
+  const revGaps = completionReviewGaps(ctx);
+  if (revGaps.length > 0) {
+    return fail("G-done", revGaps.join("; "), "k-review / gate loop; do not accept until status=passed");
+  }
+  if (ev.review) {
+    const rg = reviewClearGaps(ev.review);
+    if (rg.length > 0) {
+      return fail("G-done", rg.join("; "), "re-run ISS repro commands; refused=true required");
+    }
+  }
+  return pass("G-done", "evidence 对账 + claimed AC trace + review loop passed");
 }
 
 function xEvidence(ctx: Ctx): CheckItem {
