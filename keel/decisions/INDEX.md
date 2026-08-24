@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 158
+- count: 160
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -163,3 +163,5 @@
 | DEC-156 | C-139 技能验收 v1 = 协议机检 + 发现层；五家 live 实点另开 | confirmed | `DEC-156-C-139-skill-acceptance-v1.md` |
 | DEC-157 | 全局安装器 + 项目内运行（Trellis 式「在项目文件夹激活」） | confirmed | `DEC-157-C-157-global-installer.md` |
 | DEC-158 | G-req / G-plan 改条件判定：真空项目 SKIP，有实施活动无基线才 FAIL | confirmed | `DEC-158-C-158-empty-project-gates.md` |
+| DEC-159 | F7 自动评审回路：触发、异构策略、落盘门槛、清零判定 | confirmed | `DEC-159-C-159-auto-review-loop.md` |
+| DEC-160 | 评审视角按代码性质分类：攻击面 vs 鲁棒性 vs 需求达成 | confirmed | `DEC-160-C-160-review-lens-by-code-kind.md` |

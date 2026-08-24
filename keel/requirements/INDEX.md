@@ -1,5 +1,5 @@
 # requirements index (generated)
 
 - generator: gate index
-- current: v2.md
+- current: v3.md
 - versions: v1.md, v2.md, v3.md

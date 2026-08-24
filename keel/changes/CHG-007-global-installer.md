@@ -1,6 +1,6 @@
 ---
 id: CHG-007
-status: proposed
+status: approved
 date: 2026-08-24
 requirements_from: v2.md
 requirements_to: v3.md
@@ -77,6 +77,4 @@ supersedes_wording: DEC-153
 
 ## 批准
 
-**status: proposed** —— 需求内容与四条技术决策已由用户在对话中逐条确认（DEC-157/158 载有原话），但本单尚未取得人类 git 身份的哈希审批（C-107）。与 CHG-002~006 一并待批。
-
-**建议批准顺序**：先清 R3 复审（ISS-021 已修待复审），再一次性批准 CHG-002~007。
+2026-08-24 用户原话：「CHG-007 批准 然后到v3.md」。提交身份 kopit <wwillmee@gmail.com>（C-107）。requirements INDEX `current:` 切到 v3.md。

@@ -55,12 +55,12 @@ test("REQ-004 plan INDEX has a unique current pointer", () => {
   );
 });
 
-test("REQ-011 requirements INDEX unique current is v2", () => {
+test("REQ-011 requirements INDEX unique current is v3", () => {
   const text = readFileSync(join(root, "keel", "requirements", "INDEX.md"), "utf8");
   const currents = text.split(/\n/).filter((ln) => ln.startsWith("- current:"));
-  assert.deepEqual(currents, ["- current: v2.md"]);
-  const body = readFileSync(join(root, "keel", "requirements", "v2.md"), "utf8");
-  assert.ok(body.includes("## REQ-024"));
+  assert.deepEqual(currents, ["- current: v3.md"]);
+  const body = readFileSync(join(root, "keel", "requirements", "v3.md"), "utf8");
+  assert.ok(body.includes("## REQ-025"));
 });
 
 test("REQ-012 gate status prints handoff path", () => {

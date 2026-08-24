@@ -27,7 +27,7 @@
     "REQ-009 summary template has the five retro sections",
     "REQ-010 ISS template has a defense_pointer field",
     "REQ-010 P2-10 Chinese titles still get a unique ascii slug",
-    "REQ-011 requirements INDEX unique current is v2",
+    "REQ-011 requirements INDEX unique current is v3",
     "REQ-012 gate status prints handoff path",
     "REQ-012 status still prints handoff and runtime",
     "REQ-013 LES template has phenomenon lesson bounds counterexample",
