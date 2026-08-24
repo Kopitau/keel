@@ -3,7 +3,7 @@ import { join } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 import type { Ctx } from "./ctx.ts";
-import type { JsonMap } from "./config.ts";
+import { isProfileUnset, type JsonMap } from "./config.ts";
 import {
   currentTree,
   hashReport,
@@ -52,6 +52,13 @@ function run(ctx: Ctx, argv: string[]): { status: number; stdout: string; stderr
 }
 
 export function runVerify(ctx: Ctx): CmdResult {
+  if (isProfileUnset(ctx.config)) {
+    return {
+      code: 1,
+      stdout: "verify FAIL\nprofiles.active is unset\n",
+      stderr: "configure a test command when the unified plan is confirmed (REQ-025); will not silently pass\n",
+    };
+  }
   const profile = activeProfile(ctx.config);
   const profileName = activeProfileName(ctx.config);
   const testCmd = typeof profile.test_command === "string" ? profile.test_command : "node --test";

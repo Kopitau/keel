@@ -4,8 +4,9 @@
   "project_name": "example",
   "records_dir": "keel",
   "enforcement_tier": "local",
+  "keel_version": "0.0.0",
   "profiles": {
-    "active": ["keel-gate"],
+    "active": "unset",
     "keel-gate": {
       "language": "typescript",
       "runtime": "node",

@@ -24,7 +24,7 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-独立评审 P0–P2 与 R2 已修并复审通过。**R3（ISS-021 测试基线）已修**，待干净上下文复审。DEC-155/156 已 confirmed。CHG-002～006 **approved**（2026-08-24，kopit）。
+独立评审 P0–R3 已修。CHG-002～006 **approved**（kopit）。**CHG-007 全局安装器已实施**（`keel init` 等），变更单仍 proposed，requirements current 仍是 v2，待批准后切 v3。
 
 远端、APR-001（仍 draft）、CODEOWNERS 真人仍开着（ISS-016）。
 

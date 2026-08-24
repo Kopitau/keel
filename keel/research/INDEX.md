@@ -1,7 +1,7 @@
 # research index (generated)
 
 - generator: gate index
-- count: 9
+- count: 10
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -14,3 +14,4 @@
 | RES-007 | kk 框架审计 |  | `RES-007-R6.md` |
 | RES-008 | no-mistakes 评估 |  | `RES-008-R7.md` |
 | RES-901 | 跨平台支持与 gate 运行时选型（Python vs Node+TS） |  | `RES-901-cross-platform-and-runtime.md` |
+| RES-902 | 全局安装器 + 项目内运行的分发形态（Trellis 式「在项目文件夹激活」） |  | `RES-902-z-18205dff.md` |

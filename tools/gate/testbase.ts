@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { git } from "./git.ts";
 import { readEvidence } from "./evidence.ts";
@@ -18,6 +18,15 @@ export function baselinePath(ctx: Ctx): string {
 export function formatBaseline(names: string[]): string {
   const unique = [...new Set(names)].sort();
   return JSON.stringify({ schema_version: 1, names: unique }, null, 2) + "\n";
+}
+
+/** C-34 lockfile writer for `keel init` (CHG-007). Does not run from verify. */
+export function writeTestBaseline(ctx: Ctx, names?: string[]): string {
+  const list = names ?? testFileInventory(ctx.root).names;
+  const dest = baselinePath(ctx);
+  mkdirSync(dirname(dest), { recursive: true });
+  writeFileSync(dest, formatBaseline(list), "utf8");
+  return dest;
 }
 
 export function parseBaseline(text: string): string[] | null {

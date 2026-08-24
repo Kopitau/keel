@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 156
+- count: 158
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -161,3 +161,5 @@
 | DEC-154 | 类型检查 tsc --noEmit 进门禁；「零依赖」边界定义 | confirmed | `DEC-154-C-154.md` |
 | DEC-155 | 本地档单人施工允许 trunk；并行时才强制 worktree | confirmed | `DEC-155-C-112-local-solo-trunk.md` |
 | DEC-156 | C-139 技能验收 v1 = 协议机检 + 发现层；五家 live 实点另开 | confirmed | `DEC-156-C-139-skill-acceptance-v1.md` |
+| DEC-157 | 全局安装器 + 项目内运行（Trellis 式「在项目文件夹激活」） | confirmed | `DEC-157-C-157-global-installer.md` |
+| DEC-158 | G-req / G-plan 改条件判定：真空项目 SKIP，有实施活动无基线才 FAIL | confirmed | `DEC-158-C-158-empty-project-gates.md` |

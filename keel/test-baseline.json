@@ -88,6 +88,19 @@
     "REQ-024 DEC-148 fixture hashes the same LF corpus",
     "REQ-024 DEC-150 Node version compare",
     "REQ-024 P2-6 DEC-148 LF fixture has a golden digest",
-    "REQ-024 P2-8 casefold collisions are detected on path lists (git index)"
+    "REQ-024 P2-8 casefold collisions are detected on path lists (git index)",
+    "REQ-025 doctor flags foreign framework config, missing exec bits, and old Node",
+    "REQ-025 init↔testbase writeTestBaseline contract",
+    "REQ-025/AC-1 keel init empty git repo: G-req and G-plan SKIP, check --quick green",
+    "REQ-025/AC-3 bin/keel.js is plain JS and refuses old Node with a human message",
+    "REQ-025/AC-4 init sets hook exec bits in the git index",
+    "REQ-025/AC-5 uninstall keeps the keel/ records directory",
+    "REQ-025/AC-6 update refuses a CLI older than keel_version without --force",
+    "REQ-025/AC-7 init with a .trellis dir still installs and hints k-migrate",
+    "REQ-025/AC-8 unset profile makes verify fail closed",
+    "REQ-026/AC-1 vacuum project SKIPs G-req and G-plan",
+    "REQ-026/AC-2 feature dir without a requirements baseline FAILs G-req",
+    "REQ-026/AC-3 activity without a coupling table FAILs G-plan",
+    "REQ-026/AC-4 live NEEDS-CLARIFICATION still FAILs G-req"
   ]
 }

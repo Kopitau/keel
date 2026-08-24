@@ -12,6 +12,12 @@ npm test
 npm run typecheck
 ```
 
+Install into another project (after `npm i -g file:<this-repo>` or a git URL):
+
+```text
+keel init --name myapp --tier local --human "Name <email>"
+```
+
 Windows: `tools/gate/gate.ps1 status`. macOS/Linux: `tools/gate/gate.sh status`.
 
 Enforcement tier today: **local** (no remotes yet). OS matrix: Windows + macOS + Linux.

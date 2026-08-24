@@ -5,7 +5,7 @@ description: Use when starting k-init, initializing a new keel project, scaffold
 
 # k-init
 
-Scaffold a consumer project so keel records, gate, and the AGENTS map exist. Facts from the repo: do not ask. Decisions: batch 3–5 questions with a recommended answer each (C-02/C-03).
+Scaffold a consumer project so keel records, gate, and the AGENTS map exist. Prefer the installer: `keel init` (DEC-157). Facts from the repo: do not ask. Decisions: batch questions with a recommended answer each (C-02/C-03).
 
 ## First
 
@@ -13,32 +13,35 @@ Scaffold a consumer project so keel records, gate, and the AGENTS map exist. Fac
 
 ## Copy (do not invent a second layout)
 
-From a keel tag or this repository, copy only:
+`keel init` copies these eight groups from the installer package (never symlink, DEC-147):
 
 - `AGENTS.md` `CLAUDE.md` `CONTEXT.md`
-- `keel/templates/` `keel/config.json` (then edit)
+- `keel/templates/` (config.json is **written clean**, not copied from the framework repo)
 - `tools/gate/` `.githooks/` `.gitattributes`
-- `.agents/skills/` then `node tools/gate/gate.ts sync`
+- `.agents/skills/` then `gate sync`
 
-Windows/macOS/Linux: copy skills, never symlink (DEC-147). Gate is Node ≥22.18.0, run `.ts` directly (DEC-149/150).
+It also writes `keel/test-baseline.json` and sets hook exec bits. Gate is Node ≥22.18.0, run `.ts` directly (DEC-149/150).
 
-## Questions (one round)
+## Questions (one round; test profile is **not** asked here)
 
 1. Project name? Recommend the directory name.
 2. Enforcement tier: `github` / `gitee` / `local`? Recommend based on whether a GitHub remote exists. Local = deters mistakes, not malice.
-3. Active test profile: `python-cli` / `ds-ml` / `ts-js` / `other`? Recommend from the repo's existing tests.
-4. Human git name + email for APR (C-107)?
-5. Keep the five primary platforms (C-96)?
+3. Human git name + email for APR (C-107)?
+4. Keep the five primary platforms (C-96)?
 
-Write answers into `keel/config.json`. Then:
+`profiles.active` is `unset` until F4 (the unified plan) picks a test profile from the code being implemented. Non-interactive:
 
 ```
-git init   # if needed
+keel init --name <dir> --tier local --human "Name <email>"
+```
+
+Then:
+
+```
 git config core.hooksPath .githooks
-node tools/gate/gate.ts index
 node tools/gate/gate.ts check --quick
 ```
 
 ## Done
 
-Config parses; INDEX files have a unique `current:`; `gate check --quick` passes. Do not confirm a requirements baseline here — that is k-new / k-grill.
+Config parses; `check --quick` is green with G-req/G-plan SKIP on a vacuum project (DEC-158). Do not confirm a requirements baseline here — that is k-new / k-grill.

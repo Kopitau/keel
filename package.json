@@ -1,7 +1,11 @@
 {
   "name": "keel",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "keel": "./bin/keel.js"
+  },
   "engines": {
     "node": ">=22.18.0"
   },

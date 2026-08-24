@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
@@ -54,9 +54,37 @@ function currentReq(ctx: Ctx): { path: string; text: string } | { error: string 
   return { path, text: readFileSync(path, "utf8") };
 }
 
+/** Objective traces of implementation (DEC-158). Empty features/ does not count. */
+export function hasImplementationActivity(ctx: Ctx): boolean {
+  const feats = join(ctx.records, "features");
+  if (!existsSync(feats)) return false;
+  let names: string[] = [];
+  try {
+    names = readdirSync(feats);
+  } catch {
+    return false;
+  }
+  for (const name of names) {
+    const p = join(feats, name);
+    try {
+      const st = statSync(p);
+      if (st.isDirectory() || st.isFile()) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
+
 function gReq(ctx: Ctx): CheckItem {
   const r = currentReq(ctx);
-  if ("error" in r) return fail("G-req", r.error, "point requirements/INDEX.md at a single vN.md");
+  const activity = hasImplementationActivity(ctx);
+  if ("error" in r) {
+    if (!activity) {
+      return skip("G-req", "尚未开始，跑 k-new 建立需求基线");
+    }
+    return fail("G-req", r.error, "point requirements/INDEX.md at a single vN.md");
+  }
   const n = liveClarifications(r.text);
   if (n > 0) {
     return fail(
@@ -116,6 +144,16 @@ function gPlan(ctx: Ctx): CheckItem {
   const reqIdx = join(ctx.records, "requirements", "INDEX.md");
   const p = readCurrent(planIdx);
   const r = readCurrent(reqIdx);
+  const activity = hasImplementationActivity(ctx);
+  const multi =
+    (p.error && p.error.includes("multiple")) || (r.error && r.error.includes("multiple"));
+  if (multi) {
+    return fail("G-plan", `INDEX: ${p.error ?? r.error}`, "run: gate index (C-24)");
+  }
+  const noPlan = Boolean(p.error || !p.file || !existsSync(join(ctx.records, "plan", p.file ?? "")));
+  if (!activity && noPlan) {
+    return skip("G-plan", "尚未开始，跑 k-new 建立需求基线");
+  }
   if (p.error) return fail("G-plan", `plan INDEX: ${p.error}`, "run: gate index (C-24)");
   if (r.error) return fail("G-plan", `requirements INDEX: ${r.error}`, "run: gate index (C-63)");
   const planFile = join(ctx.records, "plan", p.file ?? "");

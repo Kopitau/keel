@@ -55,6 +55,11 @@
 - 问题链接：ISS-021
 - 不要用 `gate-warn:` 消本条。
 
+## 2026-08-24（CHG-007 / DEC-158）
+
+- 进度：G-req / G-plan 条件判定。真空项目 SKIP（提示 k-new）；有 features 子目录却无基线 FAIL；活的 NEEDS-CLARIFICATION 仍 FAIL。verify 在 `profiles.active=unset` 时明确失败，不写绿证据。
+- 问题链接：CHG-007 DEC-158 REQ-026
+
 ## 2026-08-24（CHG 批准）
 
 - 进度：用户批准 CHG-002～006。身份 kopit <wwillmee@gmail.com> 写入 identities.humans。批准提交用该人类作者，不用 keel-agent（C-107）。APR-001 仍 draft。
