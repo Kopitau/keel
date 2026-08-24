@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 20
+- count: 21
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -25,3 +25,4 @@
 | ISS-018 | ISS-018 test_command 范围未固定：ISS-001 关闭过早，同类绕过仍可穿透 CI | closed | `ISS-018-test-command.md` |
 | ISS-019 | ISS-019 verify 产出的证据必然被 check 拒绝，CI 每次都会红 | closed | `ISS-019-verify-check-ci.md` |
 | ISS-020 | ISS-020 X-trace 仍是逐需求对账，未落实 C-32 的「按验收标准逐条对账」 | closed | `ISS-020-x-trace.md` |
+| ISS-021 | ISS-021 删除或跳过测试无人检测，可让门禁对已破坏的核心机制全绿 | closed | `ISS-021-z-546eabd4.md` |

@@ -19,6 +19,7 @@ import { countKnowledge } from "./knowledge.ts";
 import { inspectOss } from "./osscheck.ts";
 import { execModeGaps } from "./execmode.ts";
 import { claimedReqs, uncoveredClaimed } from "./trace.ts";
+import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -523,7 +524,26 @@ function xTrace(ctx: Ctx): CheckItem {
   return pass("X-trace", "claimed acceptance criteria covered in tests/");
 }
 
-const NO_WAIVE = new Set(["X-evidence", "X-types", "X-trace", "G-done", "G-merge", "X-bypass"]);
+function xTests(ctx: Ctx): CheckItem {
+  const gaps = testBaselineGaps(ctx);
+  if (gaps.length > 0) {
+    return fail(
+      "X-tests",
+      gaps.join("; "),
+      "restore tests, or add a new worklog line 'C-34: ref=ISS-nnn' citing a real ISS/DEC and update keel/test-baseline.json (C-34 / ISS-021)",
+    );
+  }
+  const head = headBaseline(ctx);
+  const work = worktreeBaseline(ctx);
+  if (!head && !work) {
+    const n = testFileInventory(ctx.root).names.length;
+    return skip("X-tests", `no test-baseline.json (${n} tests/ names; C-34 unarmed until first snapshot)`);
+  }
+  const n = (work ?? head ?? []).length;
+  return pass("X-tests", `baseline ${n} names; skip/delete cited or unchanged (C-34)`);
+}
+
+const NO_WAIVE = new Set(["X-evidence", "X-types", "X-trace", "X-tests", "G-done", "G-merge", "X-bypass"]);
 
 function recordRefExists(ctx: Ctx, ref: string): boolean {
   if (ref.startsWith("ISS-")) {
@@ -588,6 +608,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(xOss(ctx));
   items.push(xKnowledge(ctx));
   items.push(xTrace(ctx));
+  items.push(xTests(ctx));
   items.push(xOwners(ctx));
   if (!quick) {
     items.push(gDone(ctx));

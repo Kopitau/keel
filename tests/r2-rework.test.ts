@@ -19,6 +19,7 @@ import { runVerify } from "../tools/gate/verify.ts";
 import { isAllowedTestCommand } from "../tools/gate/testcmd.ts";
 import { acCoveredIn, claimedReqs } from "../tools/gate/trace.ts";
 import { EXEC_REQUIRED } from "../tools/gate/execmode.ts";
+import { formatBaseline } from "../tools/gate/testbase.ts";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -104,6 +105,7 @@ test("REQ-006 ISS-019 hermetic verify then full check both exit 0", () => {
     "const { test } = require('node:test');\ntest('ok', () => {});\n",
     "utf8",
   );
+  writeFileSync(join(dir, "keel", "test-baseline.json"), formatBaseline(["ok"]), "utf8");
   writeFileSync(
     join(dir, ".gitignore"),
     "keel/evidence/*.json\nkeel/evidence/*.xml\n",

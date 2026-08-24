@@ -107,7 +107,7 @@ test("REQ-015 direct npm deps have OSS records", () => {
 test("REQ-017 C-105 review inventory lists every check id", () => {
   const text = formatReview(makeCtx(repo));
   assert.deepEqual(reviewMentionsAllIds(text), []);
-  assert.equal(CHECK_IDS.length, 19);
+  assert.equal(CHECK_IDS.length, 20);
 });
 
 test("REQ-017 W6 annual review and F17 summary exist", () => {
