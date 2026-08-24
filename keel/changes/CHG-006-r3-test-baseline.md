@@ -1,6 +1,6 @@
 ---
 id: CHG-006
-status: proposed
+status: approved
 date: 2026-08-24
 requirements_from: v2.md
 requirements_to: v2.md
@@ -12,7 +12,7 @@ requirements_to: v2.md
 
 第三轮复审 ISS-021：删掉或跳过测试后门禁全绿，可让已破坏的核心机制（DEC-144 换行规范化）不被发现。需求书 v2 已有 C-34 验收标准；此前从未执法。不改需求正文。
 
-本单 **proposed**。等人用自己的 git 身份批准（C-107）。CHG-002～005 仍 proposed，R3-P0 清零并复审后再一并提请。
+语义本身已在 C-34 确认；本 CHG 记录「此前未执法的实现补齐」。
 
 ## 新增
 
@@ -39,4 +39,4 @@ requirements_to: v2.md
 
 ## 批准
 
-待人类身份。
+2026-08-24 用户原话：「CHG-002～006 批准」。提交身份 kopit <wwillmee@gmail.com>（C-107）。

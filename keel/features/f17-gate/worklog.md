@@ -55,6 +55,11 @@
 - 问题链接：ISS-021
 - 不要用 `gate-warn:` 消本条。
 
+## 2026-08-24（CHG 批准）
+
+- 进度：用户批准 CHG-002～006。身份 kopit <wwillmee@gmail.com> 写入 identities.humans。批准提交用该人类作者，不用 keel-agent（C-107）。APR-001 仍 draft。
+- 问题链接：ISS-021（R3 实现已 closed；独立复审仍待）
+
 
 
 

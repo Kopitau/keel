@@ -1,6 +1,6 @@
 ---
 id: CHG-004
-status: proposed
+status: approved
 date: 2026-08-24
 requirements_from: v2.md
 requirements_to: v2.md
@@ -29,4 +29,4 @@ REWORK P2。不改需求正文。C-139 按 DEC-156 推荐 B 落地可机检部�
 
 ## 批准
 
-待人类身份。
+2026-08-24 用户原话：「CHG-002～006 批准」。提交身份 kopit <wwillmee@gmail.com>（C-107）。

@@ -1,6 +1,6 @@
 ---
 id: CHG-003
-status: proposed
+status: approved
 date: 2026-08-24
 requirements_from: v2.md
 requirements_to: v2.md
@@ -32,4 +32,4 @@ REWORK.md P1：G-done/G-merge/G-retro 缺 DESIGN 列出的判据；证据字段�
 
 ## 批准
 
-待人类身份（C-107）。
+2026-08-24 用户原话：「CHG-002～006 批准」。提交身份 kopit <wwillmee@gmail.com>（C-107）。

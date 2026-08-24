@@ -71,6 +71,6 @@ grep -c replace tools/gate/hash.ts                 # 0  ← 规范化确实已�
 - 负面测试二：把一条测试标记为跳过后，`verify`/`check` 必须 FAIL（不依赖 tsc 的偶然拦截）；
 - 负面测试三：删除并**引用真实 ISS/DEC** 说明原因时，必须放行（防止修过头让正常重构无法进行）。
 
-落地：`X-tests` 进 `--quick`；锁文件 `keel/test-baseline.json`；相对 HEAD 名称消失或 skip 须 **本轮新增** worklog 行 `C-34: ref=ISS-nnn|DEC-nnn`（记录须在盘）。重命名视为删除名称，须引用，堵住同计数替换。verify 不改锁文件。CHG-006 proposed。
+落地：`X-tests` 进 `--quick`；锁文件 `keel/test-baseline.json`；相对 HEAD 名称消失或 skip 须 **本轮新增** worklog 行 `C-34: ref=ISS-nnn|DEC-nnn`（记录须在盘）。重命名视为删除名称，须引用，堵住同计数替换。verify 不改锁文件。CHG-006 approved（2026-08-24，kopit）。
 
 可能复发，不许只留档。

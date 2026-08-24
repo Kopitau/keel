@@ -42,7 +42,13 @@
   },
   "identities": {
     "_comment": "Humans submit APR (C-107). Agent names must not appear as APR commit authors. Fill humans after git identity is known.",
-    "humans": [],
+    "humans": [
+      {
+        "name": "kopit",
+        "email": "wwillmee@gmail.com",
+        "note": "Human APR/CHG approver (C-107). 2026-08-24."
+      }
+    ],
     "agents": [
       {
         "name": "keel-agent",

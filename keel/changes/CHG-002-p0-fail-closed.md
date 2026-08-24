@@ -1,6 +1,6 @@
 ---
 id: CHG-002
-status: proposed
+status: approved
 date: 2026-08-24
 requirements_from: v2.md
 requirements_to: v2.md
@@ -12,7 +12,7 @@ requirements_to: v2.md
 
 独立评审（`docs/review/REWORK.md`）指出实现把已确认的 fail-closed 语义做成了缺失即 skip。P0 五条（ISS-001~005）把实现拉回 C-32 / C-33 / C-103 / C-104。需求书 v2 正文不改；改的是门禁裁决。
 
-本单 **proposed**。语义本身已在 C 记录里确认；本 CHG 只记录「纠正未走变更的实现偏离」，等人用自己的 git 身份批准（C-107）。
+语义本身已在 C 记录里确认；本 CHG 只记录「纠正未走变更的实现偏离」。
 
 ## 新增
 
@@ -39,4 +39,4 @@ requirements_to: v2.md
 
 ## 批准
 
-待人类身份。
+2026-08-24 用户原话：「CHG-002～006 批准」。提交身份 kopit <wwillmee@gmail.com>（C-107）。
