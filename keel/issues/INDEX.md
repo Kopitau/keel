@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 33
+- count: 36
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -38,3 +38,6 @@
 | ISS-031 | ISS-031 recordClear 在证据不存在时静默跳过写入，review 段因命令顺序丢失 | closed | `ISS-031-recordclear-review.md` |
 | ISS-032 | ISS-032 非阻断 finding 被静默丢弃，评审无 advisory 通道 | closed | `ISS-032-finding-advisory.md` |
 | ISS-033 | ISS-033 loop clear 拒绝清零时返回 exit 0，与 ingest 不一致 | closed | `ISS-033-loop-clear-exit-0-ingest.md` |
+| ISS-034 | ISS-034 异构要求可由实施方自述满足 | wontfix | `ISS-034-z-19259ce0.md` |
+| ISS-035 | ISS-035 复现命令读自实施方可写的 ISS 文件，改写即可假清零 | wontfix | `ISS-035-iss.md` |
+| ISS-036 | ISS-036 重复调用 clear 会清空 repro_runs 审计记录 | open | `ISS-036-clear-repro-runs.md` |
