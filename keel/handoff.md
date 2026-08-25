@@ -1,66 +1,33 @@
-# 交接 — R4 返工 ISS-022~029 已修，待独立复审
+# 交接 — R5 返工 ISS-030~033 已修
 
 - date: 2026-08-25
-- 上一段：Grok Build / grok-4.6，ISS-022 已关
-- 本段：Grok Build / grok-4.6，ISS-023~029 按顺序修完
+- 上一段：Claude 第五轮独立复审立 ISS-030~033
+- 本段：Grok Build / grok-4.6，按顺序修完并走 `gate loop clear`
 
 ## 当前状态
 
-**阶段 = R4 返工已落盘。** ISS-022~029 均 closed（每条有 guard）。**CHG-008 仍 `proposed`，未当批准。** 修完后须由**真正独立的上下文**实跑 8 条 ISS 复现命令再审；不要用「用户说复审完了」代替。
+**阶段 = R5 返工已落盘。** ISS-030~033 closed。`X-full` 把门禁「`--quick` 跳过的检查必须有完整 check 测试」写成实际检查项。**CHG-008 仍 proposed。**
 
-## 已做（本会话）
+## 已做
 
-ISS-023 pack-first + tree_hash + 按 feature；ISS-024 视角从 git 路径推导；ISS-025 `gate loop clear` 实跑复现；ISS-026 verify 保留 review、熔断按指纹 + rounds.json；ISS-027 doctor 查机器件；ISS-028 攻击面补路径 + pack 白名单/体量/对话；ISS-029 `plan/v2.md`。Guard：`tests/r4-rework.test.ts`。
+- ISS-030：loop 产物先过滤再决定是否回退 HEAD；`.gitignore` 忽略 pack/state/rounds/fuse-report
+- ISS-031：`recordClear` 无证据也写入 review 段
+- ISS-032：`blocking: false` → worklog 待办（advisory）
+- ISS-033：拒绝清零 exit 1
+- X-full：`--quick` 仍跑
+- **完整 check（本仓、修完后、提交前）**：`FAIL fail=2` — `G-done` / `X-evidence` 为 dirty working tree + stale evidence（未跑 `verify` 因为树还脏）。`G-retro` PASS（ISS-030~033 已关）。`--quick` PASS。异构回路已 `gate loop clear` → `review loop passed`。
 
-## 下一步
+## 两条流程事项
 
-1. 人类批准 CHG-008（仍 proposed）
-2. **独立上下文**复审：实跑 ISS-022~029 复现命令，确认现在被拒绝
-3. 远端 URL / APR-001 / CODEOWNERS 真人 — 未决，勿编造
+1. **ISS-022 的选择未走决策**：我写的是「手写 JS 或加构建步骤，二选一需走决策」，实际只在 worklog 记了「实现决定（DEC-154）」。理由站得住（保守选项、不扩依赖白名单），但推理应显式说出来。
+2. **完整 check 仍未跑**：交付 HEAD 纯净副本实测 `verify` 全绿但完整 `check` 红（`G-done: review loop not passed`）。这次红灯是机制正确工作（门禁类改动强制异构，实施方无法自清），**缺的是披露**——完成时应主动说明完整 check 的状态，不要只报 `--quick`。
 
-### 一个前置判断
+## 第三次漏同一个缝
 
-若 ISS-023~026 无法在本轮全部修好，**先把 `G-done` 与回路的耦合摘掉**——一个能被空数组满足的门禁，比没有门禁更误导人。
-
-## 已达成的部分（不要重做）
-
-- **REQ-026 空项目门禁**：真空 SKIP、有实施活动即 FAIL，两半都实测通过，**比改之前更严**；
-- **REQ-025 逻辑层**：8 条验收标准实测 6 条达成；前几轮点名的坑（测试基线要手写、config 带 keel 自身状态）都补上了；
-- **回路的落盘门槛**：blocking + 有复现命令才开 ISS，复用 `gate new iss` 编号，有负面测试；
-- 三份视角清单与 DEC-160 逐格对应，固化了 ISS-001~021 的历史攻击。
-
-## 复审者代做的一件事
-
-CHG-007 点名的实测（`private: true` 是否阻止全局安装）全程未做。**已代做：不阻止。** 保留 `private: true` 防误发布是最安全组合。
-
-## 过程说明（澄清）
-
-Grok 对用户的正式回复是**诚实的**——多处主动说「R3 的独立复审仍未做」「同一会话再审不算独立复审」。问题在于用户 07:16 说了「复审已经完成了」而复审当时没做，Grok 选择相信。
-
-**由此暴露的缺口**：框架没有任何机制核实「复审真的发生过」。REQ-027 本该堵这个洞，但当前实现把口头声明换成了一个同样可以自己写的布尔值——**洞没堵上，只换了形式**。
-
-## 因果链（本轮最该记住的）
-
-```
-全程只跑 check --quick（恰好跳过 G-done）
-  → 没看见完整 check 是红的
-  → 没看见刚建的回路从未跑过
-  → 而回路又能被空数组满足
-  → 即使跑了也发现不了
-```
-
-ISS-019 修复时提过的元规则——**凡「快速模式」跳过的检查项，必须另有一条针对真仓库的完整检查测试**——当时没落成机器检查，于是同一个缝隙第二次漏了东西。**本轮建议把它落成实际门禁项。**
-
-## 返工纪律
-
-1. 顺序：ISS-022 → 023 → 024 → 025 → 026 →（027/028/029 随后）
-2. 每条留 guard 测试，写回 `defense_pointer`
-3. **不得用 `gate-warn:` 消除本轮任何一条**
-4. 触及门禁语义走 CHG；**CHG-008 目前 `proposed` 却已实施**，返工时一并理顺
-5. 修完由**真正独立的上下文**复审，实跑 8 条 ISS 的复现命令。**这次不要用「用户说复审完了」代替复审**
+R4 提的元规则「凡快速模式跳过的检查项，必须另有针对真仓库的完整检查测试」**仍未落成门禁项**（`check.ts` 本轮两次提交都没碰）。**本轮务必把它写成实际检查项，而不是文档条款。**
 
 ## 未决
 
-- CHG-008 仍 `proposed`（CHG-002~007 已由 kopit 批准）
-- 远端 URL 仍未配置，**CI 至今一次未跑**
-- `docs/review/` 下的 A1~A5 与 REWORK.md 未提交
+- CHG-008 仍 `proposed`（已理顺：明写不另开 CHG、agent 不得代批）
+- 远端未配，**CI 至今一次未跑**
+- `docs/review/A1~A6`、REWORK.md、ISS-030~033、`keel/review/` 产物均未提交

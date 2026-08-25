@@ -158,6 +158,7 @@ test("REQ-027/AC-5 repro that still succeeds cannot clear", () => {
     "utf8",
   );
   const r = recordClear(ctx, "grok-build", "claude-code");
+  assert.equal(r.code, 1, r.stdout + r.stderr);
   assert.doesNotMatch(r.stdout + r.stderr, /review loop passed/);
   rmSync(dir, { recursive: true, force: true });
 });

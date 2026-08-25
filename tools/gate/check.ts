@@ -35,6 +35,17 @@ function skip(id: string, summary: string): CheckItem {
   return { id, verdict: "skip", summary };
 }
 
+/** Check ids that `--quick` does not run. Each must be named in a full-check test (R5 / ISS-019). */
+export const QUICK_SKIPPED_IDS = [
+  "G-done",
+  "G-merge",
+  "G-retro",
+  "X-evidence",
+  "X-types",
+  "X-hooks",
+  "X-apr",
+];
+
 export function liveClarifications(text: string): number {
   let n = 0;
   for (const line of text.split(/\n/)) {
@@ -573,6 +584,32 @@ function xTrace(ctx: Ctx): CheckItem {
   return pass("X-trace", "claimed acceptance criteria covered in tests/");
 }
 
+function xFull(ctx: Ctx): CheckItem {
+  const testsDir = join(ctx.root, "tests");
+  if (!existsSync(testsDir)) return skip("X-full", "no tests/");
+  const files = listFiles(testsDir).filter((f) => /\.(ts|js|mjs|cjs)$/.test(f));
+  const blob = files.map((f) => readFileSync(f, "utf8")).join("\n");
+  if (!blob.includes("runCheck")) {
+    return skip("X-full", "tests/ do not invoke runCheck (consumer project)");
+  }
+  if (!/runCheck\s*\(\s*[^,]+,\s*\[\s*\]\s*\)/.test(blob)) {
+    return fail(
+      "X-full",
+      "no test runs full gate check (not --quick)",
+      "add runCheck(ctx, []) covering ISS-019 meta-rule / R5",
+    );
+  }
+  const missing = QUICK_SKIPPED_IDS.filter((id) => !blob.includes(id));
+  if (missing.length > 0) {
+    return fail(
+      "X-full",
+      `quick-skipped checks never named in tests/: ${missing.join(", ")}`,
+      "assert each --quick-skipped id in a full-check test (R5 / ISS-019)",
+    );
+  }
+  return pass("X-full", "quick-skipped checks have full-check coverage in tests/");
+}
+
 function xTests(ctx: Ctx): CheckItem {
   const gaps = testBaselineGaps(ctx);
   if (gaps.length > 0) {
@@ -592,7 +629,7 @@ function xTests(ctx: Ctx): CheckItem {
   return pass("X-tests", `baseline ${n} names; skip/delete cited or unchanged (C-34)`);
 }
 
-const NO_WAIVE = new Set(["X-evidence", "X-types", "X-trace", "X-tests", "G-done", "G-merge", "X-bypass"]);
+const NO_WAIVE = new Set(["X-evidence", "X-types", "X-trace", "X-tests", "X-full", "G-done", "G-merge", "X-bypass"]);
 
 function recordRefExists(ctx: Ctx, ref: string): boolean {
   if (ref.startsWith("ISS-")) {
@@ -658,6 +695,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(xKnowledge(ctx));
   items.push(xTrace(ctx));
   items.push(xTests(ctx));
+  items.push(xFull(ctx));
   items.push(xOwners(ctx));
   if (!quick) {
     items.push(gDone(ctx));

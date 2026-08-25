@@ -4,7 +4,7 @@
   "project_name": "keel",
   "records_dir": "keel",
   "enforcement_tier": "local",
-  "wave": "R4-rework",
+  "wave": "R5-rework",
   "keel_version": "0.7.0",
   "_comment_tier": "github | gitee | local. Remotes not configured in W1; local = hooks + gate-before-merge + hash APR. Honest label: deters mistakes, not malice (C-48).",
   "profiles": {

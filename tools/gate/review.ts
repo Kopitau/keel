@@ -29,6 +29,7 @@ export const CHECK_IDS = [
   "X-knowledge",
   "X-trace",
   "X-tests",
+  "X-full",
   "X-apr",
   "X-owners",
 ] as const;

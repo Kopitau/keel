@@ -208,6 +208,7 @@ test("ISS-025 gate loop clear refuses when the repro still exits 0", () => {
     paths: ["README.md"],
   });
   const r = runLoop(makeCtx(dir), ["clear", "--implementer", "grok-build", "--reviewer", "claude-code"]);
+  assert.equal(r.code, 1, r.stdout + r.stderr);
   assert.doesNotMatch(r.stdout + r.stderr, /review loop passed/);
   const st = readLoopState(makeCtx(dir));
   assert.ok(st && st.status !== "passed");

@@ -45,6 +45,7 @@ export type LoopState = {
   implementer_harness: string;
   reviewer_harness: string;
   blocking_iss: string[];
+  advisory: string[];
   iss_fp: { [iss: string]: string };
   rounds_on: { [fp: string]: number };
   fuse_threshold: number;
@@ -123,16 +124,16 @@ export function collectChangedPaths(ctx: Ctx): string[] {
   const add = (out: string): void => {
     for (const line of out.split(/\n/)) {
       const s = line.trim().replace(/\\/g, "/");
-      if (s) names.add(s);
+      if (s && !LOOP_ARTIFACT_RE.test(s)) names.add(s);
     }
   };
   add(git(ctx, ["diff", "--name-only", "HEAD"]).stdout);
   add(git(ctx, ["diff", "--name-only", "--cached"]).stdout);
   add(git(ctx, ["ls-files", "--others", "--exclude-standard"]).stdout);
   if (names.size === 0 && gitHead(ctx)) {
-    add(git(ctx, ["diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"]).stdout);
+    add(git(ctx, ["diff-tree", "--no-commit-id", "--name-only", "-r", "--root", "HEAD"]).stdout);
   }
-  return [...names].filter((p) => !LOOP_ARTIFACT_RE.test(p)).sort();
+  return [...names].sort();
 }
 
 export function derivedLens(state: LoopState, ctx: Ctx): Lens {
@@ -229,13 +230,22 @@ function findIssByFingerprint(ctx: Ctx, fp: string): string | null {
   return null;
 }
 
+function appendWorklog(ctx: Ctx, worklogRel: string, line: string): void {
+  const log = join(ctx.root, worklogRel);
+  mkdirSync(dirname(log), { recursive: true });
+  const text = `\n${line}\n`;
+  if (existsSync(log)) appendFileSync(log, text, "utf8");
+  else writeFileSync(log, `# worklog\n${text}`, "utf8");
+}
+
 export function fileFindings(
   ctx: Ctx,
   findings: Finding[],
   worklogRel: string,
-): { iss: string[]; deferred: string[]; fps: { [iss: string]: string } } {
+): { iss: string[]; deferred: string[]; advisory: string[]; fps: { [iss: string]: string } } {
   const iss: string[] = [];
   const deferred: string[] = [];
+  const advisory: string[] = [];
   const fps: { [iss: string]: string } = {};
   for (const f of findings) {
     if (f.blocking && f.repro.trim()) {
@@ -265,14 +275,14 @@ export function fileFindings(
       }
     } else if (f.blocking) {
       deferred.push(f.title);
-      const log = join(ctx.root, worklogRel);
-      mkdirSync(dirname(log), { recursive: true });
-      const line = `\n- 待核实（无复现命令，未开 ISS）：${f.title}\n`;
-      if (existsSync(log)) appendFileSync(log, line, "utf8");
-      else writeFileSync(log, `# worklog\n${line}`, "utf8");
+      appendWorklog(ctx, worklogRel, `- 待核实（无复现命令，未开 ISS）：${f.title}`);
+    } else {
+      advisory.push(f.title);
+      const extra = f.repro.trim() ? ` repro=${f.repro.trim()}` : "";
+      appendWorklog(ctx, worklogRel, `- 待办（advisory）：${f.title}${extra}`);
     }
   }
-  return { iss, deferred, fps };
+  return { iss, deferred, advisory, fps };
 }
 
 export function reviewClearGaps(rev: {
@@ -425,6 +435,7 @@ export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState
     implementer_harness: impl,
     reviewer_harness: reviewer,
     blocking_iss: [],
+    advisory: [],
     iss_fp: {},
     rounds_on: {},
     fuse_threshold: FUSE_THRESHOLD,
@@ -502,7 +513,7 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     const lens = derivedLens(st, ctx);
     const het = needsHeterogeneous(lens);
     return ok(
-      `review loop: ${st.status} round=${st.round} feature=${st.feature || "-"} lens=${lens} het_required=${het} blocking=${st.blocking_iss.join(",") || "-"}\n`,
+      `review loop: ${st.status} round=${st.round} feature=${st.feature || "-"} lens=${lens} het_required=${het} blocking=${st.blocking_iss.join(",") || "-"} advisory=${(st.advisory ?? []).length}\n`,
     );
   }
   if (sub === "pack") {
@@ -572,13 +583,16 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       implementer_harness: impl,
       reviewer_harness: reviewer,
       blocking_iss: out.iss,
+      advisory: [...new Set([...(st.advisory ?? []), ...out.advisory])],
       iss_fp: { ...st.iss_fp, ...out.fps },
       lens,
       tree_hash: gitWriteTree(ctx),
       status: out.iss.length > 0 ? "repairing" : "passed",
     };
     writeLoopState(ctx, next);
-    return ok(`filed iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} status=${next.status}\n`);
+    return ok(
+      `filed iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} advisory=${out.advisory.length} status=${next.status}\n`,
+    );
   }
   if (sub === "clear") {
     const impl = flag(args, "implementer") || process.env.KEEL_HARNESS || "unknown";
@@ -642,8 +656,8 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
     repro_runs: runs,
     round: next.round,
   };
-  const ev = readEvidence(ctx);
-  if (ev) writeEvidence(ctx, attachReview(ev, review));
+  const prev = readEvidence(ctx);
+  writeEvidence(ctx, attachReview(prev ?? stubEvidenceBeforeVerify(), review));
   if (next.status === "fused") {
     writeFileSync(join(reviewDir(ctx), "fuse-report.md"), fuseReport(next), "utf8");
     return fail(`fused after ${next.round} rounds\n${fuseReport(next)}`);
@@ -653,5 +667,22 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
     if (gaps.length) return fail(gaps.join("; ") + "\n");
     return ok("review loop passed\n");
   }
-  return ok(`review loop ${next.status} still_open=${still.join(",")}\n`);
+  return fail(`review loop ${next.status} still_open=${still.join(",")}\n`);
+}
+
+function stubEvidenceBeforeVerify(): Evidence {
+  return {
+    command: "node --test",
+    exit_code: 1,
+    started: "",
+    finished: new Date().toISOString(),
+    git_commit: "",
+    tree_hash: "",
+    dirty: true,
+    report_hash: "",
+    counts: { passed: 0, failed: 0, skipped: 0 },
+    req_coverage: {},
+    stdout_tail_2kb: "review attached before verify (ISS-031)",
+    actor: { harness: "unset", model: "unset", session: "unset" },
+  };
 }

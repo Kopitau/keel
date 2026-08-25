@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 29
+- count: 33
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -34,3 +34,7 @@
 | ISS-027 | ISS-027 doctor 对已卸载/半装的项目报 ok | closed | `ISS-027-doctor-ok.md` |
 | ISS-028 | ISS-028 攻击面分类漏掉关键路径，输入裁剪只挡字面量键名 | closed | `ISS-028-z-171e2c39.md` |
 | ISS-029 | ISS-029 f07-review 的功能规划仍写「异构复审可选、默认关」，与 DEC-159 相反 | closed | `ISS-029-f07-review-dec-159.md` |
+| ISS-030 | ISS-030 pack 的回退判定被回路自身产物堵死，提交后评审拿到空包且视角降级 | closed | `ISS-030-pack.md` |
+| ISS-031 | ISS-031 recordClear 在证据不存在时静默跳过写入，review 段因命令顺序丢失 | closed | `ISS-031-recordclear-review.md` |
+| ISS-032 | ISS-032 非阻断 finding 被静默丢弃，评审无 advisory 通道 | closed | `ISS-032-finding-advisory.md` |
+| ISS-033 | ISS-033 loop clear 拒绝清零时返回 exit 0，与 ingest 不一致 | closed | `ISS-033-loop-clear-exit-0-ingest.md` |

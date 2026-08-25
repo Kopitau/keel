@@ -67,3 +67,5 @@ CHG-007 明文要求「实现前需实测：`private: true` 是否阻止 `npm i 
 ## 闭环选择与理由
 
 **回归测试**：`tests/chg007-installer.test.ts` 断言 `bin/` 与 `tools/cli/` 为纯 JS（从不 `import .ts`）、去掉 `isMain` 静默跳过；`npm pack` → prefix 安装 → `keel init` 成功且无 `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`。安装器只跑 JS；复制进项目的 `tools/gate/*.ts` 在项目目录执行，DEC-151 仍成立。
+
+**为何选手写 JS 而不是加构建步骤**（R5 指出应显式写出）：加打包器会新增 runtime/devDependency，超出 DEC-154 白名单（只允许 `typescript`）。手写 `bin/` + `tools/cli/` 的纯 JS 是保守选项，不扩依赖、不改 DEC-151 的「项目内 `.ts` 免构建」。未另立 DEC——约束已在 DEC-154/151/157，这是实现侧的保守取舍。

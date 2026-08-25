@@ -1,5 +1,11 @@
 # worklog — F7 f07-review
 
+## 2026-08-25（R5 ISS-030~033）
+
+- 进度：pack 回退先滤 loop 产物；clear 必写 review；advisory 通道；clear 拒绝 exit 1；`X-full` 落成 `--quick` 也会跑的检查。Guard：`tests/r5-rework.test.ts`。
+- 问题链接：ISS-030 ISS-031 ISS-032 ISS-033
+- C-34: ref=ISS-030 added r5-rework tests (grow baseline)
+
 ## 2026-08-25（R4 ISS-023~029）
 
 - 进度：pack-first、tree_hash、真实路径 lens、`gate loop clear` 实跑复现、verify 保留 review、熔断指纹 + rounds.json、doctor 机器件、ATTACK_RE 补漏、plan/v2.md。Guard 在 `tests/r4-rework.test.ts`。
