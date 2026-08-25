@@ -6,6 +6,17 @@
   "bin": {
     "keel": "./bin/keel.js"
   },
+  "files": [
+    "bin",
+    "tools",
+    "keel/templates",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CONTEXT.md",
+    ".githooks",
+    ".gitattributes",
+    ".agents/skills"
+  ],
   "engines": {
     "node": ">=22.18.0"
   },

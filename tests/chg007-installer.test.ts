@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -18,8 +20,8 @@ import { hasImplementationActivity, runCheck } from "../tools/gate/check.ts";
 import { runVerify } from "../tools/gate/verify.ts";
 import { gitIndexMode } from "../tools/gate/execmode.ts";
 import { writeTestBaseline, worktreeBaseline } from "../tools/gate/testbase.ts";
-import { runCli } from "../tools/cli/main.ts";
-import { nodeVersionFinding } from "../tools/cli/doctor.ts";
+import { runCli } from "../tools/cli/main.js";
+import { nodeVersionFinding } from "../tools/cli/doctor.js";
 import { EXEC_REQUIRED } from "../tools/gate/execmode.ts";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -47,6 +49,62 @@ test("REQ-025/AC-3 bin/keel.js is plain JS and refuses old Node with a human mes
   assert.equal(nodeTooOld("22.18.0"), false);
   assert.match(refuseOldNodeMessage("18.0.0"), /22\.18\.0/);
   assert.doesNotMatch(refuseOldNodeMessage("18.0.0"), /SyntaxError/);
+});
+
+test("REQ-025 ISS-022 installer never imports TypeScript and is not a silent no-op", () => {
+  const src = readFileSync(join(repo, "bin", "keel.js"), "utf8");
+  assert.doesNotMatch(src, /\.ts['"]/);
+  assert.doesNotMatch(src, /isMain/);
+  for (const n of readdirSync(join(repo, "tools", "cli"))) {
+    if (!n.endsWith(".js")) continue;
+    const t = readFileSync(join(repo, "tools", "cli", n), "utf8");
+    assert.doesNotMatch(t, /from ['"][^'"]+\.ts['"]/, n);
+    assert.doesNotMatch(t, /import\([^)]*\.ts/, n);
+  }
+  const help = spawnSync(process.execPath, [join(repo, "bin", "keel.js"), "--help"], {
+    encoding: "utf8",
+  });
+  assert.equal(help.status, 0, help.stderr);
+  assert.match(help.stdout, /usage: keel/);
+});
+
+test("REQ-025 ISS-022 npm pack then prefix install then keel init", () => {
+  const packDir = mkdtempSync(join(tmpdir(), "keel-c7-pack-"));
+  const prefix = mkdtempSync(join(tmpdir(), "keel-c7-pref-"));
+  const proj = mkdtempSync(join(tmpdir(), "keel-c7-proj-"));
+  git(proj, ["init"]);
+  git(proj, ["config", "user.email", "c7@example.com"]);
+  git(proj, ["config", "user.name", "c7"]);
+  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+  const packed = spawnSync(npm, ["pack", "--pack-destination", packDir], {
+    encoding: "utf8",
+    cwd: repo,
+    timeout: 120000,
+    shell: process.platform === "win32",
+  });
+  assert.equal(packed.status, 0, (packed.stdout || "") + (packed.stderr || "") + " status=" + String(packed.status));
+  const tgz = readdirSync(packDir).find((n) => n.endsWith(".tgz"));
+  assert.ok(tgz, packed.stdout);
+  const inst = spawnSync(npm, ["i", "--prefix", prefix, join(packDir, tgz ?? "")], {
+    encoding: "utf8",
+    timeout: 120000,
+    shell: process.platform === "win32",
+  });
+  assert.equal(inst.status, 0, inst.stdout + inst.stderr);
+  const bin = join(prefix, "node_modules", "keel", "bin", "keel.js");
+  assert.equal(existsSync(bin), true, "packed bin missing");
+  const r = spawnSync(
+    process.execPath,
+    [bin, "init", "--name", "packed", "--tier", "local"],
+    { encoding: "utf8", cwd: proj, timeout: 120000 },
+  );
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stderr + r.stdout, /ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING/);
+  assert.equal(existsSync(join(proj, "keel", "config.json")), true);
+  assert.match(r.stdout, /SKIP G-req/);
+  rmSync(packDir, { recursive: true, force: true });
+  rmSync(prefix, { recursive: true, force: true });
+  rmSync(proj, { recursive: true, force: true });
 });
 
 test("REQ-025 init↔testbase writeTestBaseline contract", () => {

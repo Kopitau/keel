@@ -89,6 +89,8 @@
     "REQ-024 DEC-150 Node version compare",
     "REQ-024 P2-6 DEC-148 LF fixture has a golden digest",
     "REQ-024 P2-8 casefold collisions are detected on path lists (git index)",
+    "REQ-025 ISS-022 installer never imports TypeScript and is not a silent no-op",
+    "REQ-025 ISS-022 npm pack then prefix install then keel init",
     "REQ-025 doctor flags foreign framework config, missing exec bits, and old Node",
     "REQ-025 init↔testbase writeTestBaseline contract",
     "REQ-025/AC-1 keel init empty git repo: G-req and G-plan SKIP, check --quick green",

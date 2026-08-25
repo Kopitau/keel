@@ -2,16 +2,14 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
-import { fail, ok, type CmdResult } from "../gate/result.ts";
-import { installerRoot } from "./layout.ts";
-import { initFromArgs } from "./init.ts";
-import { runUpdate } from "./update.ts";
-import { runUninstall } from "./uninstall.ts";
-import { runDoctor } from "./doctor.ts";
+import { fail, ok } from "./result.js";
+import { installerRoot } from "./layout.js";
+import { initFromArgs } from "./init.js";
+import { runUpdate } from "./update.js";
+import { runUninstall } from "./uninstall.js";
+import { runDoctor } from "./doctor.js";
 
-export type CliOpts = { cwd?: string; source?: string };
-
-function help(): CmdResult {
+function help() {
   return ok(
     [
       "usage: keel <command>",
@@ -26,12 +24,12 @@ function help(): CmdResult {
   );
 }
 
-function forward(cwd: string, args: string[]): CmdResult {
+function forward(cwd, args) {
   const gate = join(cwd, "tools", "gate", "gate.ts");
   if (!existsSync(gate)) {
     return fail("not a keel project (missing tools/gate/gate.ts); run keel init\n");
   }
-  const r = spawnSync(process.execPath, [gate, ...args], { encoding: "utf8", cwd });
+  const r = spawnSync(process.execPath, [gate].concat(args), { encoding: "utf8", cwd: cwd });
   return {
     code: r.status ?? 1,
     stdout: r.stdout ?? "",
@@ -39,10 +37,11 @@ function forward(cwd: string, args: string[]): CmdResult {
   };
 }
 
-export function runCli(args: string[], opts: CliOpts = {}): CmdResult {
-  const cwd = opts.cwd ?? process.cwd();
-  const source = opts.source ?? installerRoot(import.meta.url);
-  const cmd = args[0] ?? "";
+export function runCli(args, opts) {
+  opts = opts || {};
+  const cwd = opts.cwd || process.cwd();
+  const source = opts.source || installerRoot(import.meta.url);
+  const cmd = args[0] || "";
   const rest = args.slice(1);
   if (!cmd || cmd === "-h" || cmd === "--help" || cmd === "help") return help();
   if (cmd === "init") return initFromArgs(cwd, source, rest);
