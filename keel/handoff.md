@@ -19,9 +19,18 @@
 
 **能跑的**：全局安装器（两条安装路径实测通过）、门禁与证据链（树哈希绑定、测试基线、逐条验收标准追溯）、评审回路（pack→ingest→clear，实际执行复现命令）、跨平台哈希规范化、记录体系与自举。
 
+## 远端接入（2026-08-25 进行中）
+
+- 远端已配：`https://github.com/Kopitau/keel.git`（**私有**）
+- 执法档：`local` → **`github`**（config.json）
+- CODEOWNERS：占位符 → `keel/approvals/ @Kopitau`（`X-owners` 已由 SKIP 转为实际 PASS）
+- **待用户完成**：① `git push -u origin master`（需交互式凭据，agent 环境无 TTY）；② GitHub 网页开分支保护：Require PR + Require status check `gate` + Require Code Owner review
+
+**首次 CI 预期是红的，这正是价值**：`G-done: review loop not passed`（回路状态 packed）+ **Mac/Linux 上从未验证过的跨平台行为**（哈希一致性、可执行位、路径）。CHG-001 自陈的最高风险项至今只有 Windows 单点自测，第一次 CI 就是它的首次真实检验。
+
 ## 三件未完成的实事
 
-1. **CI 一次都没跑过**。无远端；三平台 × 双 Node 的工作流至今只是文件。**CHG-001 自陈的最高风险项——跨平台哈希一致性——只有 Windows 单点自测。**
+1. **CI 仍未跑过**（远端刚配、尚未 push）。三平台 × 双 Node 的工作流至今只是文件。
 2. **只自举过，未在真实业务项目上走完整流程**（需求→调研→方案→规划→实现→验收→合并→复盘）。
 3. **CHG-008 仍 proposed 却已实施**；ISS-036 待办。
 

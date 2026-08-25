@@ -3,13 +3,15 @@
   "schema_version": 1,
   "project_name": "keel",
   "records_dir": "keel",
-  "enforcement_tier": "local",
+  "enforcement_tier": "github",
   "wave": "R5-rework",
   "keel_version": "0.7.0",
-  "_comment_tier": "github | gitee | local. Remotes not configured in W1; local = hooks + gate-before-merge + hash APR. Honest label: deters mistakes, not malice (C-48).",
+  "_comment_tier": "github | gitee | local. 2026-08-25 配置远端 github.com/Kopitau/keel（私有）后升到 github 档：分支保护 + required check + 审批目录 CODEOWNERS。权威执法在 CI 复算（C-45/C-104）。",
   "profiles": {
     "_comment": "Test profiles (C-126/C-128). Gate verify (W3) selects by touched paths.",
-    "active": ["keel-gate"],
+    "active": [
+      "keel-gate"
+    ],
     "keel-gate": {
       "language": "typescript",
       "runtime": "node",
@@ -59,9 +61,21 @@
     ]
   },
   "platforms": {
-    "primary": ["claude-code", "codex", "opencode", "grok-build", "deepseek-harness"],
-    "compatible": ["pi"],
-    "os_matrix": ["windows", "macos", "linux"],
+    "primary": [
+      "claude-code",
+      "codex",
+      "opencode",
+      "grok-build",
+      "deepseek-harness"
+    ],
+    "compatible": [
+      "pi"
+    ],
+    "os_matrix": [
+      "windows",
+      "macos",
+      "linux"
+    ],
     "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001)."
   },
   "budget": {

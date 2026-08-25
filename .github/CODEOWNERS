@@ -1,4 +1,3 @@
 # C-108: approvals directory requires a human review on GitHub.
-# Replace the placeholder with real GitHub usernames before turning on
-# branch protection. An unmatched owner does not enforce anything.
-# keel/approvals/ @YOUR-GITHUB-USERNAME
+# Effective once branch protection requires Code Owner review.
+keel/approvals/ @Kopitau
