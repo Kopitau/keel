@@ -1,8 +1,8 @@
 ---
 id: ISS-026
-status: open
+status: closed
 defense_kind: "契约测试"
-defense_pointer: ""
+defense_pointer: "tests/r4-rework.test.ts (ISS-026); tools/gate/verify.ts review; tools/gate/reviewloop.ts bumpRounds/rounds.json"
 feature: f07-review
 fingerprint: "review-field-wiped-by-verify"
 date: 2026-08-25
@@ -51,3 +51,5 @@ grep -rn "bumpRounds" tools/gate/    # 唯一调用方是不可达的 recordClea
 ## 闭环选择与理由
 
 **契约测试**：断言「写入 review 段 → 跑 verify → review 段仍存在且内容一致」；熔断用稳定键的单元测试 + 三轮不清零必然触发的端到端测试。
+
+落地：`verify.ts` 重建 Evidence 时保留 `prev?.review`；`bumpRounds` 以 `iss_fp` 指纹为键；`keel/review/rounds.json` 在删掉 `state.json` 后仍累计。Guard：`tests/r4-rework.test.ts` ISS-026。

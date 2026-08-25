@@ -62,7 +62,30 @@ export function runDoctor(cwd, source, nodeVer) {
       findings.push({ code: "config", summary: "keel/config.json is not valid JSON" });
     }
   }
+  if (!existsSync(join(cwd, "tools", "gate", "gate.ts"))) {
+    findings.push({ code: "missing-gate", summary: "tools/gate/gate.ts missing; project is uninstalled or half-installed" });
+  }
+  const hooks = [".githooks/pre-commit", ".githooks/pre-push", ".githooks/prepare-commit-msg"];
+  for (let h = 0; h < hooks.length; h++) {
+    if (!existsSync(join(cwd, hooks[h]))) {
+      findings.push({ code: "missing-hooks", summary: hooks[h] + " missing" });
+    }
+  }
+  if (!existsSync(join(cwd, "keel", "test-baseline.json"))) {
+    findings.push({ code: "missing-baseline", summary: "keel/test-baseline.json missing" });
+  }
+  if (!existsSync(join(cwd, ".claude", "skills"))) {
+    findings.push({ code: "missing-skills", summary: ".claude/skills missing; run gate sync" });
+  }
   if (existsSync(join(cwd, ".git"))) {
+    const hp = spawnSync("git", ["config", "core.hooksPath"], { encoding: "utf8", cwd: cwd });
+    const hooksPath = (hp.stdout || "").trim().replace(/\\/g, "/");
+    if (hooksPath !== ".githooks" && !hooksPath.endsWith("/.githooks")) {
+      findings.push({
+        code: "hooksPath",
+        summary: "core.hooksPath=" + (hooksPath || "(unset)") + "; want .githooks",
+      });
+    }
     const gaps = execBitGaps(cwd);
     if (gaps.length > 0) {
       findings.push({ code: "execbit", summary: gaps.join("; ") });

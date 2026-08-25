@@ -1,8 +1,8 @@
 ---
 id: ISS-023
-status: open
+status: closed
 defense_kind: "门禁逻辑修订+回归测试"
-defense_pointer: ""
+defense_pointer: "tests/r4-rework.test.ts (ISS-023); tools/gate/reviewloop.ts runLoop ingest/pack"
 feature: f07-review
 fingerprint: "review-loop-passed-too-cheap"
 date: 2026-08-25
@@ -52,3 +52,5 @@ CHG-008 实施后**全程只跑 `--quick`**（5 次，恰好跳过 G-done），`
 ## 闭环选择与理由
 
 **回归测试（负面用例）**：① 空数组 ingest 后 `loop status` **不得**为 passed；② passed 之后修改任意源文件 → `G-done` 必须重新失败；③ 一个 feature 的 passed 不得使另一个 feature 通过。
+
+落地：`gate loop ingest` 无 `pack_hash` / 无 `pack.json` 即拒绝；passed 绑定 `tree_hash` 与 pack 哈希；`loop.feature` 不为空时不覆盖其它 feature 的 summary。Guard：`tests/r4-rework.test.ts` ISS-023 三条。

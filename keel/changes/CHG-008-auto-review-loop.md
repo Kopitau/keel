@@ -84,6 +84,10 @@ R3（ISS-021 已修）+ CHG-007 实施
    CHG-008 实施（自动回路接管后续）
 ```
 
+## R4 返工（ISS-023~029）
+
+实施时回路曾可被空 ingest 置 passed，且不绑树、不实跑复现。R4 把同一张变更单补全为：pack-first、tree_hash、路径推导 lens、`gate loop clear` 实跑、verify 保留 `review`、熔断按指纹、doctor 机器件、攻击面补漏、`f07-review/plan/v2.md`。**不另开 CHG**（未改 REQ 正文）。**本单 status 仍为 proposed**，agent 不得代批。
+
 ## 批准
 
-**status: proposed**。需求与两条决策已由用户在对话中逐条确认（DEC-159/160 载有原话），尚未取得人类 git 身份的哈希审批（C-107）。与 CHG-002~007 一并待批。
+**status: proposed**。需求与两条决策已由用户在对话中逐条确认（DEC-159/160 载有原话），尚未取得人类 git 身份的哈希审批（C-107）。CHG-002~007 已由 kopit 批准；本单仍待批。

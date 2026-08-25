@@ -27,10 +27,10 @@
 | ISS-020 | ISS-020 X-trace 仍是逐需求对账，未落实 C-32 的「按验收标准逐条对账」 | closed | `ISS-020-x-trace.md` |
 | ISS-021 | ISS-021 删除或跳过测试无人检测，可让门禁对已破坏的核心机制全绿 | closed | `ISS-021-z-546eabd4.md` |
 | ISS-022 | ISS-022 全局安装完全不可用：两条安装路径都是坏的 | closed | `ISS-022-node-modules-junction.md` |
-| ISS-023 | ISS-023 评审回路可被一条空数组命令置为 passed，且该状态不绑代码树 | open | `ISS-023-passed.md` |
-| ISS-024 | ISS-024 视角分类与异构强制 100% 来自自述，REQ-028 被实现反了 | open | `ISS-024-z-648bd265.md` |
-| ISS-025 | ISS-025 回路从不实跑复现命令，且清零路径没有 CLI 入口 | open | `ISS-025-z-cf82831e.md` |
-| ISS-026 | ISS-026 证据里的 review 字段被 gate verify 抹掉，熔断计数永不触发 | open | `ISS-026-review-verify.md` |
-| ISS-027 | ISS-027 doctor 对已卸载/半装的项目报 ok | open | `ISS-027-doctor-ok.md` |
-| ISS-028 | ISS-028 攻击面分类漏掉关键路径，输入裁剪只挡字面量键名 | open | `ISS-028-z-171e2c39.md` |
-| ISS-029 | ISS-029 f07-review 的功能规划仍写「异构复审可选、默认关」，与 DEC-159 相反 | open | `ISS-029-f07-review-dec-159.md` |
+| ISS-023 | ISS-023 评审回路可被一条空数组命令置为 passed，且该状态不绑代码树 | closed | `ISS-023-passed.md` |
+| ISS-024 | ISS-024 视角分类与异构强制 100% 来自自述，REQ-028 被实现反了 | closed | `ISS-024-z-648bd265.md` |
+| ISS-025 | ISS-025 回路从不实跑复现命令，且清零路径没有 CLI 入口 | closed | `ISS-025-z-cf82831e.md` |
+| ISS-026 | ISS-026 证据里的 review 字段被 gate verify 抹掉，熔断计数永不触发 | closed | `ISS-026-review-verify.md` |
+| ISS-027 | ISS-027 doctor 对已卸载/半装的项目报 ok | closed | `ISS-027-doctor-ok.md` |
+| ISS-028 | ISS-028 攻击面分类漏掉关键路径，输入裁剪只挡字面量键名 | closed | `ISS-028-z-171e2c39.md` |
+| ISS-029 | ISS-029 f07-review 的功能规划仍写「异构复审可选、默认关」，与 DEC-159 相反 | closed | `ISS-029-f07-review-dec-159.md` |

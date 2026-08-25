@@ -18,6 +18,7 @@ import {
   fileFindings,
   heterogeneousOk,
   needsHeterogeneous,
+  packBodyHash,
   recordClear,
   validatePack,
   writeLoopState,
@@ -53,8 +54,8 @@ test("REQ-028/AC-2 robustness lens for core feature samples", () => {
   assert.equal(needsHeterogeneous("robustness"), false);
 });
 
-test("REQ-028/AC-3 auxiliary lens for skills and records", () => {
-  assert.equal(classifyLens([".agents/skills/k-review/SKILL.md"]), "requirements");
+test("REQ-028/AC-3 auxiliary lens for records; skills are attack-lens (ISS-028)", () => {
+  assert.equal(classifyLens([".agents/skills/k-review/SKILL.md"]), "attack");
   assert.equal(classifyLens(["keel/OVERVIEW.md"]), "requirements");
 });
 
@@ -148,13 +149,15 @@ test("REQ-027/AC-5 repro that still succeeds cannot clear", () => {
   const ctx = makeCtx(dir);
   const st = emptyLoop("attack", "grok-build", "claude-code");
   st.blocking_iss = ["ISS-001"];
+  st.pack_hash = "pack";
   writeLoopState(ctx, st);
-  const r = recordClear(
-    ctx,
-    [{ iss: "ISS-001", command: "echo ok", exit_code: 0, refused: false }],
-    "grok-build",
-    "claude-code",
+  mkdirSync(join(dir, "keel", "issues"), { recursive: true });
+  writeFileSync(
+    join(dir, "keel", "issues", "ISS-001.md"),
+    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 0\n```\n",
+    "utf8",
   );
+  const r = recordClear(ctx, "grok-build", "claude-code");
   assert.doesNotMatch(r.stdout + r.stderr, /review loop passed/);
   rmSync(dir, { recursive: true, force: true });
 });
@@ -172,11 +175,17 @@ test("REQ-027/AC-6 three uncleared rounds fuse", () => {
 test("REQ-027/AC-1 claiming done without a passed loop is a G-done gap", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-c8-done-"));
   mkdirSync(join(dir, "keel", "features", "f01-x"), { recursive: true });
+  mkdirSync(join(dir, "keel", "review"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
+  writeFileSync(join(dir, "keel", "features", "f01-x", "summary.md"), "# s\n", "utf8");
   assert.ok(completionReviewGaps(makeCtx(dir)).some((g) => /REQ-027/.test(g)));
+  const pack = { diff: "d", plan: "p", reqs: "r", evidence: "{}", worklog_summary: "slice" };
+  const { body, hash } = packBodyHash(pack);
+  writeFileSync(join(dir, "keel", "review", "pack.json"), body, "utf8");
   writeLoopState(makeCtx(dir), {
     ...emptyLoop("robustness", "grok-build", "grok-build"),
     status: "passed",
+    pack_hash: hash,
   });
   assert.deepEqual(completionReviewGaps(makeCtx(dir)), []);
   rmSync(dir, { recursive: true, force: true });

@@ -1,34 +1,22 @@
-# 交接 — 第四轮复审完成，R4 返工中
+# 交接 — R4 返工 ISS-022~029 已修，待独立复审
 
 - date: 2026-08-25
-- 上一段：Grok Build / grok-4.6，R3（ISS-021）+ CHG-007 + CHG-008
-- 本段：Claude 第四轮独立复审（C-42，未参与实施）
+- 上一段：Grok Build / grok-4.6，ISS-022 已关
+- 本段：Grok Build / grok-4.6，ISS-023~029 按顺序修完
 
 ## 当前状态
 
-**阶段 = R4 返工。** ISS-022 已修（安装器纯 JS）。ISS-023~029 仍 open。
+**阶段 = R4 返工已落盘。** ISS-022~029 均 closed（每条有 guard）。**CHG-008 仍 `proposed`，未当批准。** 修完后须由**真正独立的上下文**实跑 8 条 ISS 复现命令再审；不要用「用户说复审完了」代替。
 
 ## 已做（本会话）
 
-ISS-022 已修：安装器纯 JS；`npm pack` 护栏。其余 ISS-023~029 未动。
+ISS-023 pack-first + tree_hash + 按 feature；ISS-024 视角从 git 路径推导；ISS-025 `gate loop clear` 实跑复现；ISS-026 verify 保留 review、熔断按指纹 + rounds.json；ISS-027 doctor 查机器件；ISS-028 攻击面补路径 + pack 白名单/体量/对话；ISS-029 `plan/v2.md`。Guard：`tests/r4-rework.test.ts`。
 
 ## 下一步
 
-**先读 `docs/review/REWORK.md` 的「第四轮独立复审 — 返工要求 R4」**，再读 ISS-022~029。完整证据见 `docs/review/A4-review-loop-compliance.md`、`A5-grok-0824-process-audit.md`。
-
-### R4-P0 阻断级
-
-| 记录 | 问题 |
-|---|---|
-| **ISS-022** | **closed**：安装器纯 JS + 去掉 isMain；`npm pack` e2e |
-| **ISS-023** | **一条空数组命令即可让回路 passed**，且不绑代码树、全仓一个布尔 |
-| **ISS-024** | 视角分类与异构强制**全部来自自述**；REQ-028「不由实现方自述」被实现反了 |
-| **ISS-025** | **从不实跑复现命令**（DEC-159 明确否决的做法）；清零无 CLI 入口，ingest 出问题即死胡同 |
-| **ISS-026** | 证据 `review` 段被 `verify` 抹掉 → 校验永不执行；熔断计数键选错 → 永不触发 |
-
-### R4-P1 重要
-
-**ISS-027** doctor 对已卸载项目报 ok ｜ **ISS-028** 攻击面漏掉门禁自身依赖的输入（改 `keel/review/` 即可绕过整条回路却判辅助级）｜ **ISS-029** `f07-review/plan/v1.md` 仍写「异构可选」，与 DEC-159 相反，而它正是给评审者的五样输入之一
+1. 人类批准 CHG-008（仍 proposed）
+2. **独立上下文**复审：实跑 ISS-022~029 复现命令，确认现在被拒绝
+3. 远端 URL / APR-001 / CODEOWNERS 真人 — 未决，勿编造
 
 ### 一个前置判断
 

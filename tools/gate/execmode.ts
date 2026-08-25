@@ -19,7 +19,10 @@ export function execModeGaps(ctx: Ctx): string[] {
   const gaps: string[] = [];
   for (const rel of EXEC_REQUIRED) {
     const mode = gitIndexMode(ctx, rel);
-    if (!mode) continue;
+    if (!mode) {
+      gaps.push(`${rel} missing from git index`);
+      continue;
+    }
     if (mode !== "100755") gaps.push(`${rel} is ${mode}, want 100755`);
   }
   return gaps;

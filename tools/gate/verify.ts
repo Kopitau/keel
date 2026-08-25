@@ -9,6 +9,7 @@ import {
   hashReport,
   junitPath,
   parseJunit,
+  readEvidence,
   tail2kb,
   writeEvidence,
   type Evidence,
@@ -143,6 +144,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     model: process.env.KEEL_MODEL || process.env.GITHUB_JOB || "unspecified",
     session: process.env.KEEL_SESSION || process.env.GITHUB_RUN_ID || `local-${process.pid}`,
   };
+  const prev = readEvidence(ctx);
   const ev: Evidence = {
     command: argv.join(" "),
     exit_code: exitCode,
@@ -157,6 +159,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     stdout_tail_2kb: tail2kb(combined) ||
       `junit passed=${counts.passed} failed=${counts.failed} skipped=${counts.skipped}\n`,
     actor,
+    review: prev?.review,
   };
   writeEvidence(ctx, ev);
   const lines = [

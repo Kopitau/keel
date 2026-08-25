@@ -1,6 +1,24 @@
 {
   "schema_version": 1,
   "names": [
+    "ISS-023 empty ingest without pack does not mark the loop passed",
+    "ISS-023 one feature passed does not cover another feature's summary",
+    "ISS-023 passed loop binds tree_hash; later edits stale G-done",
+    "ISS-024 flipping heterogeneous_required in state.json does not drop the het gap",
+    "ISS-024 production pack classifies a docs-only dirty tree as requirements",
+    "ISS-024 production pack classifies a gate file as attack, not classifyLens([])",
+    "ISS-025 gate loop clear passes only after the repro is refused",
+    "ISS-025 gate loop clear refuses when the repro still exits 0",
+    "ISS-026 deleting state.json does not zero the fuse ledger",
+    "ISS-026 fuse counts by fingerprint across new ISS ids",
+    "ISS-026 verify preserves the evidence review field",
+    "ISS-027 doctor fails after uninstall",
+    "ISS-027 doctor fails when gate.ts is missing",
+    "ISS-027 execModeGaps reports missing hook files instead of skipping",
+    "ISS-028 attack lens includes gate-input paths",
+    "ISS-028 pack refuses chatty worklog_summary and oversized fields",
+    "ISS-028 production pack classifies keel/review/ as attack",
+    "ISS-029 f07 plan v2 aligns with confirmed DEC-159/160 and does not say het is optional",
     "REQ-001 P1-5 Given-line live marker counts; backtick and 标-docs do not",
     "REQ-002 P1-6 adr research pointer must exist on disk",
     "REQ-002 RES template has required sections",
@@ -115,7 +133,7 @@
     "REQ-028 cross-category uses the strictest lens",
     "REQ-028/AC-1 attack lens for gate and test-mechanism paths",
     "REQ-028/AC-2 robustness lens for core feature samples",
-    "REQ-028/AC-3 auxiliary lens for skills and records",
+    "REQ-028/AC-3 auxiliary lens for records; skills are attack-lens (ISS-028)",
     "REQ-028/AC-5 appending a new attack grows the living list"
   ]
 }

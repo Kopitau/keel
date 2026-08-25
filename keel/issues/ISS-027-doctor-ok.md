@@ -1,8 +1,8 @@
 ---
 id: ISS-027
-status: open
+status: closed
 defense_kind: "回归测试"
-defense_pointer: ""
+defense_pointer: "tests/r4-rework.test.ts (ISS-027); tools/cli/doctor.js; tools/gate/execmode.ts"
 feature: f16-platforms
 fingerprint: "doctor-false-ok"
 date: 2026-08-25
@@ -45,3 +45,5 @@ doctor 的测试只覆盖了它已实现的三类判据；没有一条测试问�
 ## 闭环选择与理由
 
 **回归测试（负面用例）**：对一个删掉 `tools/gate/` 的项目跑 doctor → 必须 FAIL 并指出缺失项；对删掉 hooks 的项目同理。
+
+落地：`runDoctor` 检查 `tools/gate/gate.ts`、`.githooks/*`、`test-baseline.json`、`.claude/skills`、`core.hooksPath`；`execModeGaps` 对 index 缺失报 gap。Guard：`tests/r4-rework.test.ts` ISS-027。

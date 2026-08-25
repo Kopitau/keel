@@ -97,9 +97,17 @@ export function gitWriteTree(ctx: Ctx): string {
     const headIdx = join(dir, "index");
     if (existsSync(headIdx)) copyFileSync(headIdx, tmp);
     git(ctx, ["add", "-A"], env);
-    const ev = join("keel", "evidence");
-    if (existsSync(join(ctx.root, ev))) {
-      git(ctx, ["reset", "-q", "--", ev], env);
+    const exclude = [
+      join("keel", "evidence"),
+      join("keel", "review", "pack.json"),
+      join("keel", "review", "state.json"),
+      join("keel", "review", "rounds.json"),
+      join("keel", "review", "fuse-report.md"),
+    ];
+    for (const rel of exclude) {
+      if (existsSync(join(ctx.root, rel))) {
+        git(ctx, ["reset", "-q", "--", rel], env);
+      }
     }
     const r = git(ctx, ["write-tree"], env);
     return r.status === 0 ? r.stdout : "";
