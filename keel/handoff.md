@@ -1,62 +1,49 @@
-# 交接 — 六轮复审结束，框架初步完成
+# 交接 — CHG-009 现场加固已批准落地
 
-- date: 2026-08-25
-- 本段：Claude 第六轮独立复审 + 收尾（用户 2026-08-25 决定停止返工循环）
+- date: 2026-08-26
+- 本段：zhaoxi 首次真实使用暴露的执法缺口 → 三轮加固 → APR-002 批准入库（Claude）
 
-## 状态：**初步完成**
-
-框架本体已成型并自举运行。六轮独立复审（R1~R5 返工 + 本轮验证）全部完成，**36 条问题条目中 33 条已闭环**。
+## 状态：框架初步完成 + 首轮现场加固闭环
 
 | | |
 |---|---|
-| 需求 | 28 条（全部带 GWT 验收标准） |
-| 决策 | 160 条（每条含用户原话，可逐条回溯） |
-| 问题条目 | 36 条（33 闭环 / 2 wontfix 带理由 / 1 open 待办） |
-| 技能 | 16 个，符合预算 |
-| 测试 | 139 全绿 |
-| 门禁 | 17 项检查，含 X-full 元规则 |
-| 变更单 | 8 张（7 approved / CHG-008 proposed 但已实施） |
+| 需求 | 28 条（gap-hunt-v3 独立猎取 34 条发现，6 条严重**待处置**） |
+| 决策 | 167 条（DEC-161~167 为本轮，含用户原话） |
+| 问题条目 | 43 条（ISS-036 open；037~043 本轮全闭环） |
+| 测试 | 179 全绿（tests/r6-field-guards.test.ts 为现场加固守卫） |
+| 门禁 | check --quick PASS；full check 剩 3 项均为既有状态（见下） |
+| 变更单 | 9 张（CHG-009 已批准 → APR-002，哈希绑定 8 工件） |
 
-**能跑的**：全局安装器（两条安装路径实测通过）、门禁与证据链（树哈希绑定、测试基线、逐条验收标准追溯）、评审回路（pack→ingest→clear，实际执行复现命令）、跨平台哈希规范化、记录体系与自举。
+## 本轮新增的防线（CHG-009 / DEC-161~167）
 
-## 远端接入（2026-08-25 进行中）
+1. **G-req**：有 RES 而无 REQ 条目 → FAIL（顺序倒置）；confirmed 基线无缺口猎取记录 → FAIL（判实质不判格式，`gaphunt.ts`）
+2. **X-oss**：每份 RES 必须表态 `oss:` 或 `oss_none:`，不再因缺 package.json 而 SKIP
+3. **G-research**：开检 RES 实质（档位 + 四承重节 + 标准/深度须引用，`rescheck.ts`）
+4. **经验候选有读取端了**（`candidates.ts`）：`gate status` 计数，G-retro 对已复盘功能提示；处置 = 标签行追加 `→`；KLES-001/002 为管道首两次端到端
+5. **pre-commit**：框架敏感路径强制全量测试（DEC-162）；审批路径提交时守卫 `pre-commit-apr`（DEC-167）
+6. **C-107 修订为记录在案的委托**（DEC-166）：APR `delegated:` 字段记用户原话；`Agent:` 尾注从环境自动填真（`harness.ts`）；approve / pre-commit / X-apr 三点执法。APR-002 是该协议首次实际执行
 
-- 远端已配：`https://github.com/Kopitau/keel.git`（**私有**）
-- 执法档：`local` → **`github`**（config.json）
-- CODEOWNERS：占位符 → `keel/approvals/ @Kopitau`（`X-owners` 已由 SKIP 转为实际 PASS）
-- **待用户完成**：① `git push -u origin master`（需交互式凭据，agent 环境无 TTY）；② GitHub 网页开分支保护：Require PR + Require status check `gate` + Require Code Owner review
+## 教训（都有守卫测试钉住）
 
-**首次 CI 预期是红的，这正是价值**：`G-done: review loop not passed`（回路状态 packed）+ **Mac/Linux 上从未验证过的跨平台行为**（哈希一致性、可执行位、路径）。CHG-001 自陈的最高风险项至今只有 Windows 单点自测，第一次 CI 就是它的首次真实检验。
+- **新判据上线前必须拿现实中最好的样本实测**：缺口猎取判据初稿会误杀 zhaoxi 的高质量产出（ISS-038）；RES 判据初稿会误杀本仓 RES-901/902
+- **git hook 导出的 GIT_* 会劫持测试里的 git 操作**，两个野提交曾落到真仓 HEAD（已救回；hook unset + 测试自净双防，KLES-002）
+- Windows 上 Python `write_text` 默认写 CRLF，曾污染 27 文件（KLES-001）
 
-## 三件未完成的实事
+## full check 剩余 3 项（均为既有状态，非本轮引入）
 
-1. **CI 仍未跑过**（远端刚配、尚未 push）。三平台 × 双 Node 的工作流至今只是文件。
-2. **只自举过，未在真实业务项目上走完整流程**（需求→调研→方案→规划→实现→验收→合并→复盘）。
-3. **CHG-008 仍 proposed 却已实施**；ISS-036 待办。
+- `G-done: review loop not passed`（REQ-027 结构性要求外部评审者跑 pack→ingest→clear）
+- `G-merge` / `G-retro`: ISS-036 open（评审回路 clear 复现命令固化，上轮遗留待办）
 
-## 已知边界（wontfix，非缺陷追踪）
+## 下一步候选（按价值排序）
 
-- **ISS-034**：异构要求可由实施方自述满足（`--implementer` / `--reviewer` 两个字符串都自己敲）。修法方向已记录：implementer 改从提交尾注或证据 `actor.harness` 推导。
-- **ISS-035**：复现命令读自实施方可写的 ISS 文件，改写即可假清零。修法方向：ingest 时把命令固化进 state 并校验指纹。
-
-两者均为**带内机制的自述天花板**；用户判断已进入收益递减区，决定留档不修。**重估触发条件写在各自条目里**（配远端/多人协作/外部使用/发生真实事故）。
-
-## 复审者的自我更正
-
-第五、六轮复审曾两次断言「实施方结构上无法自清」——**该断言不成立**（见 ISS-034）。教训：复审者的跨轮记忆同样不可靠，结论必须每轮重新实证。
-
-## 若要继续，第一步是什么
-
-**配远端、让 CI 真跑一次绿。** 不是仪式——那是唯一能验证跨平台一致性的方式，也是整个设计里「权威执法层」的落地。在那之前，这套框架的强制力只在一台 Windows 机器上被验证过。
-
-之后是在一个真实项目上完整走一遍：那会暴露「流程是否好用」这一层，而六轮复审审的全是「机器是否可靠」。
-
-## 回路当前状态
-
-`review loop: packed` —— 复审者本轮误触发过一次 `loop pack`（`git clone` 报 Bad file descriptor 导致 cd 失败、命令跑在真仓库）。本轮复审已完成，发现记录在 ISS-034~036 与 `docs/review/A1~A7`。
+1. **gap-hunt-v3 的 6 条严重发现处置**（REQ-019 与 DEC-155 冲突、`keel update` 静默覆盖无需求归属、20 条 confirmed 决策无 REQ 落点等）——需要用户逐条拍板
+2. **zhaoxi 迁移**：3 份 RES 补 oss 表态；APR-001/002 补 `delegated:` 记录（新判据下会 FAIL，补一行即合规）
+3. push 远端让 CI 首跑（跨平台哈希一致性至今只有 Windows 单点验证）
+4. ISS-036 闭环 + 评审回路走完（需外部评审者）
 
 ## 记录索引
 
-- `docs/review/REWORK.md` —— 五轮返工清单（R1~R5）
-- `docs/review/A1~A7` —— 七份审计报告（决策合规 / 代码正确性 / 五次流程核查）
-- `keel/issues/` —— 36 条问题条目，每条含复现命令与防线指针
+- `keel/changes/CHG-009-field-hardening.md` —— 本轮总账（三轮全记）
+- `keel/research/RES-903-*` —— 现场调研实证（决策依据）
+- `docs/review/A8-zhaoxi-field-lessons.md` —— zhaoxi 会话深挖报告（独立子代理产出，部分线索未处置）
+- `keel/requirements/gap-hunt-v3.md` —— 需求书独立缺口猎取（34 条）
