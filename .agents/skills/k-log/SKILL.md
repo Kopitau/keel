@@ -15,7 +15,7 @@ Trivial: one worklog line. Promote to ISS when it changes behavior, fails a gate
 
 ## Friction (F13)
 
-Worklog line: `#经验候选 <type> <one sentence>`. Types: user correction / same fingerprint / defense failed / review pattern / knowledge gap (C-76). Do not stop the current task. Same fingerprint ×3 in one feature forces promotion (C-78). Formal LES only after a retro (C-79).
+Worklog line: `#经验候选 <type> <one sentence>`. Types: user correction / same fingerprint / defense failed / review pattern / knowledge gap (C-76). Do not stop the current task. Same fingerprint ×3 in one feature forces promotion (C-78). Formal LES only after a retro (C-79). Tags are read by machine now: `gate status` counts pending ones, and retro disposes each by appending `→ …` on the tag line.
 
 ## OSS (F15)
 

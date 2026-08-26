@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 160
+- count: 167
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -165,3 +165,10 @@
 | DEC-158 | G-req / G-plan 改条件判定：真空项目 SKIP，有实施活动无基线才 FAIL | confirmed | `DEC-158-C-158-empty-project-gates.md` |
 | DEC-159 | F7 自动评审回路：触发、异构策略、落盘门槛、清零判定 | confirmed | `DEC-159-C-159-auto-review-loop.md` |
 | DEC-160 | 评审视角按代码性质分类：攻击面 vs 鲁棒性 vs 需求达成 | confirmed | `DEC-160-C-160-review-lens-by-code-kind.md` |
+| DEC-161 | 首次真实使用后的四条防线 | confirmed | `DEC-161-field-hardening-four-defenses.md` |
+| DEC-162 | 框架敏感路径入库前强制全量测试 | confirmed | `DEC-162-precommit-full-suite-on-framework-paths.md` |
+| DEC-163 | G-research 开检 RES 实质 | confirmed | `DEC-163-res-substance-floor.md` |
+| DEC-164 | 经验候选标签接上读取端 | confirmed | `DEC-164-lesson-candidate-reader.md` |
+| DEC-165 | 其余五项「空即合规」检查暂不审计 | confirmed | `DEC-165-defer-empty-compliant-audit.md` |
+| DEC-166 | C-107 修订：审批提交允许记录在案的委托 | confirmed | `DEC-166-apr-recorded-delegation.md` |
+| DEC-167 | 审批路径触发提交时守卫（代替字面上的全量 check） | confirmed | `DEC-167-apr-commit-time-guard.md` |

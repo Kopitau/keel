@@ -154,7 +154,20 @@ test("REQ-018 approve as a human fills a normalized hash", () => {
     "utf8",
   );
   const ctx = makeCtx(dir, { name: "Ada", email: "ada@example.com" });
-  const r = runApprove(ctx, ["APR-001"]);
+  // This test simulates a human at a plain terminal; the test process itself
+  // runs inside a harness (CLAUDECODE=1 inherited), which DEC-166 rightly
+  // refuses without a delegation record. Strip the markers for the call.
+  const saved: { [k: string]: string | undefined } = {};
+  for (const k of ["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID", "AI_AGENT", "KEEL_AGENT"]) {
+    saved[k] = process.env[k];
+    delete process.env[k];
+  }
+  let r;
+  try {
+    r = runApprove(ctx, ["APR-001"]);
+  } finally {
+    for (const [k, v] of Object.entries(saved)) if (v !== undefined) process.env[k] = v;
+  }
   assert.equal(r.code, 0, r.stderr);
   const body = readFileSync(join(dir, "keel", "approvals", "APR-001.md"), "utf8");
   assert.match(body, /status: approved/);

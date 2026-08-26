@@ -5,6 +5,7 @@ date: 2026-08-21
 level: standard
 features: [F17, F24]
 decisions: [DEC-143, DEC-144, DEC-145, DEC-146, DEC-147, DEC-148, DEC-149]
+oss: [OSS-002]
 ---
 
 # RES-901 跨平台支持与 gate 运行时选型

@@ -40,7 +40,12 @@ test("REQ-021 config.json has required keys and keel-gate profile", () => {
   ]) {
     assert.ok(key in data, key);
   }
-  assert.equal(data.enforcement_tier, "local");
+  // The tier is a project setting, not a requirement of REQ-021; asserting one
+  // value here broke the suite when the repo legitimately moved to github.
+  assert.ok(
+    ["local", "gitee", "github"].includes(String(data.enforcement_tier)),
+    `unknown enforcement_tier: ${String(data.enforcement_tier)}`,
+  );
   const profiles = data.profiles as { active: string[]; [k: string]: unknown };
   assert.ok(profiles.active.includes("keel-gate"));
 });

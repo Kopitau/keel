@@ -7,6 +7,7 @@ import { mdFiles } from "./walk.ts";
 import { ok, type CmdResult } from "./result.ts";
 import { liveClarifications } from "./check.ts";
 import { readCurrent } from "./indexgen.ts";
+import { pendingCandidates } from "./candidates.ts";
 
 export function runStatus(ctx: Ctx): CmdResult {
   const cfg = ctx.config;
@@ -52,6 +53,7 @@ export function runStatus(ctx: Ctx): CmdResult {
     `enforcement_tier: ${tier}`,
     `provisional_decisions: ${provisional}`,
     `open_issues: ${openIssues}`,
+    `lesson_candidates: ${pendingCandidates(ctx).length}`,
     `needs_clarification: ${openQuestions}`,
     "branch_policy: daily→trunk; new major feature→recommend worktree; parallel→C-112 (DEC-155)",
   ];

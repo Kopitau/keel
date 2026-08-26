@@ -25,6 +25,6 @@ Update `keel/OVERVIEW.md` in place (living doc, C-54): what the project is, rout
 
 - Provisional DECs: confirm / supersede / refresh the trigger
 - ISS: all closed or wontfix with reason
-- `#经验候选` in worklogs: keep or discard with one line (F13)
+- `#经验候选` in worklogs: keep or discard by annotating the tag line itself — `→ LES-nnn` / `→ KLES` / `→ 弃 <reason>` (F13/C-77). `gate status` counts pending tags; G-retro warns on undisposed tags in summarized features. This arrow is the one sanctioned in-place worklog amendment (C-20 still bans rewriting anything else).
 
 `G-retro` requires summary present, OVERVIEW newer than merge, issues closed, close-out recorded (C-56).

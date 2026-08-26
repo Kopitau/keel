@@ -5,6 +5,7 @@ import { sha256Normalized } from "./hash.ts";
 import { gitIdentity } from "./git.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
+import { detectHarness } from "./harness.ts";
 
 type Agent = { name?: string; email?: string };
 
@@ -62,6 +63,15 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   if (!file) return fail(`APR file not found: ${id}\n`);
   const raw = readFileSync(file, "utf8");
   const { attrs, body } = parseFrontmatter(raw);
+  // DEC-166: run from an agent environment, approval is delegation — legal only
+  // when the APR itself records the user's instruction, before approve runs.
+  const harness = detectHarness();
+  if (harness && !(attrs.delegated ?? "").trim()) {
+    return fail(
+      `refuse: gate approve is running inside ${harness.agent} but ${id} has no 'delegated:' record.\n` +
+        `Record the user's verbatim instruction first — delegated: "「原话」(YYYY-MM-DD)" — then rerun (C-107/DEC-166).\n`,
+    );
+  }
   const fmMatch = raw.match(/^---\n[\s\S]*?\n---/);
   const fm = fmMatch ? fmMatch[0] : "";
   const paths = artifactPaths(body, fm);

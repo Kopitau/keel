@@ -1,7 +1,7 @@
 # changes index (generated)
 
 - generator: gate index
-- count: 8
+- count: 9
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -13,3 +13,4 @@
 | CHG-006 | CHG-006 R3：测试名称基线（C-34 删/skip 须引用） | approved | `CHG-006-r3-test-baseline.md` |
 | CHG-007 | CHG-007 全局安装器（Trellis 式激活）+ 空项目门禁语义 | approved | `CHG-007-global-installer.md` |
 | CHG-008 | CHG-008 F7 自动评审回路 + 评审视角按代码性质分类 | proposed | `CHG-008-auto-review-loop.md` |
+| CHG-009 | CHG-009 首次真实使用后的框架加固 | approved | `CHG-009-field-hardening.md` |

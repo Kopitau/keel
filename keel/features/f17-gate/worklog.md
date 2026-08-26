@@ -41,7 +41,7 @@
 
 ## 2026-08-24（P2 返工）
 
-- 进度：wave 配置化；index 大小写；中文 slug；X-owners local skip；C-139 v1 协议测试。#经验候选 回滚 / git BFD / 无 CI。
+- 进度：wave 配置化；index 大小写；中文 slug；X-owners local skip；C-139 v1 协议测试。#经验候选 回滚 / git BFD / 无 CI → 弃 三项均已入正式记录（handoff 回路说明 / ISS-041 / CHG-009），无需另立 LES。
 - 问题链接：ISS-013~017
 
 ## 2026-08-24（R2）
@@ -70,3 +70,12 @@
 
 
 
+
+## 2026-08-26
+
+- 进度：CHG-009 现场加固第二轮——G-research 开检 RES 实质（rescheck.ts）、`#经验候选` 首次有了读取端（candidates.ts：status 计数 + G-retro 提示）、pre-commit 对框架敏感路径强制全量测试（DEC-162）。
+- 实现决定：RES 实质判据前缀匹配四个承重节、接受 depth/level 双字段名——上线前先拿本仓 RES-901/902 的真实变体形状实测，避免重演 ISS-038 的误杀。
+- 问题链接：ISS-042 ISS-043
+- #经验候选 类型=知识缺口 Windows 上 Python write_text 默认写 CRLF，一次污染 27 个文件（含门禁源码）且长期无症状 → KLES-001
+- 补记（同日）：DEC-162 钩子首次实弹即拦下提交——hook 导出的 GIT_DIR/GIT_INDEX_FILE 劫持了测试内 fixture 与进程内 git 调用，两个野提交曾落到真仓 HEAD（已 mixed reset 救回，工作区无损）。修复双层：hook unset + 测试模块自净。
+- #经验候选 类型=防线失效 git hook 环境变量劫持测试里的 git 操作，CI 绿不代表 hook 场景安全 → KLES-002

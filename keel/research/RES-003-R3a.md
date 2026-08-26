@@ -4,10 +4,11 @@ title: Trellis 与主流 spec 框架
 depth: 深度
 date: 2026-08-21
 features: []
-oss: []
 source_id: R3a
 source_path: docs/research/R3a-trellis-and-spec-frameworks.md
 bootstrap: true
+oss: []
+oss_none: Trellis 与主流 spec 框架的对比调研；结论明确不复用任何被调研框架的代码。
 ---
 
 # RES-003 Trellis 与主流 spec 框架

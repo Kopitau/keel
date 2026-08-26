@@ -87,6 +87,18 @@ export function gitLastAuthor(ctx: Ctx, rel: string): { name: string; email: str
   return { name: (name ?? "").trim() || "unknown", email: (email ?? "").trim() || "unknown" };
 }
 
+/** Full body (subject + trailers) of the last commit touching rel. */
+export function gitLastBody(ctx: Ctx, rel: string): string {
+  const r = git(ctx, ["log", "-1", "--format=%B", "--", rel]);
+  return r.status === 0 ? r.stdout : "";
+}
+
+/** Staged (index) content of rel; empty string when not staged or unreadable. */
+export function gitStagedContent(ctx: Ctx, rel: string): string {
+  const r = git(ctx, ["show", `:${rel}`]);
+  return r.status === 0 ? r.stdout : "";
+}
+
 /** Tree hash of the would-be commit, excluding keel/evidence (C-33). */
 export function gitWriteTree(ctx: Ctx): string {
   const dir = gitDir(ctx);

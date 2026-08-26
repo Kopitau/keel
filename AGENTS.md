@@ -55,5 +55,5 @@ This repo is **local tier** until remotes exist. OS matrix: Windows + macOS (dev
 - Auto-inject records into context (C-120).
 - Rewrite confirmed files in place.
 - Hash raw disk bytes (DEC-144).
-- Submit APR commits with an agent git identity (C-107).
+- Submit APR commits with an agent git identity; agent-made APR commits need a `delegated:` record of the user's instruction (C-107/DEC-166).
 - Add runtime npm dependencies. New **dev** dependencies need a DEC (DEC-154).

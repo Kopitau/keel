@@ -1,4 +1,18 @@
 #!/bin/sh
 root=$(git rev-parse --show-toplevel) || exit 1
 "$root/tools/gate/gate.sh" check --quick || exit 1
+# DEC-166: approval commits are validated at commit time — agent git identity
+# never lands an APR, and an agent-environment commit needs a recorded delegation.
+if git diff --cached --name-only | grep -qE '(^|/)keel/approvals/'; then
+  "$root/tools/gate/gate.sh" hook pre-commit-apr || exit 1
+fi
+# DEC-162: framework-shaping paths must not land on a quick check alone — the
+# suite sat red for a full day after a config-only commit (ISS-041).
+# GIT_DIR/GIT_INDEX_FILE exported by git into this hook hijack the git calls
+# inside fixture tests — a fixture `git commit` landed on the REAL repo HEAD
+# during the first live firing (2026-08-26). Unset them for the test run.
+if git diff --cached --name-only | grep -qE '^(keel/config\.json$|tools/gate/|\.agents/skills/|\.githooks/)'; then
+  echo "keel: gate/config/skills/hooks staged - running the full test suite (DEC-162)"
+  (unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_PREFIX; cd "$root" && node --test) || exit 1
+fi
 exec "$root/tools/gate/gate.sh" hook pre-commit-stamp

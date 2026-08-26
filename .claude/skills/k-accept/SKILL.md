@@ -20,5 +20,5 @@ F7.5 + F18. The user nods; you do not.
 1. `node tools/gate/gate.ts loop status` must be `passed`. If not, stop — review is required before acceptance (REQ-027). **Do not automate the human nod.**
 2. `node tools/gate/gate.ts verify` then `check`.
 3. Draft `gate new apr ...` if needed; fill artifact paths.
-4. Ask the user to run `node tools/gate/gate.ts approve APR-nnn` with a **human** git identity (C-107). Agent identities are rejected.
+4. Approval commit, two legal paths (C-107/DEC-166): the user runs `gate approve APR-nnn` + commits themselves; **or** the user explicitly tells you to do it — then record their verbatim words in the APR first (`delegated: "「原话」(date)"`), and only then approve + commit under their git identity. Without that record, `gate approve` and pre-commit refuse in an agent environment. Never use an agent git identity for the commit.
 5. Stop. Merge is F8 (`G-merge`): APR + fresh evidence + green trace + no blocking ISS (C-45).

@@ -2,9 +2,57 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
 import type { Ctx } from "./ctx.ts";
-import { git, gitBranch, gitDir, gitIdentity } from "./git.ts";
+import { git, gitBranch, gitDir, gitIdentity, gitStagedContent } from "./git.ts";
 import { isForceUpdate, parsePrePushLine } from "./bypass.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
+import { detectHarness, type EnvMap } from "./harness.ts";
+import { parseFrontmatter } from "./frontmatter.ts";
+
+/**
+ * DEC-166 commit-time guard: validate the approval commit BEING MADE, which the
+ * history-based X-apr can only judge after the fact. An agent may land an APR
+ * commit on the user's explicit instruction — but then the APR file itself must
+ * carry that instruction (`delegated:` non-empty), and an agent git identity
+ * still never lands approvals (C-107).
+ */
+export function precommitAprGaps(ctx: Ctx, env: EnvMap = process.env): string[] {
+  const staged = git(ctx, ["diff", "--cached", "--name-only"]).stdout
+    .split(/\n/)
+    .map((s) => s.trim().replace(/\\/g, "/"))
+    .filter((s) => /\/approvals\/APR-\d+.*\.md$/.test(s));
+  const gaps: string[] = [];
+  if (staged.length === 0) return gaps;
+  const ident = gitIdentity(ctx);
+  const agents = ((ctx.config.identities ?? {}) as { agents?: { name?: string; email?: string }[] })
+    .agents ?? [];
+  const agentIdentity = agents.some(
+    (a) =>
+      (a.email && a.email.toLowerCase() === ident.email.toLowerCase()) ||
+      (a.name && a.name.toLowerCase() === ident.name.toLowerCase()),
+  );
+  const harness = detectHarness(env);
+  for (const rel of staged) {
+    const text = gitStagedContent(ctx, rel);
+    if (!text) continue;
+    const { attrs } = parseFrontmatter(text);
+    if ((attrs.status ?? "") !== "approved") continue;
+    if (agentIdentity) {
+      gaps.push(`${rel}: approval commit under agent git identity ${ident.name} (C-107)`);
+    }
+    if (harness && !(attrs.delegated ?? "").trim()) {
+      gaps.push(
+        `${rel}: committed from ${harness.agent} but the APR records no delegation — add 'delegated: <用户原话+日期>' (DEC-166)`,
+      );
+    }
+  }
+  return gaps;
+}
+
+function runPrecommitApr(ctx: Ctx): CmdResult {
+  const gaps = precommitAprGaps(ctx);
+  if (gaps.length === 0) return ok("pre-commit-apr: ok\n");
+  return fail(gaps.map((g) => `refuse: ${g}`).join("\n") + "\n");
+}
 
 function featureFromBranch(branch: string): string {
   const m = /F-?(\d+)/i.exec(branch);
@@ -70,9 +118,10 @@ export function runHook(ctx: Ctx, args: string[]): CmdResult {
   const name = args[0] ?? "";
   if (name === "pre-push") return runPrePush(ctx, args.slice(1));
   if (name === "pre-commit-stamp") return writeStamp(ctx);
+  if (name === "pre-commit-apr") return runPrecommitApr(ctx);
   if (name !== "prepare-commit-msg") {
     return usage(
-      "usage: gate hook prepare-commit-msg <file> | hook pre-push [refs-file] | hook pre-commit-stamp\n",
+      "usage: gate hook prepare-commit-msg <file> | hook pre-push [refs-file] | hook pre-commit-stamp | hook pre-commit-apr\n",
     );
   }
   const file = args[1] ?? "";
@@ -87,7 +136,10 @@ export function runHook(ctx: Ctx, args: string[]): CmdResult {
     const listed = agents.find(
       (a) => a.email && a.email.toLowerCase() === ident.email.toLowerCase(),
     );
-    const agent = process.env.KEEL_AGENT || listed?.name || "unknown";
+    // DEC-166: an agent environment self-identifies instead of stamping
+    // "unknown" while the harness writes its own truthful trailer next door.
+    const detected = detectHarness();
+    const agent = process.env.KEEL_AGENT || listed?.name || detected?.agent || "unknown";
     const feature =
       process.env.KEEL_FEATURE ||
       (featureFromBranch(branch) !== "unknown"
@@ -95,7 +147,7 @@ export function runHook(ctx: Ctx, args: string[]): CmdResult {
         : /^(master|main)$/.test(branch)
           ? "trunk"
           : "unknown");
-    const session = process.env.KEEL_SESSION || "unknown";
+    const session = process.env.KEEL_SESSION || detected?.session || "unknown";
     const trailers = [
       `Feature: ${feature}`,
       `Developer: ${ident.name}`,

@@ -4,10 +4,11 @@ title: 社区实践与失败模式
 depth: 标准
 date: 2026-08-21
 features: []
-oss: []
 source_id: R3b
 source_path: docs/research/R3b-community-practices-and-failure-modes.md
 bootstrap: true
+oss: []
+oss_none: 社区实践与失败模式综述，只吸收经验不复用代码。
 ---
 
 # RES-004 社区实践与失败模式

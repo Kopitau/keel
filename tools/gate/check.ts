@@ -11,13 +11,17 @@ import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceGaps, readEvidence } from "./evidence.ts";
-import { casefoldCollisions, gitCommitUnix, gitDir, gitLastAuthor, gitLsFiles } from "./git.ts";
+import { casefoldCollisions, gitCommitUnix, gitDir, gitLastAuthor, gitLastBody, gitLsFiles } from "./git.ts";
+import { commitLooksAgentMade } from "./harness.ts";
 import { inspectSkills, listSkillDirs } from "./skills.ts";
 import { measureAutoload } from "./autoload.ts";
 import { collectBypassFindings } from "./bypass.ts";
 import { countKnowledge } from "./knowledge.ts";
-import { inspectOss } from "./osscheck.ts";
+import { inspectOss, inspectResOss } from "./osscheck.ts";
 import { execModeGaps } from "./execmode.ts";
+import { gapHuntGaps } from "./gaphunt.ts";
+import { inspectResSubstance } from "./rescheck.ts";
+import { pendingCandidates, summarizedFeatures } from "./candidates.ts";
 import { claimedReqs, uncoveredClaimed } from "./trace.ts";
 import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
 import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
@@ -88,14 +92,37 @@ export function hasImplementationActivity(ctx: Ctx): boolean {
   return false;
 }
 
+function resCount(ctx: Ctx): number {
+  return mdFiles(join(ctx.records, "research"), "RES-").length;
+}
+
+/** REQ rows in a requirements file (C-04). */
+export function reqEntryCount(text: string): number {
+  return (text.match(/^##\s+REQ-\d+/gm) ?? []).length;
+}
+
+/** A confirmed row is the marker that a baseline was taken (C-06). */
+export function confirmedReqCount(text: string): number {
+  return (text.match(/^\s*-\s*\*\*status\*\*:\s*confirmed\b/gm) ?? []).length;
+}
+
 function gReq(ctx: Ctx): CheckItem {
   const r = currentReq(ctx);
   const activity = hasImplementationActivity(ctx);
+  const research = resCount(ctx);
+  const ORDER_FIX = "land REQ entries in keel/requirements/vN.md first (k-new sequence F1 -> F2; C-04/C-05)";
   if ("error" in r) {
+    if (research > 0) {
+      return fail("G-req", `${research} RES record(s) but no current requirements`, ORDER_FIX);
+    }
     if (!activity) {
       return skip("G-req", "尚未开始，跑 k-new 建立需求基线");
     }
     return fail("G-req", r.error, "point requirements/INDEX.md at a single vN.md");
+  }
+  const entries = reqEntryCount(r.text);
+  if (research > 0 && entries === 0) {
+    return fail("G-req", `${research} RES record(s) but 0 REQ entries in ${basename(r.path)}`, ORDER_FIX);
   }
   const n = liveClarifications(r.text);
   if (n > 0) {
@@ -105,10 +132,15 @@ function gReq(ctx: Ctx): CheckItem {
       "resolve markers or move open branches into the 未决问题 section before baseline (C-05)",
     );
   }
+  if (confirmedReqCount(r.text) > 0) {
+    const g = gapHuntGaps(ctx, r.path);
+    if (g?.level === "fail") return fail("G-req", g.summary, g.fix);
+    if (g?.level === "warn") return warn("G-req", g.summary, g.fix);
+  }
   if (!r.text.includes("未决问题")) {
     return warn("G-req", "no 未决问题 section", "add the section even if empty (C-05)");
   }
-  return pass("G-req", "no NEEDS-CLARIFICATION in current requirements");
+  return pass("G-req", `${entries} REQ entr(ies), no NEEDS-CLARIFICATION`);
 }
 
 function resExists(ctx: Ctx, id: string): boolean {
@@ -148,7 +180,17 @@ function gResearch(ctx: Ctx): CheckItem {
       "point research: at an existing RES-*.md (C-10)",
     );
   }
-  return pass("G-research", "adr decisions have RES files or a written exemption");
+  const substance = inspectResSubstance(ctx);
+  if (substance.length > 0) {
+    const shown = substance.slice(0, 3).map((g) => `${g.id}: ${g.gap}`).join("; ");
+    const more = substance.length > 3 ? ` (+${substance.length - 3} more)` : "";
+    return fail(
+      "G-research",
+      `RES substance gaps: ${shown}${more}`,
+      "a RES is a report, not a filename — declare the tier, keep the four load-bearing sections, cite sources (C-08/C-09)",
+    );
+  }
+  return pass("G-research", "adr decisions have RES files or a written exemption; RES substance ok");
 }
 
 function gPlan(ctx: Ctx): CheckItem {
@@ -303,6 +345,16 @@ function gRetro(ctx: Ctx): CheckItem {
   if (blocking.length > 0) {
     return fail("G-retro", `open issues: ${blocking.join(", ")}`, "close-out ISS before 已完成 (C-56)");
   }
+  const summarized = summarizedFeatures(ctx);
+  const stale = pendingCandidates(ctx).filter((c) => summarized.has(c.feature));
+  if (stale.length > 0) {
+    const feats = [...new Set(stale.map((c) => c.feature))].join(", ");
+    return warn(
+      "G-retro",
+      `${stale.length} 经验候选 undisposed in summarized feature(s): ${feats}`,
+      "k-retro keeps or discards each tag: annotate the line with → LES-nnn / → KLES / → 弃 <reason> (C-77/F13)",
+    );
+  }
   const prov = provisionalDecs(ctx);
   if (prov.length > 0) {
     const blob = readFileSync(overview, "utf8");
@@ -351,9 +403,20 @@ function xApr(ctx: Ctx): CheckItem {
         "rewrite the APR commit with a human identity (C-107)",
       );
     }
+    // DEC-166: the git author string alone proved nothing — zhaoxi's agent
+    // committed as the human with one `git config` (ISS-034 family). Judge the
+    // trailers the environment writes: an agent-made commit is legitimate only
+    // when the APR records the user's delegation.
+    if (commitLooksAgentMade(gitLastBody(ctx, rel)) && !(attrs.delegated ?? "").trim()) {
+      return fail(
+        "X-apr",
+        `${n} commit carries agent trailers but the APR records no delegation`,
+        "add 'delegated: <用户原话+日期>' to the APR, or have the human recommit (C-107/DEC-166)",
+      );
+    }
   }
   if (approved.length === 0) return pass("X-apr", "no approved APR commits to check");
-  return pass("X-apr", `${approved.length} approved APR author(s) not on the agent list`);
+  return pass("X-apr", `${approved.length} approved APR(s): human author or recorded delegation`);
 }
 
 function xBudget(ctx: Ctx): CheckItem {
@@ -406,10 +469,37 @@ function xBypass(ctx: Ctx): CheckItem {
 }
 
 function xOss(ctx: Ctx): CheckItem {
+  // C-11 stance first: research picks a dependency long before any manifest
+  // exists, so this must not hide behind a missing package.json.
+  const stance = inspectResOss(ctx);
+  if (stance.dangling.length > 0) {
+    const d = stance.dangling[0];
+    return fail(
+      "X-oss",
+      `${d?.res} references ${d?.oss} with no OSS record`,
+      "gate new oss <name> and fill C-88 fields (C-89)",
+    );
+  }
+  if (stance.silent.length > 0) {
+    return fail(
+      "X-oss",
+      `RES record(s) take no OSS stance: ${stance.silent.join(", ")}`,
+      "add oss: [OSS-00N] for projects the research selected, or oss_none: <reason> (C-11)",
+    );
+  }
+  const declared = stance.declared > 0 ? `${stance.declared} RES stance(s) declared; ` : "";
   const pkg = join(ctx.root, "package.json");
-  if (!existsSync(pkg)) return skip("X-oss", "no package.json");
+  if (!existsSync(pkg)) {
+    return stance.declared > 0
+      ? pass("X-oss", `${declared}no package.json`)
+      : skip("X-oss", "no package.json");
+  }
   const report = inspectOss(ctx);
-  if (report.deps.length === 0) return skip("X-oss", "no direct npm dependencies");
+  if (report.deps.length === 0) {
+    return stance.declared > 0
+      ? pass("X-oss", `${declared}no direct npm dependencies`)
+      : skip("X-oss", "no direct npm dependencies");
+  }
   if (report.missing.length > 0) {
     return fail(
       "X-oss",
@@ -432,7 +522,7 @@ function xOss(ctx: Ctx): CheckItem {
       "update the OSS record or file a CHG (C-90)",
     );
   }
-  return pass("X-oss", `${report.deps.length} direct dep(s) registered`);
+  return pass("X-oss", `${declared}${report.deps.length} direct dep(s) registered`);
 }
 
 function xKnowledge(ctx: Ctx): CheckItem {
