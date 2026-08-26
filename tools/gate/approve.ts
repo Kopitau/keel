@@ -1,11 +1,12 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { sha256Normalized } from "./hash.ts";
 import { gitIdentity } from "./git.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
 import { detectHarness } from "./harness.ts";
+import { mdFiles } from "./walk.ts";
 
 type Agent = { name?: string; email?: string };
 
@@ -58,8 +59,16 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
     );
   }
   const dir = join(ctx.records, "approvals");
+  // `gate new apr` writes APR-nnn-<slug>.md; resolve both that and the bare name.
   const candidates = [join(dir, `${id}.md`), join(dir, id.endsWith(".md") ? id : `${id}.md`)];
-  const file = candidates.find((p) => existsSync(p));
+  let file = candidates.find((p) => existsSync(p));
+  if (!file) {
+    const token = id.replace(/\.md$/, "");
+    file = mdFiles(dir, "APR-").find((p) => {
+      const base = basename(p);
+      return base === `${token}.md` || base.startsWith(`${token}-`);
+    });
+  }
   if (!file) return fail(`APR file not found: ${id}\n`);
   const raw = readFileSync(file, "utf8");
   const { attrs, body } = parseFrontmatter(raw);

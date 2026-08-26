@@ -240,6 +240,8 @@ test("R6 k-grill states the order rule and the gap-hunt artifact", () => {
 import { inspectResSubstance } from "../tools/gate/rescheck.ts";
 import { pendingCandidates, scanCandidates } from "../tools/gate/candidates.ts";
 import { runStatus } from "../tools/gate/status.ts";
+import { runApprove } from "../tools/gate/approve.ts";
+import { rmSync } from "node:fs";
 
 test("R6b G-research: a RES with no sections and no tier is a filename, not research", () => {
   const dir = fixture("res1");
@@ -514,4 +516,24 @@ test("R6c pre-commit hook wires the approvals guard (DEC-166)", () => {
   const hook = readFileSync(join(repo, ".githooks", "pre-commit"), "utf8");
   assert.match(hook, /keel\/approvals\//);
   assert.match(hook, /pre-commit-apr/);
+});
+
+test("R6c approve resolves the scaffold's APR-nnn-<slug>.md naming", () => {
+  // gate new apr writes slugged names; approve only matched the bare name and
+  // refused its own scaffold's output (first live approval, 2026-08-26).
+  const dir = gitRepo("apr7");
+  aprFile(dir, '"「由你提交」(2026-08-26)"');
+  const renamed = join(dir, "keel", "approvals", "APR-001-some-slug.md");
+  writeFileSync(
+    renamed,
+    readFileSync(join(dir, "keel", "approvals", "APR-001-x.md"), "utf8").replace(
+      "status: approved",
+      "status: draft",
+    ) + "\n- path: keel/config.json\n  content_sha256: pending\n",
+    "utf8",
+  );
+  rmSync(join(dir, "keel", "approvals", "APR-001-x.md"));
+  const r = runApprove(makeCtx(dir, { name: "kopit", email: "wwillmee@gmail.com" }), ["APR-001"]);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(readFileSync(renamed, "utf8"), /status: approved/);
 });

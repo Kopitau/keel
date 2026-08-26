@@ -56,6 +56,7 @@
     "R6b this repo: every RES passes the substance floor it imposes on others",
     "R6c X-apr: an agent-trailer APR commit without delegation fails post-hoc",
     "R6c X-apr: the same commit with a recorded delegation passes",
+    "R6c approve resolves the scaffold's APR-nnn-<slug>.md naming",
     "R6c harness: claude-code env is detected, bare env is not",
     "R6c harness: the zhaoxi trailer shape reads as agent-made",
     "R6c pre-commit hook wires the approvals guard (DEC-166)",
