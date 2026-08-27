@@ -664,17 +664,18 @@ const TRACE_FIX =
 
 function xTrace(ctx: Ctx): CheckItem {
   const claimed = claimedReqs(ctx);
-  const { proxies, whitebox } = traceWarnings(ctx, claimed);
-  if (claimed.length === 0 && whitebox.length === 0) {
-    return pass("X-trace", "no claimed-done features (C-32 scope = 验收范围)");
-  }
+  // Gaps first: a claimed feature whose plan names no REQ must not read as "nothing claimed" (ISS-044).
   const missing = uncoveredClaimed(ctx);
   if (missing.length > 0) {
     return fail(
       "X-trace",
       `uncovered acceptance criteria: ${missing.join(", ")}`,
-      "mark black-box acceptance tests REQ-nnn/AC-i (C-32 / ISS-020 / DEC-168)",
+      "add req: [REQ-nnn] to the feature plan front matter (ISS-044); mark black-box acceptance tests REQ-nnn/AC-i (C-32 / ISS-020 / DEC-168)",
     );
+  }
+  const { proxies, whitebox } = traceWarnings(ctx, claimed);
+  if (claimed.length === 0 && whitebox.length === 0) {
+    return pass("X-trace", "no claimed-done features (C-32 scope = 验收范围)");
   }
   const notes: string[] = [];
   if (proxies.length > 0) notes.push(`proxy coverage, WARN not PASS: ${proxies.join(", ")}`);

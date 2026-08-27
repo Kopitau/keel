@@ -5,6 +5,7 @@ plan_version: v1
 replaces: null
 change: null
 wave: W1
+req: [REQ-000]
 ---
 
 # F00 标题 — 规划 v1

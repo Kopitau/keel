@@ -112,23 +112,51 @@ export function testNameInfos(ctx: Ctx): TestNameInfo[] {
   return out;
 }
 
-/** REQs of features that have summary.md (completion claim = 验收范围, C-32). */
-export function claimedReqs(ctx: Ctx): string[] {
+/** REQ ids on a plan's `req:` front-matter line: `req: REQ-001` or `req: [REQ-001, REQ-002]`. */
+function planReqs(text: string): string[] {
+  const m = /^req:\s*(.+)$/m.exec(text);
+  return [...new Set((m?.[1] ?? "").match(/REQ-\d{3}/g) ?? [])];
+}
+
+/** Feature dirs that carry a summary.md: the completion claim (C-32 scope = 验收范围). */
+function claimedFeatures(ctx: Ctx): { name: string; reqs: string[] }[] {
   const feats = join(ctx.records, "features");
   if (!existsSync(feats)) return [];
-  const out: string[] = [];
-  for (const name of readdirSync(feats)) {
+  const out: { name: string; reqs: string[] }[] = [];
+  for (const name of readdirSync(feats).sort()) {
     if (!existsSync(join(feats, name, "summary.md"))) continue;
     const planDir = join(feats, name, "plan");
-    if (!existsSync(planDir)) continue;
-    for (const p of readdirSync(planDir)) {
-      if (!p.endsWith(".md")) continue;
-      const text = readFileSync(join(planDir, p), "utf8");
-      const m = /^req:\s*(REQ-\d{3})\b/m.exec(text);
-      if (m?.[1] && !out.includes(m[1])) out.push(m[1]);
+    const reqs: string[] = [];
+    if (existsSync(planDir)) {
+      for (const p of readdirSync(planDir)) {
+        if (!p.endsWith(".md")) continue;
+        for (const id of planReqs(readFileSync(join(planDir, p), "utf8"))) {
+          if (!reqs.includes(id)) reqs.push(id);
+        }
+      }
     }
+    out.push({ name, reqs });
+  }
+  return out;
+}
+
+/** REQs of features that have summary.md (completion claim = 验收范围, C-32). */
+export function claimedReqs(ctx: Ctx): string[] {
+  const out: string[] = [];
+  for (const f of claimedFeatures(ctx)) {
+    for (const id of f.reqs) if (!out.includes(id)) out.push(id);
   }
   return out.sort();
+}
+
+/**
+ * ISS-044: a feature that claims done (summary.md) but whose plan names no REQ.
+ * Before this existed such a feature made X-trace answer "no claimed-done
+ * features" — the template and `gate new feature` never wrote `req:`, so C-32
+ * never bound in a consumer project.
+ */
+export function claimedWithoutReq(ctx: Ctx): string[] {
+  return claimedFeatures(ctx).filter((f) => f.reqs.length === 0).map((f) => f.name);
 }
 
 export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
@@ -177,7 +205,7 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
 export function uncoveredClaimed(ctx: Ctx): string[] {
   const claimed = claimedReqs(ctx);
   const { rows } = buildTrace(ctx);
-  const missing: string[] = [];
+  const missing: string[] = claimedWithoutReq(ctx).map((f) => `${f}: summary.md but plan has no req:`);
   for (const id of claimed) {
     const row = rows.find((r) => r.req === id);
     if (!row) {

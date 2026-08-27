@@ -94,3 +94,12 @@
 - 突变验证：把模式改回不含 `AUTHOR_|COMMITTER_` → iss045 两条（「keeps the fixture's own identity」「strips everything」）+ r6 两条 X-apr 变红（4 fail）；还原 → 45/45。
 - 问题链接：ISS-045 closed，防线指针 `tests/iss045-hook-git-env.test.ts`（5 条）。基线 192。
 - 备注：KLES-002 的措辞应从「GIT_DIR」扩为「git 导出给 hook 的全部变量」——用户库文件不在本仓，待用户改。同指纹第三次即 `#经验候选`。
+
+## 2026-08-27（ISS-044：feature-plan 模板与脚手架不生成 `req:`）
+
+- 复现：用真脚手架 `gate new feature demo` → `plan/v1.md` 无 `req:`；写 summary.md 后 `check --quick` → `PASS X-trace no claimed-done features`。顺带踩到：`gate.ts` 的 root 取自脚本所在仓库而非 cwd，在临时目录里调本仓的 gate.ts 会把脚手架写进本仓（已删 `keel/features/f25-demo`，未提交）——测试里一律用 `runNew(makeCtx(fixture))`。
+- 修复：模板前言加 `req: [REQ-000]`；`new.ts` 无模板兜底也写；`trace.ts` 的 `claimedReqs` 读单值/数组，新增 `claimedWithoutReq`，缺口经 `uncoveredClaimed` 进 X-trace / G-done / G-merge；`xTrace` 先算缺口再判「无宣称」。
+- 红灯：`tests/iss044-claimed-req.test.ts` 修复前文件级失败（导出不存在）；修复后 8/8。
+- 突变验证：① stash trace.ts + check.ts → 文件级红；② stash 模板 + new.ts → 两条脚手架测试红；③ `claimedWithoutReq` 改为恒返回空 → 无 `req:` / 无 plan 两条红。三次还原后 8/8。
+- 问题链接：ISS-044 closed，防线指针 `tests/iss044-claimed-req.test.ts`。
+- 对 zhaoxi 的影响：升级 keel 后，F0 写 summary.md 会被 X-trace 拦（`f00-platform-base: summary.md but plan has no req:`），补 `req: [REQ-001, REQ-002, …]` 即合规；此后 DEC-168 的代理/黑盒判据才真正对它生效。

@@ -54,7 +54,9 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
     if (existsSync(dir)) return fail(`already exists: ${dir}\n`);
     mkdirSync(join(dir, "plan"), { recursive: true });
     const fid = `F${n}`;
-    const plan = stamp(template(ctx, "feature-plan.md") || "# plan\n", fid, dirName, title, date);
+    // ISS-044: X-trace binds a claimed feature through this `req:` line; a plan without it never claims anything.
+    const fallbackPlan = `---\nfeature: ${fid}\nslug: ${dirName}\nplan_version: v1\nreq: [REQ-000]\n---\n\n# ${fid} ${title} — 规划 v1\n`;
+    const plan = stamp(template(ctx, "feature-plan.md") || fallbackPlan, fid, dirName, title, date);
     const log = stamp(template(ctx, "worklog.md") || `# worklog — ${fid}\n`, fid, dirName, title, date);
     writeFileSync(join(dir, "plan", "v1.md"), plan, "utf8");
     writeFileSync(join(dir, "worklog.md"), log, "utf8");
