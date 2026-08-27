@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-decide"
+  short_description: "Use when starting k-decide, recording a technical decision, presenting options to the user, or writing a DEC file."
+policy:
+  allow_implicit_invocation: true

@@ -103,3 +103,13 @@
 - 突变验证：① stash trace.ts + check.ts → 文件级红；② stash 模板 + new.ts → 两条脚手架测试红；③ `claimedWithoutReq` 改为恒返回空 → 无 `req:` / 无 plan 两条红。三次还原后 8/8。
 - 问题链接：ISS-044 closed，防线指针 `tests/iss044-claimed-req.test.ts`。
 - 对 zhaoxi 的影响：升级 keel 后，F0 写 summary.md 会被 X-trace 拦（`f00-platform-base: summary.md but plan has no req:`），补 `req: [REQ-001, REQ-002, …]` 即合规；此后 DEC-168 的代理/黑盒判据才真正对它生效。
+
+## 2026-08-27（RES-904 借鉴落地：DEC-169 前沿 / DEC-170 openai.yaml）
+
+- 决策：用户「按你说的全做」→ DEC-169（前沿）、DEC-170（Codex 元数据）confirmed；DEC-171（fog 判据）、DEC-172（spike）deferred 记触发条件。
+- 红灯：`tests/dec169-frontier.test.ts`、`tests/dec170-openai-yaml.test.ts` 先写，实现前运行——两文件加载失败（`frontier.ts` 不存在 / `MODEL_SKILLS` 未导出）。
+- 内部分解：`frontier.ts`（`computeFrontier`：编号取计划前言 `feature:`，done = summary.md，claimed = claim.json，problems = 非法/自指/不存在/环）→ `status.ts` 加 `frontier:` / `blocked:` / `proxy_acs:` → G-plan 校验 problems → `worktree add` 被阻塞 WARN 不拒。`skills.ts` 加 `USER_SKILLS` / `MODEL_SKILLS` / `openaiYamlFor`，`inspectSkills` 校验 yaml 存在且不 stale；`sync.ts` 先生成再复制。
+- 实现决定：前沿只到功能级，不下沉到内部步骤（DEC-169 复审条款留口）；`proxy_acs` 数的是 tests/ 全部 proxy 名（不限已宣称功能），因为它是复审阈值的分子。
+- 实现决定：DEC-169/170 的测试用 `DEC-` 前缀、不带 AC 标记——v3 需求书没有对应 AC，按 DEC-168 不许借 AC 名；需求落点留到 v4（gap-hunt-v3 待处置项同类）。
+- 突变验证：① `computeFrontier` 忽略 done → dec169 两条红；② `openaiYamlFor` 对所有技能返回 true → dec170 四条红；各自还原后 13/13。
+- 证据：`npx tsc --noEmit` 干净；`node --test` **213/213**（200 + dec169 8 + dec170 5）；`gate check --quick` → `PASS_WITH_WARN fail=0 warn=1`（G-plan 行现为 `frontier 23, blocked 0`）；`gate status` 新增 `frontier:` / `blocked:` / `proxy_acs: 1`；`gate verify` passed=213；基线 213；`.agents/skills/k-*/agents/openai.yaml` 16 份 + 镜像 16 份入库。

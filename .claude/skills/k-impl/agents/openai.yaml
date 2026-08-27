@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-impl"
+  short_description: "Use when starting k-impl, implementing a confirmed feature, claiming a feature branch, or entering the autonomous implementation zone."
+policy:
+  allow_implicit_invocation: false

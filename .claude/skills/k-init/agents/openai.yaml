@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-init"
+  short_description: "Use when starting k-init, initializing a new keel project, scaffolding keel records, or asking the first config questions."
+policy:
+  allow_implicit_invocation: false

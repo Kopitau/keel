@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-review"
+  short_description: "Use when starting k-review, independently reviewing a feature diff, or checking correctness against requirements and the feature plan."
+policy:
+  allow_implicit_invocation: false

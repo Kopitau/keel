@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-retro"
+  short_description: "Use when starting k-retro, writing a feature summary after merge, updating OVERVIEW, or closing provisional decisions and lesson candidates."
+policy:
+  allow_implicit_invocation: false

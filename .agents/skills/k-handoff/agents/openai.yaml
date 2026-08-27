@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-handoff"
+  short_description: "Use when starting k-handoff, ending a session, context is nearly full, or writing keel/handoff.md so another harness can continue."
+policy:
+  allow_implicit_invocation: false

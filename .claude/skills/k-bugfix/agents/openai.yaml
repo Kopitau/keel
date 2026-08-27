@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-bugfix"
+  short_description: "Use when starting k-bugfix, fixing a bug, reproducing a failure, or adding a regression test."
+policy:
+  allow_implicit_invocation: false

@@ -4,6 +4,7 @@ import type { Ctx } from "./ctx.ts";
 import { git, gitIdentity } from "./git.ts";
 import { findFeatureDir, pad2 } from "./ids.ts";
 import { overlapWith } from "./overlap.ts";
+import { computeFrontier } from "./frontier.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
 
 function parseF(id: string): number | null {
@@ -43,6 +44,11 @@ export function runWorktree(ctx: Ctx, args: string[]): CmdResult {
       `file overlap with claimed features; serialize or split the interface first (C-114):\n${hits.join("\n")}\n`,
     );
   }
+  // DEC-169: a blocked feature may still be claimed — worktree is advice (DEC-155) — but say so.
+  const blk = computeFrontier(ctx).blocked.find((b) => b.id === `F${n}`);
+  const warnLine = blk
+    ? `WARN F${n} is blocked by ${blk.by.join(", ")} (blocked_by in its plan, DEC-169); claiming anyway\n`
+    : "";
   mkdirSync(join(ctx.root, ".keel-worktrees"), { recursive: true });
   const ident = gitIdentity(ctx);
   writeFileSync(
@@ -54,7 +60,7 @@ export function runWorktree(ctx: Ctx, args: string[]): CmdResult {
     ) + "\n",
     "utf8",
   );
-  if (existsSync(wt)) return ok(`worktree already exists ${wt}\nbranch ${branch}\n`);
+  if (existsSync(wt)) return ok(`${warnLine}worktree already exists ${wt}\nbranch ${branch}\n`);
   const hasBranch = git(ctx, ["rev-parse", "--verify", branch]);
   const addArgs =
     hasBranch.status === 0
@@ -64,5 +70,5 @@ export function runWorktree(ctx: Ctx, args: string[]): CmdResult {
   if (r.status !== 0) {
     return fail(`git worktree add failed: ${r.stderr || r.stdout}\n`);
   }
-  return ok(`claimed F${n}\nbranch ${branch}\nworktree ${wt}\n`);
+  return ok(`${warnLine}claimed F${n}\nbranch ${branch}\nworktree ${wt}\n`);
 }

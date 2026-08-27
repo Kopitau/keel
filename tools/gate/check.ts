@@ -23,6 +23,7 @@ import { gapHuntGaps } from "./gaphunt.ts";
 import { inspectResSubstance } from "./rescheck.ts";
 import { pendingCandidates, summarizedFeatures } from "./candidates.ts";
 import { claimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
+import { computeFrontier } from "./frontier.ts";
 import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
 import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
 
@@ -216,7 +217,15 @@ function gPlan(ctx: Ctx): CheckItem {
   if (!body.includes("接口与耦合") && !body.includes("| I-")) {
     return fail("G-plan", "current overview has no coupling table", "add 接口与耦合 (C-24/C-38)");
   }
-  return pass("G-plan", `unique current ${p.file} / ${r.file}`);
+  const fr = computeFrontier(ctx);
+  if (fr.problems.length > 0) {
+    return fail(
+      "G-plan",
+      `blocked_by: ${fr.problems.join("; ")}`,
+      "fix blocked_by in the feature plan front matter — existing feature ids, no self-reference, no cycle (DEC-169)",
+    );
+  }
+  return pass("G-plan", `unique current ${p.file} / ${r.file}; frontier ${fr.frontier.length}, blocked ${fr.blocked.length}`);
 }
 
 function gDone(ctx: Ctx): CheckItem {

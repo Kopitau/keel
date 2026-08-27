@@ -30,6 +30,8 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | black-box acceptance test | 名带 `REQ-nnn/AC-i`；只用需求点名的输入、只断 AC 承诺的结果；唯一能证明 AC 的测试（DEC-168） | 给回归测试挂 AC 名 |
 | white-box regression test | 名以 `ISS-`/`DEC-`/`fp:` 开头，针对具体缺陷或分支；提交前突变验证（C-35/DEC-168） | 用它顶验收；名里带 `AC-i` |
 | proxy coverage | `[proxy:<解除条件>]`，黑不了的 AC 的替身；X-trace 记 WARN 不记 PASS（DEC-168） | 没有解除条件的替身；把 WARN 当 PASS |
+| frontier | 未完成、未认领、且 `blocked_by` 全部已完成的功能；`gate status` 打印（DEC-169） | 用散文"实施顺序"代替机器可查的依赖 |
+| seam | 黑盒验收测试挂上去的那一层（CLI / 路由 / 命令 / 模块 API），在功能计划"测试义务"里点名（RES-904 §6） | 测试挂在比计划更低的缝上却不标 proxy |
 
 ## Banned near-synonyms
 

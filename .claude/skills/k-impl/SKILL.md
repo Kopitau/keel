@@ -33,6 +33,14 @@ Read that feature’s `plan/vN.md` and `worklog.md`. Read the coupling table in 
    - **Stand-in** — an AC you cannot test black-box yet: `REQ-nnn/AC-i [proxy:<release condition>] …`. X-trace shows it as WARN, never PASS. Drop the marker when the real test lands.
 5. `node tools/gate/gate.ts check --quick` often; `verify` before you claim done (C-33).
 
+## Slices (RES-904 §5–6)
+
+The plan's 内部步骤 are slices. Every slice: verifiable by one command (`verify:` in the plan), fits one fresh context, cuts through every layer it touches (schema → API → UI → tests) so it can be demonstrated alone.
+
+**One slice per session.** Implement → tests → one worklog line with the evidence → `gate check --quick` → k-handoff → stop. Continue only if the user says so. Long sessions are where "fix A, break B" chains form.
+
+**Seams.** The plan's 测试义务 names the seam each black-box acceptance test attaches to (CLI, HTTP route, command, module API) — the highest one available, as few as possible. Write the black-box test at that seam. If the seam does not exist yet, the plan says so and the test carries `[proxy:<seam> lands in Fnn]` with exactly that release condition (DEC-168).
+
 ## Stop and ask (C-21)
 
 Confirmed interface or data contract; requirement boundary; unplanned major dependency; confirmed test obligation.

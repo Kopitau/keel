@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-log"
+  short_description: "Use when starting k-log, filing an ISS, recording friction, tagging a lesson candidate, or registering OSS reuse."
+policy:
+  allow_implicit_invocation: true

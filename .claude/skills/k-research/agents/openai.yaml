@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-research"
+  short_description: "Use when starting k-research, writing a RES report, comparing implementation options, or researching before a technical decision."
+policy:
+  allow_implicit_invocation: true

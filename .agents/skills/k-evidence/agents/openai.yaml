@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-evidence"
+  short_description: "Use when starting k-evidence, claiming work is done, running gate verify, checking tree hashes, or building the REQ-to-test trace."
+policy:
+  allow_implicit_invocation: true

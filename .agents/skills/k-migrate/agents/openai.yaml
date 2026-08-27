@@ -1,0 +1,5 @@
+interface:
+  display_name: "k-migrate"
+  short_description: "Use when starting k-migrate, converting Trellis or Superpowers artifacts into keel records, or mining docs/ for unstructured requirements and rules."
+policy:
+  allow_implicit_invocation: false
