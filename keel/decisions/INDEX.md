@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 172
+- count: 182
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -177,3 +177,13 @@
 | DEC-170 | Codex 元数据：gate sync 为每个 k-* 技能生成 agents/openai.yaml，用户技能禁隐式调用 | confirmed | `DEC-170-codex-metadata-gate-sync-writes-agents-o.md` |
 | DEC-171 | 需求书的 fog 判据与升级规则 + 按 epic 分批基线（deferred） | deferred | `DEC-171-fog-rule-and-epic-scoped-baseline-deferr.md` |
 | DEC-172 | spike 作为调研记录的一种（RES kind: spike）（deferred） | deferred | `DEC-172-spike-as-a-research-record-kind-deferred.md` |
+| DEC-173 | keel update 采用交互式 y/N 确认 | confirmed | `DEC-173-update-interactive-y-n-confirmation.md` |
+| DEC-174 | 验收验证按功能完成声明收口并区分三种方式 | confirmed | `DEC-174-feature-scoped-acceptance-verification-m.md` |
+| DEC-175 | CI 验收拆为本地契约测试与真实运行证据 | confirmed | `DEC-175-split-ci-contract-test-from-real-run-evi.md` |
+| DEC-176 | 旧 RES 缺引用只警告新记录严格失败 | confirmed | `DEC-176-legacy-res-citation-gap-warning-policy.md` |
+| DEC-177 | gate loop clear 追加复现运行历史 | confirmed | `DEC-177-append-review-clear-repro-history.md` |
+| DEC-178 | 批准 CHG-008 核心方向并在 requirements v4 修正缺口 | confirmed | `DEC-178-approve-chg008-direction-correct-in-v4.md` |
+| DEC-179 | CHG-008、CHG-010 与 requirements v4 合并一次 APR | confirmed | `DEC-179-combined-apr-for-chg008-chg010-v4.md` |
+| DEC-180 | REQ-025 唯一归属 F23，F16 仅作关联 | confirmed | `DEC-180-req025-owned-by-f23-related-f16.md` |
+| DEC-181 | 旧 RES 身份使用外置迁移清单 | confirmed | `DEC-181-legacy-res-external-migration-manifest.md` |
+| DEC-182 | 自动评审复现命令的漏洞态与修复态判定 | confirmed | `DEC-182-review-repro-exit-code-contract.md` |

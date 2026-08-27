@@ -113,3 +113,7 @@
 - 实现决定：DEC-169/170 的测试用 `DEC-` 前缀、不带 AC 标记——v3 需求书没有对应 AC，按 DEC-168 不许借 AC 名；需求落点留到 v4（gap-hunt-v3 待处置项同类）。
 - 突变验证：① `computeFrontier` 忽略 done → dec169 两条红；② `openaiYamlFor` 对所有技能返回 true → dec170 四条红；各自还原后 13/13。
 - 证据：`npx tsc --noEmit` 干净；`node --test` **213/213**（200 + dec169 8 + dec170 5）；`gate check --quick` → `PASS_WITH_WARN fail=0 warn=1`（G-plan 行现为 `frontier 23, blocked 0`）；`gate status` 新增 `frontier:` / `blocked:` / `proxy_acs: 1`；`gate verify` passed=213；基线 213；`.agents/skills/k-*/agents/openai.yaml` 16 份 + 镜像 16 份入库。
+
+## 2026-08-27（requirements v4 基线激活）
+
+- C-34: ref=DEC-175 requirements v4 将 REQ-017 拆为 AC-3 本地 workflow 契约、AC-4 真实六格运行、AC-5 绕过检测；旧 v3 的 AC-3 proxy 与 AC-4 绕过测试名同步对账，真实运行继续明确标为 proxy。REQ-011 的 current 基线断言由 v3 更新为 v4。只改测试标签与基线指针，不实现 CHG-010 行为。

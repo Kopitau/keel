@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 45
+- count: 50
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -50,3 +50,8 @@
 | ISS-043 | ISS-043 G-research 只判文件存在，从不打开看 | closed | `ISS-043-res-content-unchecked.md` |
 | ISS-044 | ISS-044 feature-plan 模板与 `gate new feature` 不生成 `req:`，X-trace 对消费项目从不绑定 | closed | `ISS-044-feature-plan-template-and-gate-new-featu.md` |
 | ISS-045 | ISS-045 hook 导出的 `GIT_AUTHOR_*` 让 fixture 提交冠上真仓的 agent 身份，X-apr 守卫因错误原因变红 | closed | `ISS-045-hook-exported-git-author-leaks-the-real-.md` |
+| ISS-046 | ISS-046 CHG-010 漏列五个验收义务已变化的功能计划 | closed | `ISS-046-chg-010.md` |
+| ISS-047 | ISS-047 review clear 依赖的『已修复谓词』没有可机读的打开态契约 | closed | `ISS-047-review-clear.md` |
+| ISS-048 | ISS-048 legacy RES 的 PASS/WARN/FAIL 未限定为引用子判据 | closed | `ISS-048-legacy-res-passwarnfail.md` |
+| ISS-049 | ISS-049 REQ-010 的 ingest 攻击探针行为被错误标为 machine-doc | closed | `ISS-049-req-010-ingest-machine-doc.md` |
+| ISS-050 | ISS-050 v4-req017-ac-numbering-stale-test-labels | closed | `ISS-050-v4-req017-ac-numbering-stale-test-labels.md` |

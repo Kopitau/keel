@@ -1,6 +1,6 @@
 ---
 id: CHG-008
-status: proposed
+status: approved
 date: 2026-08-24
 requirements_from: v2.md
 requirements_to: v3.md
@@ -90,4 +90,8 @@ R3（ISS-021 已修）+ CHG-007 实施
 
 ## 批准
 
-**status: proposed**。需求与两条决策已由用户在对话中逐条确认（DEC-159/160 载有原话），尚未取得人类 git 身份的哈希审批（C-107）。CHG-002~007 已由 kopit 批准；本单仍待批。
+**status: approved**。需求与两条决策已由用户在对话中逐条确认（DEC-159/160 载有原话）；本单最终由 APR-003 与 CHG-010、requirements v4 一次性哈希批准（DEC-179）。
+
+2026-08-27，用户在看清自动评审、三轮熔断、分类视角、实证闭环、异构复审和用户边界后选择「1A」，确认保留核心方向并在 requirements v4 修正缺口（DEC-178）。该次确认时 v4 工件与独立评审尚未完成，因此本单当时仍保持 `proposed`，没有把方向确认冒充 APR。
+
+2026-08-27，用户回复「Y」，确认正式评审修订后的完整 v4，并明确委托生成、批准和提交合并 APR；本单按 DEC-179 由 APR-003 同时批准。本次不合并、不开始实现。

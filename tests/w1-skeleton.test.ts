@@ -69,11 +69,11 @@ test("REQ-004 plan INDEX has a unique current pointer", () => {
   );
 });
 
-test("REQ-011 requirements INDEX unique current is v3", () => {
+test("REQ-011 requirements INDEX unique current is v4", () => {
   const text = readFileSync(join(root, "keel", "requirements", "INDEX.md"), "utf8");
   const currents = text.split(/\n/).filter((ln) => ln.startsWith("- current:"));
-  assert.deepEqual(currents, ["- current: v3.md"]);
-  const body = readFileSync(join(root, "keel", "requirements", "v3.md"), "utf8");
+  assert.deepEqual(currents, ["- current: v4.md"]);
+  const body = readFileSync(join(root, "keel", "requirements", "v4.md"), "utf8");
   assert.ok(body.includes("## REQ-025"));
 });
 

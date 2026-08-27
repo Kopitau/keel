@@ -44,7 +44,7 @@ test("REQ-017 C-105 force-update is when remote is not an ancestor", () => {
   assert.equal(parsed?.remoteSha, a);
 });
 
-test("REQ-017/AC-4 C-105 Keel-Precommit skipped is a bypass finding", () => {
+test("REQ-017/AC-5 C-105 Keel-Precommit skipped is a bypass finding", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-w6-bypass-"));
   mkdirSync(join(dir, "keel"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -62,7 +62,7 @@ test("REQ-017/AC-4 C-105 Keel-Precommit skipped is a bypass finding", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-017 C-105 CI workflow dropped verify is a gap", () => {
+test("REQ-017/AC-4 [proxy:GitHub Actions six-grid run evidence not yet recorded] local workflow dropped verify is a gap", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-w6-ci-"));
   mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
   writeFileSync(join(dir, ".github", "workflows", "gate.yml"), "name: x\nrun: echo hi\n", "utf8");
@@ -71,7 +71,7 @@ test("REQ-017 C-105 CI workflow dropped verify is a gap", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-017/AC-4 C-105 tests/ missing alongside a test script is a gap", () => {
+test("REQ-017/AC-5 C-105 tests/ missing alongside a test script is a gap", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-w6-tests-"));
   mkdirSync(join(dir, "keel"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -82,11 +82,10 @@ test("REQ-017/AC-4 C-105 tests/ missing alongside a test script is a gap", () =>
   rmSync(dir, { recursive: true, force: true });
 });
 
-// DEC-168: this is a static read of the workflow file, not the behaviour AC-3
-// promises (L3 reruns the same scripts on a push). CI has never run for this
-// repo and the AC cannot be verified locally at all — so it is a stand-in, WARN
-// in X-trace, until the AC is rewritten via k-grill (DEC-168 review trigger).
-test("REQ-017/AC-3 [proxy:CI never ran; AC not locally verifiable, rewrite via k-grill] this repo CI workflow still declares check, verify and the OS matrix", () => {
+// DEC-175 / requirements v4 split the locally testable workflow contract (AC-3)
+// from the real six-grid GitHub run (AC-4). The negative test above remains an
+// explicit proxy for AC-4 until the required run evidence exists.
+test("REQ-017/AC-3 this repo CI workflow declares check, verify and the OS matrix", () => {
   assert.deepEqual(ciWorkflowGaps(repo), []);
 });
 
