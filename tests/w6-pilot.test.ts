@@ -44,7 +44,7 @@ test("REQ-017 C-105 force-update is when remote is not an ancestor", () => {
   assert.equal(parsed?.remoteSha, a);
 });
 
-test("REQ-017 C-105 Keel-Precommit skipped is a bypass finding", () => {
+test("REQ-017/AC-4 C-105 Keel-Precommit skipped is a bypass finding", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-w6-bypass-"));
   mkdirSync(join(dir, "keel"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -71,7 +71,7 @@ test("REQ-017 C-105 CI workflow dropped verify is a gap", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-017 C-105 tests/ missing alongside a test script is a gap", () => {
+test("REQ-017/AC-4 C-105 tests/ missing alongside a test script is a gap", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-w6-tests-"));
   mkdirSync(join(dir, "keel"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -82,7 +82,11 @@ test("REQ-017 C-105 tests/ missing alongside a test script is a gap", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-017 this repo CI workflow still has check, verify, OS matrix", () => {
+// DEC-168: this is a static read of the workflow file, not the behaviour AC-3
+// promises (L3 reruns the same scripts on a push). CI has never run for this
+// repo and the AC cannot be verified locally at all — so it is a stand-in, WARN
+// in X-trace, until the AC is rewritten via k-grill (DEC-168 review trigger).
+test("REQ-017/AC-3 [proxy:CI never ran; AC not locally verifiable, rewrite via k-grill] this repo CI workflow still declares check, verify and the OS matrix", () => {
   assert.deepEqual(ciWorkflowGaps(repo), []);
 });
 

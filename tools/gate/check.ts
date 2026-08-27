@@ -22,7 +22,7 @@ import { execModeGaps } from "./execmode.ts";
 import { gapHuntGaps } from "./gaphunt.ts";
 import { inspectResSubstance } from "./rescheck.ts";
 import { pendingCandidates, summarizedFeatures } from "./candidates.ts";
-import { claimedReqs, uncoveredClaimed } from "./trace.ts";
+import { claimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
 import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
 import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
 
@@ -659,19 +659,31 @@ function xHooks(ctx: Ctx): CheckItem {
   return pass("X-hooks", `core.hooksPath=${hp}; exec bits 100755`);
 }
 
+const TRACE_FIX =
+  "only black-box acceptance tests carry REQ-nnn/AC-i; a stand-in says [proxy:<release condition>]; regression/guard names start with ISS-/DEC-/fp: (DEC-168)";
+
 function xTrace(ctx: Ctx): CheckItem {
-  const missing = uncoveredClaimed(ctx);
-  if (claimedReqs(ctx).length === 0) {
+  const claimed = claimedReqs(ctx);
+  const { proxies, whitebox } = traceWarnings(ctx, claimed);
+  if (claimed.length === 0 && whitebox.length === 0) {
     return pass("X-trace", "no claimed-done features (C-32 scope = 验收范围)");
   }
+  const missing = uncoveredClaimed(ctx);
   if (missing.length > 0) {
     return fail(
       "X-trace",
       `uncovered acceptance criteria: ${missing.join(", ")}`,
-      "mark tests REQ-nnn/AC-i (C-32 / ISS-020)",
+      "mark black-box acceptance tests REQ-nnn/AC-i (C-32 / ISS-020 / DEC-168)",
     );
   }
-  return pass("X-trace", "claimed acceptance criteria covered in tests/");
+  const notes: string[] = [];
+  if (proxies.length > 0) notes.push(`proxy coverage, WARN not PASS: ${proxies.join(", ")}`);
+  if (whitebox.length > 0) notes.push(`white-box names carry AC markers: ${whitebox.join(", ")}`);
+  if (notes.length > 0) {
+    // The reason is in the test name itself; C-103 does not escalate it (DEC-168).
+    return { ...warn("X-trace", notes.join("; "), TRACE_FIX), acknowledged: true };
+  }
+  return pass("X-trace", "claimed acceptance criteria covered by black-box tests in tests/");
 }
 
 function xFull(ctx: Ctx): CheckItem {
@@ -760,6 +772,7 @@ function warnWorklogCovered(ctx: Ctx, items: CheckItem[]): CheckItem[] {
   const blob = logs.join("\n");
   return items.map((it) => {
     if (it.verdict !== "warn") return it;
+    if (it.acknowledged) return it;
     if (warnAcknowledged(ctx, it.id, blob)) return it;
     return {
       ...it,

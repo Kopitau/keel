@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 43
+- count: 45
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -48,3 +48,5 @@
 | ISS-041 | ISS-041 测试套件从 2026-08-25 起一直是红的，交接文件却写着「139 全绿」 | closed | `ISS-041-suite-red-since-config-change.md` |
 | ISS-042 | ISS-042 `#经验候选` 标签没有读取端：写了等于没写 | closed | `ISS-042-candidate-tags-dead-end.md` |
 | ISS-043 | ISS-043 G-research 只判文件存在，从不打开看 | closed | `ISS-043-res-content-unchecked.md` |
+| ISS-044 | ISS-044 feature-plan 模板与 `gate new feature` 不生成 `req:`，X-trace 对消费项目从不绑定 | open | `ISS-044-feature-plan-template-and-gate-new-featu.md` |
+| ISS-045 | ISS-045 hook 导出的 `GIT_AUTHOR_*` 让 fixture 提交冠上真仓的 agent 身份，X-apr 守卫因错误原因变红 | closed | `ISS-045-hook-exported-git-author-leaks-the-real-.md` |

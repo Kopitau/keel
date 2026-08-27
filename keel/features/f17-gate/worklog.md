@@ -79,3 +79,18 @@
 - #经验候选 类型=知识缺口 Windows 上 Python write_text 默认写 CRLF，一次污染 27 个文件（含门禁源码）且长期无症状 → KLES-001
 - 补记（同日）：DEC-162 钩子首次实弹即拦下提交——hook 导出的 GIT_DIR/GIT_INDEX_FILE 劫持了测试内 fixture 与进程内 git 调用，两个野提交曾落到真仓 HEAD（已 mixed reset 救回，工作区无损）。修复双层：hook unset + 测试模块自净。
 - #经验候选 类型=防线失效 git hook 环境变量劫持测试里的 git 操作，CI 绿不代表 hook 场景安全 → KLES-002
+
+## 2026-08-26（DEC-168）
+
+- 进度：`trace.ts` 判据改为只数测试名上的黑盒标记；`[proxy:]` 与白盒挂 AC 记 WARN（`CheckItem.acknowledged`，不被 C-103 升级）；`gate trace` 加 proxy 列。REQ-017 的 AC 测试按黑盒重写（细节与 C-34 引用见 f06-evidence worklog 同日条目）。
+- 问题链接：ISS-044（open：feature-plan 模板与 `gate new feature` 不生成 `req:`，X-trace 对消费项目不绑定）。
+
+## 2026-08-27（ISS-045：hook 导出的 GIT_AUTHOR_* 劫持 fixture 提交身份）
+
+- 现象：提交 DEC-168 批次时 pre-commit 全量 185/187（终端 187/187），两条 `R6c X-apr` 失败，实际输出 `last commit author keel-agent <agent@keel.local> is an agent`。
+- 复现：`GIT_AUTHOR_NAME=keel-agent GIT_AUTHOR_EMAIL=agent@keel.local node --test tests/r6-field-guards.test.ts` → 2 fail；不带环境变量 40/40。假设一次命中：`git commit` 把 author/committer 六个变量导出给 hook，fixture 的 `git config user.name` 被环境覆盖。
+- 修复（C-61，同指纹 KLES-002 第二次，比上一级）：不再手写变量清单，改为 `tests/fixtures/git-env.ts` 一个共享模式 `/^GIT_(DIR|INDEX_FILE|WORK_TREE|PREFIX|AUTHOR_|COMMITTER_)/`，r6 / dec168 / iss045 三个碰 git 的测试文件加载时 `scrubProcessGitEnv`，fixture spawn 走 `scrubHookGitEnv`；`.githooks/pre-commit` 的 `unset` 补六个变量（双层）。
+- 红灯：修复前上述命令 2 fail。修复后 hook 式环境下 r6 + iss045 + dec168 57/57。
+- 突变验证：把模式改回不含 `AUTHOR_|COMMITTER_` → iss045 两条（「keeps the fixture's own identity」「strips everything」）+ r6 两条 X-apr 变红（4 fail）；还原 → 45/45。
+- 问题链接：ISS-045 closed，防线指针 `tests/iss045-hook-git-env.test.ts`（5 条）。基线 192。
+- 备注：KLES-002 的措辞应从「GIT_DIR」扩为「git 导出给 hook 的全部变量」——用户库文件不在本仓，待用户改。同指纹第三次即 `#经验候选`。

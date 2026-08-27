@@ -28,23 +28,10 @@ function git(cwd: string, args: string[]): void {
   if ((r.status ?? 1) !== 0) throw new Error(r.stderr || r.stdout || args.join(" "));
 }
 
-test("REQ-017/AC-1 Node runs .ts directly with builtins only", () => {
-  assert.equal(isAllowedTestCommand("node --test", "keel-gate"), true);
-});
-
-test("REQ-017/AC-2 six gates print pass/warn/fail with a fix line", () => {
-  assert.match(runCheck(makeCtx(repo), ["--quick"]).stdout, /PASS G-req/);
-});
-
-test("REQ-017/AC-3 L3 CI reruns the same gate scripts", () => {
-  const yml = readFileSync(join(repo, ".github", "workflows", "gate.yml"), "utf8");
-  assert.match(yml, /gate.ts verify/);
-  assert.match(yml, /gate.ts check/);
-});
-
-test("REQ-017/AC-4 hooksPath, --no-verify stamp, and tests-dir are gated", () => {
-  assert.equal(isAllowedTestCommand("node --test tests/fake/x.test.ts", "keel-gate"), false);
-});
+// The four one-line REQ-017/AC-1..4 placeholders that used to sit here were
+// removed under DEC-168 (C-34: ref=DEC-168, worklog f06-evidence 2026-08-26):
+// their bodies did not test what the AC names promised. The black-box tests
+// for those ACs live in tests/dec168-test-kinds.test.ts, w6-pilot and p0-rework.
 
 test("REQ-017 ISS-018 narrowing test_command to one file is refused", () => {
   assert.equal(isAllowedTestCommand("node --test tests/ok.test.js", "keel-gate"), false);

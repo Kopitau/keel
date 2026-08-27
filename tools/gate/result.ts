@@ -5,6 +5,9 @@ export type CheckItem = {
   verdict: Verdict;
   summary: string;
   fix?: string;
+  /** A warn whose reason already lives in the artifact it reports (e.g. a `[proxy:...]`
+   *  test name, DEC-168). C-103 escalation leaves it as WARN; it is still never a PASS. */
+  acknowledged?: boolean;
 };
 
 export type CmdResult = {

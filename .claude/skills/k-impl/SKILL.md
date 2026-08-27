@@ -26,7 +26,11 @@ Read that feature’s `plan/vN.md` and `worklog.md`. Read the coupling table in 
 1. Append the worklog as you go (decomposition, progress, non-obvious choices). Do not rewrite history (C-20).
 2. Stay inside the planned file set. Overlap with another claimed feature → serialize (C-114).
 3. Core logic: tests before code. Auxiliary: tests before you call it done (C-31).
-4. Mark tests with `REQ-nnn` in the test name (C-32).
+4. Two kinds of test, two kinds of name (DEC-168). A REQ id in a comment or a fixture string is not coverage; `gate trace` reads test names only.
+   - **Black-box acceptance** — name carries `REQ-nnn/AC-i`. Input is only what the requirement names; assertion is only what the AC promises. Write it from the AC before the code, ideally in a context that has not seen the implementation; the implementer may add assertions, never weaken them. Only this kind certifies an AC (C-32/C-37).
+   - **White-box regression / guard** — name starts with `ISS-nnn`, `DEC-nnn` or `fp:<fingerprint>`; it never carries an AC marker. Before you commit it: revert the fix, watch the test go red, restore (C-35); one worklog line.
+   - **Interface contract** — name starts with `I-nn` from the coupling table (C-38).
+   - **Stand-in** — an AC you cannot test black-box yet: `REQ-nnn/AC-i [proxy:<release condition>] …`. X-trace shows it as WARN, never PASS. Drop the marker when the real test lands.
 5. `node tools/gate/gate.ts check --quick` often; `verify` before you claim done (C-33).
 
 ## Stop and ask (C-21)

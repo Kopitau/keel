@@ -154,7 +154,7 @@ test("REQ-017 ISS-004 this repo required scripts are 100755", () => {
   }
 });
 
-test("REQ-017 ISS-005 bare gate-warn password still FAILs", () => {
+test("REQ-017/AC-4 ISS-005 bare gate-warn password still FAILs", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-p0-005-"));
   skeleton(dir);
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");

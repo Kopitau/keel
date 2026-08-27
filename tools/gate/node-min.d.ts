@@ -16,6 +16,8 @@ declare module "node:fs" {
   export function copyFileSync(src: string, dest: string): void;
   export function readdirSync(path: string, opts?: { recursive?: boolean }): string[];
   export function statSync(path: string): { isDirectory(): boolean; isFile(): boolean; mtimeMs: number };
+  export function lstatSync(path: string): { isDirectory(): boolean; isFile(): boolean; isSymbolicLink(): boolean };
+  export function chmodSync(path: string, mode: number | string): void;
   export function rmSync(path: string, opts?: { recursive?: boolean; force?: boolean }): void;
   export function mkdtempSync(prefix: string): string;
   export function cpSync(
@@ -33,6 +35,7 @@ declare module "node:path" {
   export function relative(from: string, to: string): string;
   export function isAbsolute(p: string): boolean;
   export const sep: string;
+  export const delimiter: string;
 }
 
 declare module "node:url" {
@@ -79,6 +82,7 @@ declare module "node:process" {
 declare module "node:assert/strict" {
   const assert: {
     equal(a: unknown, b: unknown, msg?: string): void;
+    notEqual(a: unknown, b: unknown, msg?: string): void;
     deepEqual(a: unknown, b: unknown, msg?: string): void;
     ok(v: unknown, msg?: string): void;
     match(s: string, r: RegExp, msg?: string): void;

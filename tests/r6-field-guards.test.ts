@@ -16,9 +16,12 @@ const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Self-clean at load: when a git hook (or any caller) exports GIT_DIR /
 // GIT_INDEX_FILE, both fixture `git` spawns AND the in-process gate git() calls
 // under test get hijacked onto the real repo — two rogue commits landed on the
-// real HEAD before this line existed (2026-08-26). Tests must not trust the
-// inherited git environment.
-for (const k of ["GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_PREFIX"]) delete process.env[k];
+// real HEAD before this line existed (2026-08-26). The same hook also exports
+// GIT_AUTHOR_* / GIT_COMMITTER_*, which turned every fixture commit below into a
+// keel-agent commit and failed the X-apr guards for the wrong reason (ISS-045).
+// Tests must not trust the inherited git environment — one shared pattern, not a list.
+import { scrubHookGitEnv, scrubProcessGitEnv } from "./fixtures/git-env.ts";
+scrubProcessGitEnv(process.env);
 
 function fixture(tag: string): string {
   const dir = mkdtempSync(join(tmpdir(), `keel-r6-${tag}-`));
@@ -415,12 +418,11 @@ test("R6c harness: the zhaoxi trailer shape reads as agent-made", () => {
  * Env for git inside fixtures. When these tests run from a git hook, git has
  * exported GIT_DIR / GIT_INDEX_FILE pointing at the REAL repo — a fixture
  * `git commit` then lands on the real HEAD (it did, 2026-08-26, two rogue
- * commits). Fixture git must never inherit those.
+ * commits) — and GIT_AUTHOR_* / GIT_COMMITTER_* naming the real committer
+ * (ISS-045). Fixture git must never inherit any of them.
  */
 function cleanGitEnv(): { [k: string]: string | undefined } {
-  const env = { ...process.env };
-  for (const k of ["GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_PREFIX"]) delete env[k];
-  return env;
+  return scrubHookGitEnv(process.env);
 }
 
 function fixtureGit(dir: string, args: string[]): void {

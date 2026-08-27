@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -25,7 +25,7 @@ test("REQ-016 every skill exists with matching name and Use when description", (
   }
 });
 
-test("REQ-016 DEC-147 gate sync copies skills to .claude/skills", () => {
+test("I-18 REQ-016 DEC-147 gate sync copies skills to .claude/skills and never links", () => {
   const r = runSync(makeCtx(root));
   assert.equal(r.code, 0, r.stderr);
   for (const name of SKILL_CATALOG) {
@@ -33,5 +33,8 @@ test("REQ-016 DEC-147 gate sync copies skills to .claude/skills", () => {
     const dest = join(root, ".claude", "skills", name, "SKILL.md");
     assert.equal(existsSync(dest), true, dest);
     assert.equal(readFileSync(dest, "utf8"), src);
+    // I-18 (F24 → F16): a copy on every OS — a symlink here is the platform fork DEC-147 rejected.
+    assert.equal(lstatSync(dest).isSymbolicLink(), false, dest);
+    assert.equal(lstatSync(join(root, ".claude", "skills", name)).isSymbolicLink(), false, name);
   }
 });

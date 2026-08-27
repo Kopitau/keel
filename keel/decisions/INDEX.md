@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 167
+- count: 168
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -172,3 +172,4 @@
 | DEC-165 | 其余五项「空即合规」检查暂不审计 | confirmed | `DEC-165-defer-empty-compliant-audit.md` |
 | DEC-166 | C-107 修订：审批提交允许记录在案的委托 | confirmed | `DEC-166-apr-recorded-delegation.md` |
 | DEC-167 | 审批路径触发提交时守卫（代替字面上的全量 check） | confirmed | `DEC-167-apr-commit-time-guard.md` |
+| DEC-168 | 测试分黑盒验收与白盒回归：只有黑盒可挂 AC 名，X-trace 只数黑盒 | confirmed | `DEC-168-test-kinds-black-box-acceptance-vs-white.md` |

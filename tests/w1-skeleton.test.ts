@@ -7,6 +7,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { sha256Normalized } from "../tools/gate/hash.ts";
 import { isAtLeast, parseVersion } from "../tools/gate/node-version.ts";
+import { isAllowedTestCommand } from "../tools/gate/testcmd.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -23,7 +24,7 @@ test("REQ-020 AGENTS.md stays within line and byte budget", () => {
   assert.ok(text.length <= 32768, `AGENTS.md is ${text.length} chars`);
 });
 
-test("REQ-021 config.json has required keys and keel-gate profile", () => {
+test("I-17 REQ-021 config.json has required keys and profiles.keel-gate is the gate's own allowlisted test command", () => {
   const data = JSON.parse(readFileSync(join(root, "keel", "config.json"), "utf8")) as {
     [k: string]: unknown;
   };
@@ -48,6 +49,14 @@ test("REQ-021 config.json has required keys and keel-gate profile", () => {
   );
   const profiles = data.profiles as { active: string[]; [k: string]: unknown };
   assert.ok(profiles.active.includes("keel-gate"));
+  // I-17 (F17 → F21): the keel-gate profile is the gate's own full-suite command,
+  // and it must be one verify would accept — otherwise evidence for this repo is unrunnable.
+  const gateProfile = profiles["keel-gate"] as { test_command?: string } | undefined;
+  assert.equal(
+    isAllowedTestCommand(gateProfile?.test_command ?? "", "keel-gate"),
+    true,
+    `keel-gate.test_command=${String(gateProfile?.test_command)}`,
+  );
 });
 
 test("REQ-004 plan INDEX has a unique current pointer", () => {
@@ -78,7 +87,7 @@ test("REQ-012 gate status prints handoff path", () => {
   assert.match(proc.stdout, /node\+ts/);
 });
 
-test("REQ-024 DEC-144 CRLF and LF hash to the same digest", () => {
+test("I-16 REQ-024 DEC-144 CRLF, LF and BOM hash to the same digest", () => {
   const lf = "hello\nworld\n";
   const crlf = "hello\r\nworld\r\n";
   const bom = "\uFEFFhello\nworld\n";

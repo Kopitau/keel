@@ -27,6 +27,9 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | W1–W6 | implementation waves from DESIGN §8 (advisory, adopted as working order 2026-08-21) | treating §8 as a confirmed C-record |
 | normalized hash | SHA-256 of UTF-8 / no BOM / LF (DEC-144) | hashing raw on-disk bytes |
 | strip-types | Node ≥22.18.0 runs `.ts` without a build (DEC-150/151) | tsx / tsc emit as the runtime path |
+| black-box acceptance test | 名带 `REQ-nnn/AC-i`；只用需求点名的输入、只断 AC 承诺的结果；唯一能证明 AC 的测试（DEC-168） | 给回归测试挂 AC 名 |
+| white-box regression test | 名以 `ISS-`/`DEC-`/`fp:` 开头，针对具体缺陷或分支；提交前突变验证（C-35/DEC-168） | 用它顶验收；名里带 `AC-i` |
+| proxy coverage | `[proxy:<解除条件>]`，黑不了的 AC 的替身；X-trace 记 WARN 不记 PASS（DEC-168） | 没有解除条件的替身；把 WARN 当 PASS |
 
 ## Banned near-synonyms
 
