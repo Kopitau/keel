@@ -62,11 +62,11 @@ test("I-17 REQ-021 config.json has required keys and profiles.keel-gate is the g
 test("REQ-004 plan INDEX has a unique current pointer", () => {
   const text = readFileSync(join(root, "keel", "plan", "INDEX.md"), "utf8");
   const currents = text.split(/\n/).filter((ln) => ln.startsWith("- current:"));
-  assert.deepEqual(currents, ["- current: overview-v2.md"]);
-  assert.equal(
-    readFileSync(join(root, "keel", "plan", "overview-v2.md"), "utf8").length > 0,
-    true,
-  );
+  assert.equal(currents.length, 1, `current pointers: ${currents.join(", ")}`);
+  const current = (currents[0] ?? "").replace("- current:", "").trim();
+  assert.match(current, /^overview-v\d+\.md$/);
+  const body = readFileSync(join(root, "keel", "plan", current), "utf8");
+  assert.match(body, /^# 统一实施规划总览 v\d+/);
 });
 
 test("REQ-011 requirements INDEX unique current is v4", () => {

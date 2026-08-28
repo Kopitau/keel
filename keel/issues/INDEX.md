@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 50
+- count: 51
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -55,3 +55,4 @@
 | ISS-048 | ISS-048 legacy RES 的 PASS/WARN/FAIL 未限定为引用子判据 | closed | `ISS-048-legacy-res-passwarnfail.md` |
 | ISS-049 | ISS-049 REQ-010 的 ingest 攻击探针行为被错误标为 machine-doc | closed | `ISS-049-req-010-ingest-machine-doc.md` |
 | ISS-050 | ISS-050 v4-req017-ac-numbering-stale-test-labels | closed | `ISS-050-v4-req017-ac-numbering-stale-test-labels.md` |
+| ISS-051 | ISS-051 plan-index-current-version-hardcode | closed | `ISS-051-plan-index-current-version-hardcode.md` |

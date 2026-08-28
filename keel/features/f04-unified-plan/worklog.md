@@ -11,3 +11,10 @@
 
 - 进度：`feature-plan.md` 前言加 `blocked_by: []`（DEC-169）；"测试义务"加"缝"表（REQ/AC → 黑盒测试挂在哪 → 真验收 / proxy 至 Fnn，RES-904 §6）；"内部步骤"改为切片（单上下文装得下、可独立演示、纵向贯穿，每步带 `verify:`，RES-904 §5）；"依赖"节说明 `blocked_by`。
 - 实现决定：切片与缝只进模板与 k-impl 文字，不加门禁——先在下一个功能上用一遍再决定要不要 X-trace 对账 proxy 注记与缝表。
+
+## 2026-08-28（CHG-010 / requirements v4 规划基线）
+
+- 进度：新建 `overview-v3.md`，完整保留 I-01～I-18 并新增 I-19～I-25；为 F1～F24 全部新建最新计划版本（F7/F17 为 v3，其余为 v2），每份都有 `req:`、`blocked_by:`、verification、测试缝和逐会话切片。
+- 实现决定：本轮 `blocked_by` 统一只表达“必须等整个功能已有 summary.md”的硬阻塞；CHG-010 各 owner 是既有系统上的增量，大多数只有接口/文件重叠而非完整功能阻塞，因此不把 overview 耦合机械复制成瀑布依赖，串行点留在 I-nn 与实施顺序中（DEC-169/C-114）。
+- 边界：本切片只写规划，不实现 0.8.0 行为；用户在途 `keel/handoff.md` 保持不覆盖。
+- #经验候选 defense failed `current:` 升版第二次撞到硬编码测试（ISS-050→ISS-051）；点修未覆盖同文件 sibling，应优先断言版本无关不变量。
