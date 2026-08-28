@@ -5,8 +5,14 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { runCheck } from "../tools/gate/check.ts";
 import { makeCtx } from "../tools/gate/ctx.ts";
+import { runTrace } from "../tools/gate/trace.ts";
 
-function fixture(tag: string, acceptanceCount: number, verification: string): string {
+function fixture(
+  tag: string,
+  acceptanceCount: number,
+  verification: string,
+  options: { summary?: boolean; testName?: string } = {},
+): string {
   const root = mkdtempSync(join(tmpdir(), `keel-chg010-verification-${tag}-`));
   for (const dir of [
     "requirements",
@@ -62,11 +68,21 @@ function fixture(tag: string, acceptanceCount: number, verification: string): st
     "---\nfeature: F6\nreq: [REQ-006]\nblocked_by: []\n---\n# F6\n",
     "utf8",
   );
-  writeFileSync(
-    join(root, "keel", "features", "f06-evidence", "summary.md"),
-    "# F6 summary\n",
-    "utf8",
-  );
+  if (options.summary !== false) {
+    writeFileSync(
+      join(root, "keel", "features", "f06-evidence", "summary.md"),
+      "# F6 summary\n",
+      "utf8",
+    );
+  }
+  if (options.testName) {
+    mkdirSync(join(root, "tests"), { recursive: true });
+    writeFileSync(
+      join(root, "tests", "acceptance.test.ts"),
+      `import { test } from "node:test";\ntest(${JSON.stringify(options.testName)}, () => {});\n`,
+      "utf8",
+    );
+  }
   return root;
 }
 
@@ -114,4 +130,39 @@ test("REQ-006/AC-7 G-req accepts an equal array containing all three verificatio
   inFixture("valid", 3, "[auto, machine-doc, manual]", (line) => {
     assert.match(line, /^PASS G-req/);
   });
+});
+
+test("REQ-006/AC-2 gate trace shows verification per AC and whether the REQ is in claimed scope", () => {
+  const claimed = fixture("trace-claimed", 3, "[auto, machine-doc, manual]");
+  const unclaimed = fixture("trace-unclaimed", 1, "[auto]", { summary: false });
+  try {
+    const claimedOut = runTrace(makeCtx(claimed)).stdout;
+    assert.match(claimedOut, /\| REQ-006 \| claimed \| AC-1=auto<br>AC-2=machine-doc<br>AC-3=manual \|/);
+    assert.match(claimedOut, /claimed: 1 \/ 1 REQ\(s\)/);
+
+    const unclaimedOut = runTrace(makeCtx(unclaimed)).stdout;
+    assert.match(unclaimedOut, /\| REQ-006 \| not claimed \| AC-1=auto \|/);
+    assert.match(unclaimedOut, /claimed: 0 \/ 1 REQ\(s\)/);
+    assert.match(gReqLine(unclaimed), /^PASS G-req/);
+  } finally {
+    rmSync(claimed, { recursive: true, force: true });
+    rmSync(unclaimed, { recursive: true, force: true });
+  }
+});
+
+test("REQ-006/AC-7 a claimed manual proxy is visible in trace and keeps X-trace at WARN, never PASS", () => {
+  const root = fixture("trace-proxy", 1, "[manual]", {
+    testName: "REQ-006/AC-1 [proxy:real environment evidence missing] stand-in",
+  });
+  try {
+    const trace = runTrace(makeCtx(root)).stdout;
+    assert.match(trace, /\| REQ-006 \| claimed \| AC-1=manual \|.*AC-1 \[real environment evidence missing\] \|/);
+    const xTrace = runCheck(makeCtx(root), ["--quick"]).stdout
+      .split(/\n/)
+      .find((line) => line.includes(" X-trace  ")) ?? "<missing X-trace>";
+    assert.match(xTrace, /^WARN X-trace/);
+    assert.doesNotMatch(xTrace, /^PASS/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

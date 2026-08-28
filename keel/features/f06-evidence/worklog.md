@@ -37,3 +37,12 @@
 - C-34: ref=DEC-174 新增四条 verification 协议黑盒测试并更新测试名基线。
 - 绿灯：新增测试 4/4；连同 DEC-168 trace、旧格式兼容、frontier 与既有 F6 回归为 27/27；`npx tsc --noEmit` exit 0；quick 为 PASS_WITH_WARN，G-req 报告 `28 verification array(s) valid`，唯一 WARN 仍是 REQ-017/AC-4 六格 proxy。
 - 追溯：`gate trace` 的 28 条 REQ/AC 数量保持不变，REQ-006/AC-2 与 AC-7 现在由 `tests/chg010-verification.test.ts` 覆盖；本切片尚未把 verification 类型列加入 trace 表，留 plan v2 步骤 2。
+
+## 2026-08-28（P1 / trace verification 与 claimed scope 切片）
+
+- 内部分解：plan v2 步骤 2；只扩展 trace 的可观察协议，不改变未声明完成功能不阻断的 DEC-174 边界，也不解除真实六格 proxy。
+- 红灯：新增两条黑盒后 `node --test tests/chg010-verification.test.ts` 为 4 pass / 2 fail；旧矩阵看不到 AC 对应的 verification 和 claimed scope，manual proxy 虽已存在但无法与验证类型、强制范围同表对账。
+- 实现决定：`TraceRow` 直接携带 requirements parser 的 AC 顺序 verification 和由 `summary.md` 推导的 claimed 布尔值；输出增加 scope/verification 两列、claimed 总数与 claimed uncovered，避免另建第二套映射。
+- C-34: ref=DEC-174 —— 新增 claimed/unclaimed 正反向输出测试，以及“claimed manual proxy 只能 WARN、不得 PASS”的黑盒测试；基线更新为 223 个测试名。
+- 绿灯：新文件 6/6；连同 DEC-168、ISS-044、P0/R2 trace 回归共 37/37；`npx tsc --noEmit` exit 0。真实 `gate trace` 显示 2/28 REQ claimed、claimed uncovered=0，REQ-017/AC-4 明确为 manual proxy，未冒充 PASS。
+- 边界：P6 继续本地；GitHub Actions 六格 run 证据未记录，REQ-017/AC-4 proxy 保留。

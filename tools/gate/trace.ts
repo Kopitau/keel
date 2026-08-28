@@ -27,6 +27,10 @@ export type TestNameInfo = {
 
 export type TraceRow = {
   req: string;
+  /** Whether the owner feature has summary.md and therefore enters C-32 enforcement scope. */
+  claimed: boolean;
+  /** AC-index-aligned values declared by the requirements verification protocol (DEC-174). */
+  verification: string[];
   tests: string[];
   criteria: number;
   uncoveredAc: number[];
@@ -250,11 +254,13 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
   for (const protocol of protocols) {
     if (!reqs.includes(protocol.req)) reqs.push(protocol.req);
   }
+  const claimed = new Set(claimedReqs(ctx));
   const infos = testNameInfos(ctx);
   const rows: TraceRow[] = reqs.map((req) => {
+    const protocol = protocols.find((entry) => entry.req === req);
     const mine = infos.filter((t) => t.reqs.includes(req));
     const tests = [...new Set(mine.map((t) => t.file))].sort();
-    const n = protocols.find((protocol) => protocol.req === req)?.acceptance.length ?? 0;
+    const n = protocol?.acceptance.length ?? 0;
     const uncoveredAc: number[] = [];
     const proxyAc: { ac: number; note: string }[] = [];
     const whiteboxAc: { ac: number; name: string }[] = [];
@@ -273,7 +279,16 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
       if (white.length > 0) continue;
       uncoveredAc.push(i);
     }
-    return { req, tests, criteria: n, uncoveredAc, proxyAc, whiteboxAc };
+    return {
+      req,
+      claimed: claimed.has(req),
+      verification: protocol?.verification ?? [],
+      tests,
+      criteria: n,
+      uncoveredAc,
+      proxyAc,
+      whiteboxAc,
+    };
   });
   return { rows, reqFile };
 }
@@ -327,28 +342,42 @@ export function runTrace(ctx: Ctx): CmdResult {
     `- requirements: ${reqFile}`,
     `- generator: gate trace`,
     `- counts black-box test names only (DEC-168); [proxy:...] is a stand-in, not coverage`,
+    `- enforcement scope: claimed means the owner feature has summary.md (DEC-174)`,
     "",
-    "| REQ | tests | criteria | uncovered AC | proxy AC |",
-    "|---|---|---|---|---|",
+    "| REQ | scope | verification | tests | criteria | uncovered AC | proxy AC |",
+    "|---|---|---|---|---|---|---|",
   ];
   let uncovered = 0;
   let proxies = 0;
+  let claimed = 0;
+  let claimedUncovered = 0;
   const whitebox: string[] = [];
   for (const r of rows) {
     const acGap = r.criteria > 0 ? r.uncoveredAc.length > 0 : r.tests.length === 0;
     if (acGap) uncovered += 1;
+    if (r.claimed) {
+      claimed += 1;
+      if (acGap) claimedUncovered += 1;
+    }
     proxies += r.proxyAc.length;
     for (const w of r.whiteboxAc) whitebox.push(`${r.req}/AC-${w.ac} <- "${w.name}"`);
     const cell = r.tests.length === 0
       ? "_none_"
       : r.tests.map((t) => "`" + posixRel(ctx.root, t) + "`").join("<br>");
+    const verification = r.verification.length === 0
+      ? "—"
+      : r.verification.map((value, index) => `AC-${index + 1}=${value}`).join("<br>");
     const ac = r.uncoveredAc.length === 0 ? "—" : r.uncoveredAc.map((n) => `AC-${n}`).join(", ");
     const px = r.proxyAc.length === 0
       ? "—"
       : r.proxyAc.map((p) => `AC-${p.ac}${p.note ? ` [${p.note}]` : ""}`).join(", ");
-    lines.push(`| ${r.req} | ${cell} | ${r.criteria} | ${ac} | ${px} |`);
+    lines.push(
+      `| ${r.req} | ${r.claimed ? "claimed" : "not claimed"} | ${verification} | ${cell} | ${r.criteria} | ${ac} | ${px} |`,
+    );
   }
   lines.push("");
+  lines.push(`claimed: ${claimed} / ${rows.length} REQ(s)`);
+  lines.push(`claimed uncovered: ${claimedUncovered} REQ(s)`);
   lines.push(`uncovered: ${uncovered} / ${rows.length}`);
   lines.push(`proxy: ${proxies} AC(s) covered only by a stand-in`);
   if (whitebox.length > 0) {
