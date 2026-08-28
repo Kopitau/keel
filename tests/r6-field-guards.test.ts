@@ -216,7 +216,7 @@ test("R6 X-oss: a registered OSS id resolves", () => {
   res(dir, "RES-001", "oss: [OSS-007]\n");
   writeFileSync(
     join(dir, "keel", "oss", "OSS-007-thing.md"),
-    "---\nid: OSS-007\nproject: thing\nversion: 1.0.0\nstatus: active\nnext_review: none\n---\n\n# OSS-007\n",
+    "---\nid: OSS-007\nproject: thing\nrepo: https://example.com/thing\nversion: 1.0.0\nlicense: MIT\nreuse_kind: selected-project\nstatus: active\nreview_days: 28\nnext_review: 2099-01-01\n---\n\n# OSS-007\n\n## 复用点\n\nRES-001 选用。\n\n## 本地差异\n\n无。\n\n## 追踪计划\n\n版本与安全公告。\n",
     "utf8",
   );
   const out = runCheck(makeCtx(dir), ["--quick"]).stdout;

@@ -95,6 +95,10 @@
 - 问题链接：ISS-045 closed，防线指针 `tests/iss045-hook-git-env.test.ts`（5 条）。基线 192。
 - 备注：KLES-002 的措辞应从「GIT_DIR」扩为「git 导出给 hook 的全部变量」——用户库文件不在本仓，待用户改。同指纹第三次即 `#经验候选`。
 
+## 2026-08-28（P5 owner 对账联动）
+
+- 进度：F3 的 DEC 状态机新增 `X-decisions` 后，同步 C-105 年度门禁库存与枚举测试；未改变其他 gate ID。首轮全仓回归仅因此 318/320，更新清单后定向复测。
+
 ## 2026-08-27（ISS-044：feature-plan 模板与脚手架不生成 `req:`）
 
 - 复现：用真脚手架 `gate new feature demo` → `plan/v1.md` 无 `req:`；写 summary.md 后 `check --quick` → `PASS X-trace no claimed-done features`。顺带踩到：`gate.ts` 的 root 取自脚本所在仓库而非 cwd，在临时目录里调本仓的 gate.ts 会把脚手架写进本仓（已删 `keel/features/f25-demo`，未提交）——测试里一律用 `runNew(makeCtx(fixture))`。

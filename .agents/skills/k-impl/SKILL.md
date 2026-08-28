@@ -33,6 +33,12 @@ Read that feature’s `plan/vN.md` and `worklog.md`. Read the coupling table in 
    - **Stand-in** — an AC you cannot test black-box yet: `REQ-nnn/AC-i [proxy:<release condition>] …`. X-trace shows it as WARN, never PASS. Drop the marker when the real test lands.
 5. `node tools/gate/gate.ts check --quick` often; `verify` before you claim done (C-33).
 
+## Quality evidence (C-69/C-127)
+
+- Longform expansion uses the same model at medium reasoning. Record model, reasoning level, artifact path, and date in the worklog; short records stay inline.
+- For a token-saving candidate, record the candidate, the identified quality or functional loss, and the rejection. Never save framework tokens by weakening intelligence or function.
+- A notebook is exploration, not a pipeline module. Before notebook logic enters a pipeline, move it into a module and add a core test.
+
 ## Slices (RES-904 §5–6)
 
 The plan's 内部步骤 are slices. Every slice: verifiable by one command (`verify:` in the plan), fits one fresh context, cuts through every layer it touches (schema → API → UI → tests) so it can be demonstrated alone.

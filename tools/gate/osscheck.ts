@@ -7,14 +7,20 @@ import { mdFiles } from "./walk.ts";
 export type OssRecord = {
   id: string;
   project: string;
+  repo: string;
   version: string;
+  license: string;
+  reuseKind: string;
+  reviewDays: string;
   status: string;
   nextReview: string;
+  body: string;
   file: string;
 };
 
 export type OssReport = {
   missing: string[];
+  gaps: string[];
   due: OssRecord[];
   versionMismatch: { project: string; oss: string; lock: string }[];
   records: OssRecord[];
@@ -27,6 +33,22 @@ function todayYmd(): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function sectionText(body: string, heading: string): string {
+  const lines = body.split(/\n/);
+  let active = false;
+  const out: string[] = [];
+  for (const line of lines) {
+    const hit = line.match(/^##\s+(.+?)\s*$/);
+    if (hit) {
+      if (active) break;
+      active = hit[1]?.trim() === heading;
+      continue;
+    }
+    if (active) out.push(line);
+  }
+  return out.join("\n").trim();
 }
 
 export function isReviewDue(nextReview: string, today = todayYmd()): boolean {
@@ -66,13 +88,18 @@ export function loadOssRecords(ctx: Ctx): OssRecord[] {
   const dir = join(ctx.records, "oss");
   const out: OssRecord[] = [];
   for (const f of mdFiles(dir, "OSS-")) {
-    const { attrs } = parseFrontmatter(readFileSync(f, "utf8"));
+    const { attrs, body } = parseFrontmatter(readFileSync(f, "utf8"));
     out.push({
       id: attrs.id ?? "",
       project: attrs.project ?? "",
+      repo: attrs.repo ?? "",
       version: attrs.version ?? "",
+      license: attrs.license ?? "",
+      reuseKind: attrs.reuse_kind ?? "",
+      reviewDays: attrs.review_days ?? "",
       status: attrs.status ?? "",
       nextReview: attrs.next_review ?? "",
+      body,
       file: f,
     });
   }
@@ -83,6 +110,7 @@ export function inspectOss(ctx: Ctx): OssReport {
   const deps = packageDirectDeps(ctx.root);
   const records = loadOssRecords(ctx);
   const missing: string[] = [];
+  const gaps: string[] = [];
   const due: OssRecord[] = [];
   const versionMismatch: { project: string; oss: string; lock: string }[] = [];
   for (const dep of deps) {
@@ -90,6 +118,20 @@ export function inspectOss(ctx: Ctx): OssReport {
     if (!hit) missing.push(dep);
   }
   for (const r of records) {
+    const prefix = r.id || basename(r.file, ".md");
+    if (!/^OSS-\d+$/.test(r.id)) gaps.push(`${prefix} id missing or invalid`);
+    if (!r.project) gaps.push(`${prefix} project missing`);
+    if (!/^https?:\/\//i.test(r.repo)) gaps.push(`${prefix} repo URL missing`);
+    if (!r.version) gaps.push(`${prefix} exact version or commit missing`);
+    if (!r.license) gaps.push(`${prefix} license missing`);
+    if (!r.reuseKind) gaps.push(`${prefix} reuse_kind missing`);
+    if (!/^\d+$/.test(r.reviewDays) || Number(r.reviewDays) <= 0) gaps.push(`${prefix} review_days missing or invalid`);
+    if (!r.nextReview) gaps.push(`${prefix} next_review missing`);
+    if (r.status !== "retired" && r.nextReview === "none") gaps.push(`${prefix} active record cannot set next_review: none`);
+    for (const heading of ["复用点", "本地差异", "追踪计划"]) {
+      const section = sectionText(r.body, heading);
+      if (!section) gaps.push(`${prefix} ${heading} missing`);
+    }
     if (r.status === "retired") continue;
     if (isReviewDue(r.nextReview)) due.push(r);
     const locked = r.project ? lockVersion(ctx.root, r.project) : null;
@@ -97,7 +139,7 @@ export function inspectOss(ctx: Ctx): OssReport {
       versionMismatch.push({ project: r.project, oss: r.version, lock: locked });
     }
   }
-  return { missing, due, versionMismatch, records, deps };
+  return { missing, gaps, due, versionMismatch, records, deps };
 }
 
 export type ResStance = {

@@ -7,13 +7,14 @@ export type JsonMap = { [key: string]: unknown };
 export function isProfileUnset(cfg: JsonMap): boolean {
   const profiles = (cfg.profiles ?? {}) as JsonMap;
   const active = profiles.active;
-  if (active === "unset" || active === "") return true;
-  if (Array.isArray(active)) {
-    if (active.length === 0) return true;
-    return String(active[0] ?? "") === "unset";
-  }
-  if (typeof active === "string" && active.toLowerCase() === "unset") return true;
-  return false;
+  // A configured profile is always a one-item array in the executable 0.8.0
+  // selector. Missing, malformed, or multi-profile values fail closed instead
+  // of silently falling back to `node --test` and ignoring part of the config.
+  if (!Array.isArray(active) || active.length !== 1) return true;
+  const name = String(active[0] ?? "");
+  if (!name || name === "unset") return true;
+  const selected = profiles[name];
+  return !selected || typeof selected !== "object";
 }
 
 export function loadConfig(recordsDir: string): JsonMap {

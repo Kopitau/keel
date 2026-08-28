@@ -28,6 +28,8 @@ import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } f
 import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
 import { inspectRequirementChangeChain } from "./changechain.ts";
 import { inspectIssueProtocol } from "./issues.ts";
+import { inspectDecisionTransitions } from "./decisions.ts";
+import { relevantLessons } from "./lessons.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -278,7 +280,9 @@ function gPlan(ctx: Ctx): CheckItem {
       "fix blocked_by in the feature plan front matter — existing feature ids, no self-reference, no cycle (DEC-169)",
     );
   }
-  return pass("G-plan", `unique current ${p.file} / ${r.file}; frontier ${fr.frontier.length}, blocked ${fr.blocked.length}`);
+  const lessons = relevantLessons(ctx, body);
+  const hint = lessons.length > 0 ? `; relevant LES: ${lessons.join(", ")}` : "";
+  return pass("G-plan", `unique current ${p.file} / ${r.file}; frontier ${fr.frontier.length}, blocked ${fr.blocked.length}${hint}`);
 }
 
 function gDone(ctx: Ctx): CheckItem {
@@ -354,6 +358,14 @@ function gIssues(ctx: Ctx): CheckItem {
   return pass("G-issues", `${result.checked} iss-v2 valid; ${result.legacy} legacy ISS readable`);
 }
 
+function xDecisions(ctx: Ctx): CheckItem {
+  const result = inspectDecisionTransitions(ctx);
+  if (result.gaps.length > 0) {
+    return fail("X-decisions", result.gaps.join("; "), "restore a legal C-14 state; overturn confirmed decisions via superseded");
+  }
+  return pass("X-decisions", `${result.checked} decision status transition(s) valid`);
+}
+
 function provisionalDecs(ctx: Ctx): string[] {
   const out: string[] = [];
   for (const f of mdFiles(join(ctx.records, "decisions"), "DEC-")) {
@@ -423,7 +435,7 @@ function gRetro(ctx: Ctx): CheckItem {
   const stale = pendingCandidates(ctx).filter((c) => summarized.has(c.feature));
   if (stale.length > 0) {
     const feats = [...new Set(stale.map((c) => c.feature))].join(", ");
-    return warn(
+    return fail(
       "G-retro",
       `${stale.length} 经验候选 undisposed in summarized feature(s): ${feats}`,
       "k-retro keeps or discards each tag: annotate the line with → LES-nnn / → KLES / → 弃 <reason> (C-77/F13)",
@@ -432,11 +444,12 @@ function gRetro(ctx: Ctx): CheckItem {
   const prov = provisionalDecs(ctx);
   if (prov.length > 0) {
     const blob = readFileSync(overview, "utf8");
-    if (!blob.includes("销项") && !blob.includes("暂定")) {
+    const missingProv = prov.filter((id) => !blob.includes(id));
+    if (missingProv.length > 0) {
       return fail(
         "G-retro",
-        `provisional DECs ${prov.join(", ")} not closed out in OVERVIEW`,
-        "record 销项 (C-56)",
+        `provisional DECs ${missingProv.join(", ")} not closed out by id in OVERVIEW`,
+        "record each id and its confirm / supersede / refreshed trigger disposition (C-56)",
       );
     }
   }
@@ -562,13 +575,16 @@ function xOss(ctx: Ctx): CheckItem {
     );
   }
   const declared = stance.declared > 0 ? `${stance.declared} RES stance(s) declared; ` : "";
+  const report = inspectOss(ctx);
+  if (report.gaps.length > 0) {
+    return fail("X-oss", `invalid OSS record: ${report.gaps.join("; ")}`, "fill the C-88 fields and sections; retired records remain readable");
+  }
   const pkg = join(ctx.root, "package.json");
   if (!existsSync(pkg)) {
     return stance.declared > 0
       ? pass("X-oss", `${declared}no package.json`)
       : skip("X-oss", "no package.json");
   }
-  const report = inspectOss(ctx);
   if (report.deps.length === 0) {
     return stance.declared > 0
       ? pass("X-oss", `${declared}no direct npm dependencies`)
@@ -892,6 +908,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(gResearch(ctx));
   items.push(gPlan(ctx));
   items.push(gIssues(ctx));
+  items.push(xDecisions(ctx));
   items.push(xBudget(ctx));
   items.push(xCasefold(ctx));
   items.push(xIds(ctx));

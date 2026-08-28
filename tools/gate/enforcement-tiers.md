@@ -30,3 +30,4 @@ node tools/gate/gate.ts check
 hooks：pre-commit = `check --quick` 然后写 `.git/keel-precommit-stamp`；prepare-commit-msg 据此写入 `Keel-Precommit: ok|skipped`（`--no-verify` 跳过 pre-commit 会留下 skipped，门禁 FAIL）。pre-push = `verify` 然后 `check`。
 
 `git push --no-verify` 会跳过 L2。**推送后的权威是 L3 CI**（C-104）；本地档没有远端时，合并前必须亲手跑 `verify` + `check`。APR 用人类身份 `gate approve`。防呆不防恶。
+本地合并说明须存档，并引用 APR id、证据 tree hash 与两条命令结果；这仍是降级证据，不冒充远端保护或 CI。

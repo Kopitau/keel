@@ -15,3 +15,6 @@
 
 - 进度：测量常驻装载 6427/10240。校准结论 KEEP 全部初值，见 `calibration-w6.md`。X-budget 增加 autoload 软警告。
 
+## 2026-08-28（P5）
+
+- 进度：补 32KiB 硬失败、≤150 行、records 内容不进入 autoload、技能数超 cap、硬限来源日期四条逐 AC 黑盒；本树实测 autoload 6512/10240。定向 P5：52 passed / 0 failed。

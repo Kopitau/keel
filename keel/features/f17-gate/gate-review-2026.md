@@ -37,6 +37,7 @@ C-105：拦 `--no-verify` / 强推 / 改 hooksPath / 改 CI / 改测试目录（
 | X-full | KEEP | **R5 返工新增**：`--quick` 跳过的检查项必须在 tests/ 里有完整 check 覆盖（ISS-019 元规则第三次漏） |
 | X-apr | KEEP | **P1 返工新增**（C-107）：已批准 APR 的提交作者不得在 agent 清单 |
 | X-owners | KEEP | **P2**：local 档 skip；github 档禁止 CODEOWNERS 占位符 |
+| X-decisions | KEEP | **P5**：拒绝 DEC 非法状态与 confirmed/superseded 终态回退（C-14） |
 
 ## 已删除 / 不恢复
 

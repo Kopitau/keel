@@ -19,8 +19,12 @@ Closing requires root cause, fix (or the explicit wontfix action), why it escape
 
 ## Friction (F13)
 
-Worklog line: `#经验候选 <type> <one sentence>`. Types: user correction / same fingerprint / defense failed / review pattern / knowledge gap (C-76). Do not stop the current task. Same fingerprint ×3 in one feature forces promotion (C-78). Formal LES only after a retro (C-79). Tags are read by machine now: `gate status` counts pending ones, and retro disposes each by appending `→ …` on the tag line.
+Worklog line: `#经验候选 <type> <one sentence>`. Types: user correction / same fingerprint / defense failed / review pattern / knowledge gap (C-76). Do not stop the current task. Same fingerprint ×3 in one feature forces promotion (C-78). Formal LES only after a retro (C-79). Tags are read by machine now: `gate status` counts pending ones, and retro disposes each only by appending `→ LES-nnn`, `→ KLES`, or `→ 弃 <reason>` on the tag line.
 
 ## OSS (F15)
 
 Direct dependency or copied code → `gate new oss`. Exact version or commit, license, reuse point, local diff, 28-day review plan (C-88/C-90). Transitive deps are not required (C-89).
+
+An upstream review is read-only and records review date, upstream URL, old/new version or commit, diff, and one conclusion: unchanged / watch / recommend research / recommend change. An update goes through CHG; never bump automatically (C-90).
+
+GPL/AGPL borrowing or modification requires a user DEC **before reuse**. The DEC records license impact, options, and the user’s words verbatim (C-92).

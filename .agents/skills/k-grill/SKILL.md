@@ -36,7 +36,7 @@ Self-check before sending a batch: **count the `?`**. Fewer question marks than 
 
 `gate new` is not used for REQ rows; they live in `keel/requirements/vN.md`:
 
-id, status, source, description, acceptance (GWT primary; short checklists allowed), bounds and counterexamples, non-goals.
+id, status, source, description, acceptance (GWT primary; short checklists allowed), verification, bounds and counterexamples, non-goals.
 
 Fuzzy → `[NEEDS-CLARIFICATION: concrete question]`. Unresolved forks go in the `未决问题` section, not only in chat (C-05).
 

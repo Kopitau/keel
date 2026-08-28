@@ -19,6 +19,7 @@ const PLACEHOLDER = "类型 一句话";
  * content behind the tag (`#经验候选 defense failed …`), backticked or not.
  */
 const MENTION = "`" + TAG + "`";
+const DISPOSITION = /→\s*(?:LES-\d+\b|KLES(?:-\d+)?\b|弃\s+\S)/i;
 
 /**
  * C-77: capture is one worklog line, zero ceremony; a script aggregates. This is
@@ -42,7 +43,7 @@ export function scanCandidates(ctx: Ctx): Candidate[] {
     for (let i = 0; i < lines.length; i++) {
       const t = lines[i] ?? "";
       if (!t.includes(TAG) || t.includes(PLACEHOLDER) || t.includes(MENTION)) continue;
-      out.push({ feature: name, line: i + 1, text: t.trim(), disposed: t.includes("→") });
+      out.push({ feature: name, line: i + 1, text: t.trim(), disposed: DISPOSITION.test(t) });
     }
   }
   return out;

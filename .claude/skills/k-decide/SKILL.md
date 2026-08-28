@@ -14,8 +14,10 @@ Machine header: id, title, status, date, features, research, adr flag.
 Chinese body: question → options → recommendation → **user’s words verbatim** → impact.
 
 Status: `proposed` → `confirmed` / `provisional` (reason + review trigger) / `deferred`. Overturn → `superseded` pointing at the new DEC (C-14).
+The gate rejects terminal-state rollback such as `confirmed` → `proposed` and any change away from `superseded`.
 
 Write in the same round as the user’s answer (C-15). Do not batch confirmations to the session end.
+Same-round manual evidence names the DEC id and date, preserves the user’s words verbatim, and leaves a worklog/record pointer to that DEC.
 
 ## ADR mark
 

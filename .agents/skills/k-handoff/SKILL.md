@@ -21,6 +21,8 @@ Update at session end or when context will compact. If you skip it, a later agen
 
 `keel/journal/<developer>/YYYY-MM-DD-nn.md` for process. Handoff stays short.
 
+For a cross-harness recovery drill, the journal records the new harness name and version, date, the three-jump paths read, the next step recovered, the execution transcript, and the bound tree hash (C-73). This is manual evidence; a platform chat export is not a substitute.
+
 ## Next session
 
 They run `node tools/gate/gate.ts status` (prints this path) then read OVERVIEW then the current feature plan + worklog (C-27/C-72). Do not bulk-load `keel/`.
