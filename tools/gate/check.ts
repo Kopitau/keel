@@ -26,6 +26,7 @@ import { claimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
 import { computeFrontier } from "./frontier.ts";
 import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
 import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
+import { inspectRequirementChangeChain } from "./changechain.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -111,6 +112,7 @@ function gReq(ctx: Ctx): CheckItem {
   const r = currentReq(ctx);
   const activity = hasImplementationActivity(ctx);
   const research = resCount(ctx);
+  let approvedChanges = 0;
   const ORDER_FIX = "land REQ entries in keel/requirements/vN.md first (k-new sequence F1 -> F2; C-04/C-05)";
   if ("error" in r) {
     if (research > 0) {
@@ -134,6 +136,15 @@ function gReq(ctx: Ctx): CheckItem {
     );
   }
   if (confirmedReqCount(r.text) > 0) {
+    const chain = inspectRequirementChangeChain(ctx, r.path, r.text);
+    if (chain.gaps.length > 0) {
+      return fail(
+        "G-req",
+        chain.gaps.join("; "),
+        "approve each producing CHG and bind its normalized artifact hash in an approved APR (REQ-011/AC-5)",
+      );
+    }
+    approvedChanges = chain.checked.length;
     const g = gapHuntGaps(ctx, r.path);
     if (g?.level === "fail") return fail("G-req", g.summary, g.fix);
     if (g?.level === "warn") return warn("G-req", g.summary, g.fix);
@@ -141,7 +152,8 @@ function gReq(ctx: Ctx): CheckItem {
   if (!r.text.includes("未决问题")) {
     return warn("G-req", "no 未决问题 section", "add the section even if empty (C-05)");
   }
-  return pass("G-req", `${entries} REQ entr(ies), no NEEDS-CLARIFICATION`);
+  const chainSummary = approvedChanges > 0 ? `; ${approvedChanges} producing CHG(s) APR-bound` : "";
+  return pass("G-req", `${entries} REQ entr(ies), no NEEDS-CLARIFICATION${chainSummary}`);
 }
 
 function resExists(ctx: Ctx, id: string): boolean {

@@ -19,3 +19,14 @@
 - 进度：按已批准 CHG-010/APR-003，把 requirements v4 的 owner 与验证义务联动到 overview v3 和 24 份功能计划新版；plan INDEX 切到 overview-v3。
 - 规划顺序：P0 规划 → P1 CHG/verification/trace → P2 review/ISS-036 → P3 updater/legacy/0.8.0 → P4 平台治理 → P5 其余 owner → P6 消费项目与真实 CI。
 - 未开始：任何 gate/installer/skill 行为实现；旧 evidence 将在本规划树上重跑后作废更新。
+
+## 2026-08-28（P1 / CHG→REQ→APR 关系切片）
+
+- 内部分解：本会话只做 plan v2 步骤 2——先以 `gate check --quick` 的 G-req 黑盒覆盖 proposed CHG、approved 但无 APR、APR hash 不匹配、完整链通过；verification/trace 与 evidence stale 分留后续会话。
+- 开工审计：现有 G-req 只检查 REQ 数、NEEDS-CLARIFICATION 与 gap-hunt，不读取 CHG/APR，故三条负向关系目前会被静默放行。
+- 执行边界：用户要求 P6 暂不触发真实 GitHub 六格；该外部 AC 不取消，继续保留 proxy WARN，本轮只做本地实现与验证。
+- 红灯：`node --test tests/chg010-change-chain.test.ts` 为 1 pass / 3 fail；proposed、无 APR、hash stale 三种非法链均被旧 G-req 报 PASS，完整链为唯一既有 PASS。
+- 实现决定：只检查当前 requirements 相对 `replaces:` 基线新引入的 CHG，再并入显式 `change:`；v4 因而检查 CHG-008/010，同时不把继承的 CHG-001/007 历史欠账伪装成需重写的当前变更。
+- C-34: ref=DEC-179 新增四条 REQ-011/AC-5 黑盒关系测试并更新测试名基线。
+- 绿灯：新增测试 4/4；连同既有 G-req/approve 回归为 54/54；`npx tsc --noEmit` exit 0；`gate check --quick` 为 PASS_WITH_WARN，G-req 报告 `2 producing CHG(s) APR-bound`，唯一 WARN 仍是用户明确延期的 REQ-017/AC-4 六格 proxy。
+- 追溯：`gate trace` 已把 REQ-011/AC-5 绑定到 `tests/chg010-change-chain.test.ts`；AC-1～4 未在本切片冒充覆盖，留给后续 P1 子切片。
