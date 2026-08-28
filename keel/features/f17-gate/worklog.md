@@ -132,3 +132,5 @@
 
 - 进度：Windows 本地全量与消费项目 update 已取得，细节见 F23 `consumer-update-p6.md`。
 - 边界：遵照用户要求没有触发 GitHub Actions；无 run URL/ID、SHA 对应六个 job 与工件 hash，REQ-017/AC-4 明确保留 proxy。
+
+- 待办（advisory）：k-grill REQ row schema diverges from the authoritative requirement shape: it mandates 'verification' but omits the mandatory 'feature'/'must' fields, and REQ-001 acceptance C-04 was not updated to include 'verification' repro=Compare .agents/skills/k-grill/SKILL.md field list introduced by the diff ('id, status, source, description, acceptance (…), verification, bounds and counterexamples, non-goals') against the actual requirement rows in the reqs document (REQ-001 lists status/source/feature/must/description/acceptance/verification) and against REQ-001 acceptance C-04, which enumerates required fields as 编号/状态/来源/描述/验收标准/边界与反例/非目标 with no 'verification'. The skill now mandates 'verification' but omits the 'feature' ('每条 REQ 有且只有一个 owner F') and 'must' fields that appear in every requirement row.
