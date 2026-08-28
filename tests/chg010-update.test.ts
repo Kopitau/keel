@@ -190,11 +190,12 @@ test("REQ-025/AC-7 N non-y EOF and absent stdin keep the entire target tree byte
   }
 });
 
-test("REQ-025/AC-7 explicit y executes the previewed transaction and preserves unrelated files and skills", () => {
+test("REQ-022/AC-6 REQ-025/AC-7 explicit y writes the manifest without changing a legacy RES or unrelated files", () => {
   const source = sourceFixture();
   const root = projectFixture();
   try {
     const beforeUser = statSync(join(root, "user", "data.txt"));
+    const legacyBefore = readFileSync(join(root, "keel", "research", "RES-001-old.md"));
     const result = runCli(["update"], { cwd: root, source, confirmUpdate: () => "y" });
     assert.equal(result.code, 0, result.stderr);
     assert.match(result.stdout, /keel update preview 0\.7\.0 -> 0\.8\.0/);
@@ -207,6 +208,7 @@ test("REQ-025/AC-7 explicit y executes the previewed transaction and preserves u
     assert.equal(readFileSync(join(root, ".agents", "skills", "personal", "SKILL.md"), "utf8"), "# preserve personal skill\n");
     assert.equal(readFileSync(join(root, ".claude", "skills", "personal", "SKILL.md"), "utf8"), "# preserve personal mirror\n");
     assert.equal(readFileSync(join(root, "user", "data.txt"), "utf8"), "never touch me\n");
+    assert.deepEqual(readFileSync(join(root, "keel", "research", "RES-001-old.md")), legacyBefore);
     assert.equal(statSync(join(root, "user", "data.txt")).mtimeMs, beforeUser.mtimeMs);
     const cfg = JSON.parse(readFileSync(join(root, "keel", "config.json"), "utf8")) as { keel_version?: string };
     assert.equal(cfg.keel_version, "0.8.0");

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { git, gitIdentity } from "./git.ts";
@@ -31,12 +31,30 @@ export function runWorktree(ctx: Ctx, args: string[]): CmdResult {
   const base = basename(featureDir);
   const branch = branchName(n, base);
   const wt = join(ctx.root, ".keel-worktrees", `F-${pad2(n)}-${base.replace(/^f\d+-/, "")}`);
+  const claimPath = join(featureDir, "claim.json");
   if (sub === "rm") {
     const r = git(ctx, ["worktree", "remove", "--force", wt]);
     if (r.status !== 0 && existsSync(wt)) {
       return fail(`worktree rm failed: ${r.stderr || r.stdout}\n`);
     }
-    return ok(`removed worktree ${wt}\n`);
+    if (existsSync(claimPath)) unlinkSync(claimPath);
+    return ok(`removed worktree ${wt}\nreleased claim F${n}\n`);
+  }
+  const ident = gitIdentity(ctx);
+  if (existsSync(claimPath)) {
+    let existing: { assignee?: unknown; email?: unknown };
+    try {
+      existing = JSON.parse(readFileSync(claimPath, "utf8")) as { assignee?: unknown; email?: unknown };
+    } catch {
+      return fail(`F${n} has an unreadable claim; the current owner must release it with gate worktree rm F${n}\n`);
+    }
+    const assignee = typeof existing.assignee === "string" ? existing.assignee : "unknown";
+    const email = typeof existing.email === "string" ? existing.email : "unknown";
+    if (assignee !== ident.name || email !== ident.email) {
+      return fail(
+        `F${n} is already claimed by ${assignee} <${email}>; the current owner must release it with gate worktree rm F${n} before reassignment\n`,
+      );
+    }
   }
   const hits = overlapWith(ctx, featureDir);
   if (hits.length > 0) {
@@ -50,17 +68,15 @@ export function runWorktree(ctx: Ctx, args: string[]): CmdResult {
     ? `WARN F${n} is blocked by ${blk.by.join(", ")} (blocked_by in its plan, DEC-169); claiming anyway\n`
     : "";
   mkdirSync(join(ctx.root, ".keel-worktrees"), { recursive: true });
-  const ident = gitIdentity(ctx);
-  writeFileSync(
-    join(featureDir, "claim.json"),
-    JSON.stringify(
-      { feature: `F${n}`, assignee: ident.name, email: ident.email, branch, worktree: wt },
-      null,
-      2,
-    ) + "\n",
-    "utf8",
-  );
-  if (existsSync(wt)) return ok(`${warnLine}worktree already exists ${wt}\nbranch ${branch}\n`);
+  const claim = JSON.stringify(
+    { feature: `F${n}`, assignee: ident.name, email: ident.email, branch, worktree: wt },
+    null,
+    2,
+  ) + "\n";
+  if (existsSync(wt)) {
+    writeFileSync(claimPath, claim, "utf8");
+    return ok(`${warnLine}worktree already exists ${wt}\nbranch ${branch}\n`);
+  }
   const hasBranch = git(ctx, ["rev-parse", "--verify", branch]);
   const addArgs =
     hasBranch.status === 0
@@ -70,5 +86,6 @@ export function runWorktree(ctx: Ctx, args: string[]): CmdResult {
   if (r.status !== 0) {
     return fail(`git worktree add failed: ${r.stderr || r.stdout}\n`);
   }
+  writeFileSync(claimPath, claim, "utf8");
   return ok(`${warnLine}claimed F${n}\nbranch ${branch}\nworktree ${wt}\n`);
 }

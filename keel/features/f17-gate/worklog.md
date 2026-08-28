@@ -117,3 +117,9 @@
 ## 2026-08-27（requirements v4 基线激活）
 
 - C-34: ref=DEC-175 requirements v4 将 REQ-017 拆为 AC-3 本地 workflow 契约、AC-4 真实六格运行、AC-5 绕过检测；旧 v3 的 AC-3 proxy 与 AC-4 绕过测试名同步对账，真实运行继续明确标为 proxy。REQ-011 的 current 基线断言由 v3 更新为 v4。只改测试标签与基线指针，不实现 CHG-010 行为。
+
+## 2026-08-28（P4 / workflow 契约）
+
+- 进度：machine-doc 测试锁定 GitHub workflow 的 Windows/macOS/Linux × Node 22/24 精确矩阵、同一 `gate check` 与逐格 evidence 上传。
+- 边界：按用户要求没有触发 GitHub Actions；`REQ-017/AC-4` 继续是 proxy WARN，只有真实 run URL/ID、SHA、六个 job、日期和工件 hash 才能解除。
+- 证据：`tests/chg010-gates.test.ts` workflow 契约通过；本地 quick 的 proxy 不是 PASS。

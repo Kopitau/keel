@@ -10,3 +10,10 @@
 ## 2026-08-21（W4）
 
 - 进度：`k-migrate` 技能指向 `keel/templates/migrate/` 映射表。语义映射仍由模型执行，gate 只做编号/索引。
+
+## 2026-08-28（P4 / 迁移报告与源只读）
+
+- 进度：新增中文 `templates/migrate/report.md`，固定保留已映射、未映射、冲突、存疑、无法归类、待确认六类；k-migrate 先后快照来源字节，并把独立 marker 新增与源字节未变分开记录。
+- 边界：迁移产物仍是 `迁移初稿（未确认）`；缺理由 DEC 仍为 provisional，旧 Trellis/Superpowers 树不得删除或改写。
+- 证据：真实 `keel init` Trellis fixture 的迁移前后逐文件 bytes 相同；报告与 updater legacy RES 不改写测试通过。
+- C-34: ref=DEC-181 updater 的显式确认测试改名后同时承担 REQ-022/AC-6；旧测试名移除有本决策引用，行为没有删减。

@@ -46,3 +46,7 @@
 - 绿灯：`node --test tests/chg007-installer.test.ts tests/chg010-update.test.ts tests/chg010-legacy-res.test.ts` → 28/28；`npx tsc --noEmit` → exit 0。
 - C-34: ref=DEC-173 新增 update 预览、明确 y、N/EOF/非交互零写入黑盒；ref=DEC-181 新增 legacy manifest PASS/WARN/FAIL 与规范化哈希矩阵。只增加测试，没有删除或 skip。
 - 全量兼容修正：旧 R6 fixtures 明确写 `keel_version: 0.8.0`，bootstrap wrapper 在 source 有效后仍须有 exact manifest 才能 WARN；没有删除原守卫。另补损坏安装源拒绝测试，防止缺 `tools/gate` 时把目标管理目录误判为 DELETE；SemVer 按正式 precedence 判定，`0.8.0-rc.1 < 0.8.0`。最新 P3 组合为 31/31（前述 28/28 是补这三条守卫前的中间绿灯）。
+
+## 2026-08-28（P4 提交环境复核）
+
+- 摩擦：预提交期间另一个用户任务并行扫描 D 盘，而本机 Node/npm 也安装在 D 盘；同一 `npm pack → prefix install → keel init` 黑盒由先前 34 秒通过变为 pack 120/300 秒超时，并留下已精确终止的测试孤儿进程。定位到外部磁盘争用后，不放宽测试、不改产品；把同版本 Node 22.19/npm 10.9.3 复制到 C 盘一次性运行时后，原始 120 秒/步断言完整通过（191 秒总计）。这是本机执行环境隔离，不是 keel 行为修复，不建 ISS。

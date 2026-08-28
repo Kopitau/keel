@@ -59,7 +59,15 @@ export function buildCleanConfig(opts) {
       humans: humans,
       agents: [{ name: "keel-agent", email: "agent@keel.local" }],
     },
-    platforms: { primary: primary, compatible: ["pi"] },
+    platforms: {
+      primary: primary,
+      compatible: ["pi"],
+      os_matrix: ["windows", "macos", "linux"],
+      development: ["windows", "macos"],
+      ci: ["linux"],
+      deepseek_harness_windows:
+        "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001).",
+    },
     budget: {
       agents_md_max_lines: 150,
       agents_md_chain_max_bytes: 32768,

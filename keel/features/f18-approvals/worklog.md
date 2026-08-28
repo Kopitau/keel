@@ -10,3 +10,8 @@
 ## 2026-08-21（W2）
 
 - 进度：`gate approve APR-nnn` 用规范化哈希填 APR；git 身份在 agent 清单内则拒绝（C-107）。不代人类 commit。
+
+## 2026-08-28（P4 / 审批所有者）
+
+- 进度：`X-owners` 在 github/gitee tier 只接受覆盖 `<records_dir>/approvals/` 的有效 CODEOWNERS 行；路径与 owner 必须同一行，注释、占位符和 config 中的 agent 身份不能充当审批人。local tier 仍明确 SKIP 为 documentation-only。
+- 证据：缺文件、注释伪规则、拆行、占位符、agent 与真人 owner 正反向 fixture 全部通过（`tests/chg010-approvals.test.ts` 3/3）。

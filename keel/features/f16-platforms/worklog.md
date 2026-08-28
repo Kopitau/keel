@@ -28,3 +28,9 @@
 
 - 进度：`gate sync` 为 16 个 k-* 生成 `agents/openai.yaml`（User 技能 `allow_implicit_invocation: false`，Model 技能 true），X-skills 校验缺失/stale。来源 RES-904 §7（wayfinder 的同名文件 + OpenAI Codex skills 文档 + mattpocock/skills #516）。
 - 未实测：本机无 Codex；W5 触发台账里 Codex 仍是"发现层已验、对话未实点"——下次实点时验证 `$k-accept` 显式可调、隐式不出现。
+
+## 2026-08-28（P4 / 六 harness 本地契约）
+
+- 进度：六家 headless 配方增加人类可读的 harness 全名，config primary/compatible 与配方由 machine-doc 测试逐一对账。
+- 边界：本轮没有付费模型调用；`REQ-016/AC-8` 明确保留 `[proxy:real six-harness trigger evidence not recorded]`，本地配方和命令面不能替代 live 触发证据。
+- 证据：`tests/chg010-gates.test.ts` 对应代理测试通过；RES-905/906/907 分别保留鉴权、配额、终态与隔离的未核实边界。

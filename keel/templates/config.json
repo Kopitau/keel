@@ -26,7 +26,11 @@
   },
   "platforms": {
     "primary": ["claude-code", "codex", "opencode", "grok-build", "deepseek-harness"],
-    "compatible": ["pi"]
+    "compatible": ["pi"],
+    "os_matrix": ["windows", "macos", "linux"],
+    "development": ["windows", "macos"],
+    "ci": ["linux"],
+    "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001)."
   },
   "budget": {
     "agents_md_max_lines": 150,

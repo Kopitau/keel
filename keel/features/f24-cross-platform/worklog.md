@@ -13,3 +13,9 @@
 ## 2026-08-21（W5）
 
 - 进度：`tests/fixtures/dec148-lf.txt` 规范化哈希夹具，三 OS CI 应得到同一 digest。
+
+## 2026-08-28（P4 / OS 角色契约）
+
+- 进度：live config、clean installer config 与 config 模板统一写明 `os_matrix=[windows,macos,linux]`、`development=[windows,macos]`、`ci=[linux]`；保留 DeepSeek Harness 在 Windows 需 WSL 的已确认限制。
+- 边界：本轮 Windows 本机规范化 fixture 通过；真实 macOS 同 fixture 证据尚未取得，`REQ-024/AC-6` 保留 proxy，不能用静态 workflow 冒充跨 OS 运行。
+- 证据：`tests/chg010-gates.test.ts` 的配置契约与 DEC-148 digest 代理测试通过。

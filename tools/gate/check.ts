@@ -660,21 +660,48 @@ function xOwners(ctx: Ctx): CheckItem {
   if (!existsSync(file)) {
     return fail("X-owners", "CODEOWNERS missing", "add .github/CODEOWNERS covering keel/approvals/ (C-108)");
   }
-  const text = readFileSync(file, "utf8");
-  if (/@YOUR-GITHUB-USERNAME/i.test(text)) {
-    return fail(
-      "X-owners",
-      "CODEOWNERS still has the placeholder @YOUR-GITHUB-USERNAME",
-      "put a real GitHub login on keel/approvals/ (C-108)",
-    );
-  }
-  if (!/keel\/approvals\//.test(text)) {
+  const recordsDir = String(ctx.config.records_dir ?? "keel").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  const approvalPatterns = new Set([
+    `${recordsDir}/approvals`,
+    `${recordsDir}/approvals/`,
+    `${recordsDir}/approvals/*`,
+    `${recordsDir}/approvals/**`,
+  ]);
+  const rules = readFileSync(file, "utf8")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== "" && !line.startsWith("#"))
+    .map((line) => line.split(/\s+/))
+    .filter((parts) => approvalPatterns.has((parts[0] ?? "").replace(/^\/+/, "")));
+  if (rules.length === 0) {
     return fail("X-owners", "keel/approvals/ not in CODEOWNERS", "C-108");
   }
-  if (!/@[A-Za-z0-9-]/.test(text)) {
-    return fail("X-owners", "CODEOWNERS has no @owner", "C-108");
+  const owners = rules.flatMap((parts) => parts.slice(1).filter((part) => /^@[A-Za-z0-9][A-Za-z0-9_/-]*$/.test(part)));
+  if (owners.length === 0) {
+    return fail("X-owners", "CODEOWNERS approvals rule has no @owner on the same active line", "C-108");
   }
-  return pass("X-owners", "CODEOWNERS names a real owner for approvals");
+  const nonPlaceholders = owners.filter((owner) => !/^@YOUR-GITHUB-USERNAME$/i.test(owner));
+  if (nonPlaceholders.length === 0) {
+    return fail(
+      "X-owners",
+      "CODEOWNERS approvals rule still has only the placeholder @YOUR-GITHUB-USERNAME",
+      "put a human platform login on keel/approvals/ (C-108)",
+    );
+  }
+  const identities = ctx.config.identities as { agents?: unknown } | undefined;
+  const agentHandles = new Set(
+    (Array.isArray(identities?.agents) ? identities.agents : [])
+      .flatMap((agent) => {
+        if (!agent || typeof agent !== "object") return [];
+        const name = (agent as { name?: unknown }).name;
+        return typeof name === "string" ? [name.toLowerCase().replace(/^@/, "")] : [];
+      }),
+  );
+  const humanOwners = nonPlaceholders.filter((owner) => !agentHandles.has(owner.slice(1).toLowerCase()));
+  if (humanOwners.length === 0) {
+    return fail("X-owners", "CODEOWNERS approvals rule names only a configured agent", "name a human owner (C-108)");
+  }
+  return pass("X-owners", "CODEOWNERS names a non-placeholder, non-agent owner for approvals");
 }
 
 function xIds(ctx: Ctx): CheckItem {
