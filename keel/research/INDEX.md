@@ -1,7 +1,7 @@
 # research index (generated)
 
 - generator: gate index
-- count: 12
+- count: 15
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -17,3 +17,6 @@
 | RES-902 | 全局安装器 + 项目内运行的分发形态（Trellis 式「在项目文件夹激活」） |  | `RES-902-z-18205dff.md` |
 | RES-903 | 首次真实使用的执法缺口实证 |  | `RES-903-z-f7fd513b.md` |
 | RES-904 | mattpocock/skills 的 wayfinder：keel 可借鉴什么 |  | `RES-904-wayfinder-skill-by-mattpocock-what-keel-.md` |
+| RES-905 | OpenCode 与 Grok Build CLI headless 评审调用配方 |  | `RES-905-opencode-grok-build-cli-headless.md` |
+| RES-906 | Claude Code 与 Codex CLI 非交互评审配方 |  | `RES-906-claude-code-codex-cli.md` |
+| RES-907 | DeepSeek Harness 与 Pi headless 评审调用配方 |  | `RES-907-deepseek-harness-pi-headless.md` |

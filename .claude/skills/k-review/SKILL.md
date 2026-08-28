@@ -17,6 +17,8 @@ F7 + REQ-027/028. Fresh context only. You report; you do not patch (C-39/C-41). 
 
 Pack with `gate loop pack --feature <slug> --implementer <h> --reviewer <h>`. Gate writes the five keys; extra fields, chat-shaped text, or oversized blobs are refused (C-39).
 
+For cross-harness invocation, use the exact repository recipe for that harness in `keel/review/headless.md`. Its command, isolation preflight, output parser, and success predicate are one contract. A missing binary, auth/quota failure, timeout, nonzero exit, error event, empty output, or schema failure means **review not obtained**; same-harness fallback is forbidden.
+
 ## Lens (DEC-160) — by changed paths, not by implementer claim
 
 | Paths | Lens | Checklist |
@@ -25,7 +27,7 @@ Pack with `gate loop pack --feature <slug> --implementer <h> --reviewer <h>`. Ga
 | `tools/` other, `samples/` | **robustness** | `keel/review/robustness.md` — actually run dirty/empty/fail-midway cases |
 | records, docs | **requirements** | `keel/review/requirements.md` — AC coverage + obvious error paths |
 
-Mixed paths → strictest lens. Attack-lens changes **require a different harness** than the implementer. If you cannot invoke one, **stop and say so**; do not silently same-harness (DEC-159). No native subagent (e.g. Pi): open a **new** session with the pack; do not improvise a platform-private API (C-30).
+Mixed paths → strictest lens. Attack-lens changes **require a different provider family** than the implementer. Renaming the same harness or choosing another model from the same provider is not heterogeneous. If you cannot invoke one, **stop and say so**; same-harness fallback is forbidden (DEC-159). No native subagent (e.g. Pi): start the recipe's independent sequential session with the hashed pack; do not improvise a platform-private API (C-30).
 
 ## Axes (all lenses)
 
@@ -34,10 +36,12 @@ Mixed paths → strictest lens. Attack-lens changes **require a different harnes
 
 Label blocking vs advisory.
 
+Return `Finding[]`. Each finding has `title`, `blocking`, `repro`, `impact`, and `fingerprint`; `body` and `pending_defense` are optional. For blocking findings, `repro` is an attack probe and `impact` is mandatory. Do not invent either one.
+
 ## Land findings
 
 `gate loop pack` first. Blocking **with** a repro command → `gate loop ingest findings.json --reviewer <h>` (opens ISS via `gate new iss`). Empty findings without a pack **must not** mark the loop passed (ISS-023).
-Blocking **without** a repro command → deferred to the feature worklog as `待核实`; **must not** open an ISS (C-58).
+Blocking **without** a repro command or impact → deferred to the feature worklog as `待核实`; **must not** open an ISS (C-58).
 
 ## Re-review (new clean context, C-42)
 

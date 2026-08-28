@@ -27,6 +27,7 @@ import { computeFrontier } from "./frontier.ts";
 import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
 import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
 import { inspectRequirementChangeChain } from "./changechain.ts";
+import { inspectIssueProtocol } from "./issues.ts";
 
 function pass(id: string, summary: string): CheckItem {
   return { id, verdict: "pass", summary };
@@ -315,6 +316,18 @@ function openIssueIds(ctx: Ctx): string[] {
     if (st === "open" || st === "") out.push(attrs.id || basename(f));
   }
   return out;
+}
+
+function gIssues(ctx: Ctx): CheckItem {
+  const result = inspectIssueProtocol(ctx);
+  if (result.gaps.length > 0) {
+    return fail(
+      "G-issues",
+      result.gaps.join("; "),
+      "complete the iss-v2 open/closed fields, recurrence explanation, and existing defense_pointer (REQ-010)",
+    );
+  }
+  return pass("G-issues", `${result.checked} iss-v2 valid; ${result.legacy} legacy ISS readable`);
 }
 
 function provisionalDecs(ctx: Ctx): string[] {
@@ -827,6 +840,7 @@ export function runCheck(ctx: Ctx, args: string[]): CmdResult {
   items.push(gReq(ctx));
   items.push(gResearch(ctx));
   items.push(gPlan(ctx));
+  items.push(gIssues(ctx));
   items.push(xBudget(ctx));
   items.push(xCasefold(ctx));
   items.push(xIds(ctx));

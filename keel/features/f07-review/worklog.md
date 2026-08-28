@@ -1,5 +1,20 @@
 # worklog — F7 f07-review
 
+## 2026-08-28（P2 / 六 harness headless 配方）
+
+- 红灯：`tests/chg010-headless.test.ts` 3/3 因仓库没有 `keel/review/headless.md`、k-review 没有共同 Finding schema 而失败。
+- 调研：RES-905/906/907 分别只用 OpenCode/xAI、Anthropic/OpenAI、DeepSeek/Pi 官方资料与本地 `--help`；没有调用计费模型。命令面与未核实 live 边界分开记录。
+- 实现：配方页逐家写 command/input/output/success/source/date，统一五键 pack 与含 `impact` 的 Finding[]；所有失败均 stop，禁止 same-harness fallback；Pi 用独立 `-p --no-session` 顺序新进程。
+- 证据：headless machine-doc 3/3；P2 相关回归 110/110；本地全量 237/237。真实模型/live harness 证据未运行，不能替代 REQ-016/AC-8 或 REQ-027/AC-3 的 manual evidence。
+- C-34: ref=DEC-178 added headless recipe machine-doc acceptance tests (grow baseline)
+
+## 2026-08-28（DEC-182 / ingest 攻击探针先验）
+
+- 红灯：`tests/chg010-review-loop.test.ts` 新增 ingest 的退出 0、非 0、缺命令三路径后为 3/5；旧实现把任意非空命令直接开 ISS，退出 7 仍错误进入 repairing，正向 ISS 也没有首次实跑证据。
+- 实现：`fileFindings` 在唯一 ISS 写入路径先执行攻击探针。只有退出 0 才创建/复用 blocking ISS；非 0 降级 worklog 待核实并保留命令、退出码、tree hash 与输出尾；缺命令保持原拒绝路径。
+- 证据：正向 ISS 追加 `probe_exit_code`、`probe_recorded_at`、`probe_tree_hash`、`probe_result`；跨平台夹具用 `node ingest-probe.js` 避免 shell 引号差异。新增五条文件内测试 5/5。
+- C-34: ref=DEC-182 added ingest 0/nonzero/missing-probe black-box paths (grow baseline)
+
 ## 2026-08-28（DEC-177 / ISS-036 追加式 clear 历史）
 
 - 进度：`gate loop clear` 从覆盖本轮 `repro_runs` 改为追加每轮结果；新记录含 round/time/tree hash，无新命令的重复 clear 不抹除历史。passed 只看每个 ISS 的最新结果，旧漏洞态仍保留审计。

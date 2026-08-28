@@ -132,7 +132,7 @@ test("REQ-027/AC-4 blocking without a repro command does not open an ISS", () =>
   assert.match(readFileSync(join(dir, "keel", "features", "f07-review", "worklog.md"), "utf8"), /待核实/);
   const filed = fileFindings(
     ctx,
-    [{ title: "real hole", blocking: true, repro: "node tools/gate/gate.ts check" }],
+    [{ title: "real hole", blocking: true, repro: "node -e \"process.exit(0)\"", impact: "blocks delivery" }],
     "keel/features/f07-review/worklog.md",
   );
   assert.equal(filed.iss.length, 1);

@@ -1,10 +1,15 @@
 ---
 id: ISS-000
+schema: iss-v2
 status: open
 defense_kind: ""
 defense_pointer: ""
 feature: ""
 fingerprint: ""
+source: ""
+recurrence_of: ""
+prior_defense_failure: ""
+defense_escalation: ""
 date: YYYY-MM-DD
 ---
 
@@ -12,7 +17,13 @@ date: YYYY-MM-DD
 
 ## 现象
 
+## 影响
+
 复现命令：
+
+## 待诊断防线
+
+打开态只写“待诊断”，未知根因和修复不得编造。
 
 ## 根因
 

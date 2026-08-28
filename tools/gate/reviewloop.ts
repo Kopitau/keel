@@ -59,6 +59,8 @@ export type Finding = {
   title: string;
   blocking: boolean;
   repro: string;
+  impact?: string;
+  pending_defense?: string;
   body?: string;
   fingerprint?: string;
 };
@@ -241,6 +243,12 @@ function appendWorklog(ctx: Ctx, worklogRel: string, line: string): void {
   else writeFileSync(log, `# worklog\n${text}`, "utf8");
 }
 
+function fillIssueSection(text: string, heading: string, value: string): string {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(## ${escaped}\\r?\\n)(?:\\r?\\n)?`);
+  return text.replace(re, (_whole, prefix: string) => `${prefix}\n${value.trim()}\n\n`);
+}
+
 export function fileFindings(
   ctx: Ctx,
   findings: Finding[],
@@ -251,7 +259,29 @@ export function fileFindings(
   const advisory: string[] = [];
   const fps: { [iss: string]: string } = {};
   for (const f of findings) {
-    if (f.blocking && f.repro.trim()) {
+    if (f.blocking && !f.repro.trim()) {
+      deferred.push(f.title);
+      appendWorklog(ctx, worklogRel, `- 待核实（无复现命令，未开 ISS）：${f.title}`);
+    } else if (f.blocking && !(f.impact ?? "").trim()) {
+      deferred.push(f.title);
+      appendWorklog(ctx, worklogRel, `- 待核实（无影响说明，未开 ISS）：${f.title}`);
+    } else if (f.blocking) {
+      // DEC-182: a blocking repro is an attack probe. It may open an ISS only
+      // when it actually demonstrates the problem on the current, unfixed tree.
+      const command = f.repro.trim();
+      const probeTree = gitWriteTree(ctx);
+      const probeRecordedAt = new Date().toISOString();
+      const probe = runReproCommand(ctx.root, command);
+      if (probe.exit_code !== 0) {
+        deferred.push(f.title);
+        const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
+        appendWorklog(
+          ctx,
+          worklogRel,
+          `- 待核实（攻击探针首次退出 ${probe.exit_code}，未开 ISS）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
+        );
+        continue;
+      }
       const fp = findingFingerprint(f);
       const existing = findIssByFingerprint(ctx, fp);
       if (existing) {
@@ -267,7 +297,21 @@ export function fileFindings(
         if (existsSync(dest)) {
           let body = readFileSync(dest, "utf8");
           body = body.replace(/fingerprint:\s*""/, `fingerprint: "${fp}"`);
-          body = body.replace("复现命令：", `复现命令：\n\n\`\`\`\n${f.repro.trim()}\n\`\`\``);
+          body = body.replace(/source:\s*""/, "source: review-loop");
+          body = fillIssueSection(body, "现象", f.title);
+          body = fillIssueSection(body, "影响", (f.impact ?? "").replace(/\s+/g, " ").slice(0, 2000));
+          body = fillIssueSection(
+            body,
+            "待诊断防线",
+            (f.pending_defense ?? "待诊断；未知根因和修复保持空白。").replace(/\s+/g, " ").slice(0, 2000),
+          );
+          body = body.replace("复现命令：", `复现命令：\n\n\`\`\`\n${command}\n\`\`\``);
+          body +=
+            `\n\n## 打开态攻击探针\n\n` +
+            `- probe_exit_code: ${probe.exit_code}\n` +
+            `- probe_recorded_at: ${probeRecordedAt}\n` +
+            `- probe_tree_hash: ${probeTree || "(none)"}\n` +
+            `- probe_result: vulnerable\n`;
           if (f.body) body += `\n\n${f.body}\n`;
           writeFileSync(dest, body, "utf8");
         }
@@ -276,9 +320,6 @@ export function fileFindings(
         iss.push(id);
         fps[id] = fp;
       }
-    } else if (f.blocking) {
-      deferred.push(f.title);
-      appendWorklog(ctx, worklogRel, `- 待核实（无复现命令，未开 ISS）：${f.title}`);
     } else {
       advisory.push(f.title);
       const extra = f.repro.trim() ? ` repro=${f.repro.trim()}` : "";

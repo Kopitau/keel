@@ -1,5 +1,12 @@
 # worklog — F16 f16-platforms
 
+## 2026-08-28（P2 / headless 配方结构）
+
+- 进度：`keel/review/headless.md` 覆盖 config 中五个 primary 与 Pi compatible；逐家绑定官方来源、命令、输入、输出、成功判据和 fail-closed 规则。
+- 边界：本轮没有真实模型调用，不把版本/help、auth probe 或文档当 live 触发证据；REQ-016/AC-8 的六家人工证据仍留在 P4/P6。
+- 证据：`tests/chg010-headless.test.ts` 3/3，技能镜像相关 P2 组 110/110，本地全量 237/237。
+- C-34: ref=DEC-178 shared headless machine-doc tests with F7 (grow baseline)
+
 ## 2026-08-21
 
 - 进度：W1 开工。切片：AGENTS.md + CLAUDE.md 桥 + 技能目录占位
