@@ -8,6 +8,7 @@ declare module "node:fs" {
   export function readFileSync(path: string, encoding: "utf8"): string;
   export function readFileSync(path: string): Uint8Array;
   export function readFileSync(fd: number, encoding: "utf8"): string;
+  export function readSync(fd: number, buffer: Uint8Array, offset: number, length: number, position: number | null): number;
   export function writeFileSync(path: string, data: string, encoding: "utf8"): void;
   export function appendFileSync(path: string, data: string, encoding: "utf8"): void;
   export function unlinkSync(path: string): void;
@@ -16,9 +17,17 @@ declare module "node:fs" {
   export function copyFileSync(src: string, dest: string): void;
   export function readdirSync(path: string, opts?: { recursive?: boolean }): string[];
   export function statSync(path: string): { isDirectory(): boolean; isFile(): boolean; mtimeMs: number };
-  export function lstatSync(path: string): { isDirectory(): boolean; isFile(): boolean; isSymbolicLink(): boolean };
+  export function lstatSync(path: string): {
+    isDirectory(): boolean;
+    isFile(): boolean;
+    isSymbolicLink(): boolean;
+    mode: number;
+    mtimeMs: number;
+    size: number;
+  };
   export function chmodSync(path: string, mode: number | string): void;
   export function rmSync(path: string, opts?: { recursive?: boolean; force?: boolean }): void;
+  export function rmdirSync(path: string): void;
   export function mkdtempSync(prefix: string): string;
   export function cpSync(
     src: string,
@@ -57,7 +66,7 @@ declare module "node:buffer" {
 
 declare module "node:crypto" {
   export function createHash(alg: string): {
-    update(data: string, encoding: "utf8"): { digest(enc: "hex"): string };
+    update(data: string | Uint8Array, encoding?: "utf8"): { digest(enc: "hex"): string };
   };
 }
 
@@ -106,6 +115,7 @@ declare module "node:child_process" {
       timeout?: number;
       shell?: boolean;
       maxBuffer?: number;
+      input?: string;
     },
   ): { status: number | null; stdout: string; stderr: string };
 }

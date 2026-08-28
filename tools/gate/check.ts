@@ -20,7 +20,7 @@ import { countKnowledge } from "./knowledge.ts";
 import { inspectOss, inspectResOss } from "./osscheck.ts";
 import { execModeGaps } from "./execmode.ts";
 import { gapHuntGaps } from "./gaphunt.ts";
-import { inspectResSubstance } from "./rescheck.ts";
+import { inspectResCitations, inspectResSubstance } from "./rescheck.ts";
 import { pendingCandidates, summarizedFeatures } from "./candidates.ts";
 import { claimedReqs, inspectVerificationProtocol, traceWarnings, uncoveredClaimed } from "./trace.ts";
 import { computeFrontier } from "./frontier.ts";
@@ -220,7 +220,31 @@ function gResearch(ctx: Ctx): CheckItem {
       "a RES is a report, not a filename — declare the tier, keep the four load-bearing sections, cite sources (C-08/C-09)",
     );
   }
-  return pass("G-research", "adr decisions have RES files or a written exemption; RES substance ok");
+  const citations = inspectResCitations(ctx);
+  if (citations.failures.length > 0) {
+    const shown = citations.failures.slice(0, 3).map((g) => `${g.id}: ${g.gap}`).join("; ");
+    const more = citations.failures.length > 3 ? ` (+${citations.failures.length - 3} more)` : "";
+    return fail(
+      "G-research",
+      `RES citation gaps: ${shown}${more}`,
+      "add dated source URLs, or restore the exact DEC-181 migration manifest id/path/normalized hash binding",
+    );
+  }
+  if (citations.legacy.length > 0) {
+    const ids = citations.legacy.map((item) => item.id).join(", ");
+    return {
+      ...warn(
+        "G-research",
+        `${citations.legacy.length} unchanged pre-0.8 standard/deep RES use the external legacy manifest: ${ids}`,
+        "add dated source URLs when substantively revising these reports; any text change invalidates the legacy hash",
+      ),
+      acknowledged: true,
+    };
+  }
+  return pass(
+    "G-research",
+    `adr decisions have RES files or a written exemption; RES substance and citations ok (${citations.cited} cited)`,
+  );
 }
 
 function gPlan(ctx: Ctx): CheckItem {

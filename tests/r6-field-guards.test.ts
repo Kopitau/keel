@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import process from "node:process";
 import { runCheck } from "../tools/gate/check.ts";
 import { makeCtx } from "../tools/gate/ctx.ts";
+import { sha256Normalized } from "../tools/gate/hash.ts";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -28,7 +29,11 @@ function fixture(tag: string): string {
   for (const d of ["requirements", "research", "oss", "features", "decisions", "issues"]) {
     mkdirSync(join(dir, "keel", d), { recursive: true });
   }
-  writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
+  writeFileSync(
+    join(dir, "keel", "config.json"),
+    JSON.stringify({ records_dir: "keel", keel_version: "0.8.0" }),
+    "utf8",
+  );
   return dir;
 }
 
@@ -279,7 +284,7 @@ test("R6b G-research: 标准 tier with zero citations fails", () => {
     "utf8",
   );
   const out = runCheck(makeCtx(dir), ["--quick"]).stdout;
-  assert.match(line(out, "G-research"), /zero citations/, out);
+  assert.match(line(out, "G-research"), /legacy citation manifest is missing/, out);
 });
 
 test("R6b G-research: 本地 tier needs no web citations", () => {
@@ -298,15 +303,39 @@ test("R6b G-research: 本地 tier needs no web citations", () => {
 test("R6b G-research: a bootstrap wrapper is judged by its source, not its body", () => {
   const dir = fixture("res5");
   reqs(dir, "v1.md", ONE_REQ);
+  const wrapper =
+    "---\nid: RES-001\ntitle: t\ndepth: 深度\ndate: 2026-08-26\nbootstrap: true\nsource_path: docs/research/R9.md\noss: []\noss_none: none\n---\n\n# wrapper\n";
   writeFileSync(
     join(dir, "keel", "research", "RES-001-x.md"),
-    "---\nid: RES-001\ntitle: t\ndepth: 深度\ndate: 2026-08-26\nbootstrap: true\nsource_path: docs/research/R9.md\noss: []\noss_none: none\n---\n\n# wrapper\n",
+    wrapper,
     "utf8",
   );
   const out1 = runCheck(makeCtx(dir), ["--quick"]).stdout;
   assert.match(line(out1, "G-research"), /source_path missing on disk/, out1);
   mkdirSync(join(dir, "docs", "research"), { recursive: true });
   writeFileSync(join(dir, "docs", "research", "R9.md"), "# R9\n" + "内容行。\n".repeat(400), "utf8");
+  mkdirSync(join(dir, "keel", "migrations"), { recursive: true });
+  writeFileSync(
+    join(dir, "keel", "migrations", "res-citation-legacy.json"),
+    JSON.stringify(
+      {
+        schema_version: 1,
+        source_keel_version: "0.7.0",
+        target_keel_version: "0.8.0",
+        generated_at: "2026-08-28",
+        entries: [
+          {
+            id: "RES-001",
+            path: "keel/research/RES-001-x.md",
+            sha256: sha256Normalized(wrapper),
+          },
+        ],
+      },
+      null,
+      2,
+    ) + "\n",
+    "utf8",
+  );
   const out2 = runCheck(makeCtx(dir), ["--quick"]).stdout;
   assert.doesNotMatch(line(out2, "G-research"), /^FAIL/, out2);
 });

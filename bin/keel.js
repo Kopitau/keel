@@ -20,7 +20,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const cli = pathToFileURL(join(here, "..", "tools", "cli", "main.js")).href;
 import(cli)
   .then(function (mod) {
-    const result = mod.runCli(process.argv.slice(2), { cwd: process.cwd() });
+    const terminal = mod.terminalUpdateOptions();
+    const result = mod.runCli(process.argv.slice(2), { cwd: process.cwd(), ...terminal });
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
     process.exit(result.code || 0);

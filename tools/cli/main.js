@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
@@ -45,8 +45,26 @@ export function runCli(args, opts) {
   const rest = args.slice(1);
   if (!cmd || cmd === "-h" || cmd === "--help" || cmd === "help") return help();
   if (cmd === "init") return initFromArgs(cwd, source, rest);
-  if (cmd === "update") return runUpdate(cwd, source, rest);
+  if (cmd === "update") return runUpdate(cwd, source, rest, opts);
   if (cmd === "uninstall") return runUninstall(cwd);
   if (cmd === "doctor") return runDoctor(cwd, source);
   return forward(cwd, args);
+}
+
+/**
+ * Interactive adapter kept outside the update planner so tests and headless
+ * callers can prove EOF/non-interactive cancellation without faking a TTY.
+ */
+export function terminalUpdateOptions(input = process.stdin, output = process.stdout) {
+  return {
+    emitUpdatePreview(text) {
+      output.write(text);
+    },
+    confirmUpdate() {
+      if (!input || input.isTTY !== true || typeof input.fd !== "number") return null;
+      const buffer = Buffer.alloc(1024);
+      const count = readSync(input.fd, buffer, 0, buffer.length, null);
+      return count > 0 ? buffer.subarray(0, count).toString("utf8") : null;
+    },
+  };
 }

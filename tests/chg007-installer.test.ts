@@ -265,7 +265,7 @@ test("REQ-025/AC-6 update refuses a CLI older than keel_version without --force"
   const blocked = runCli(["update"], { cwd: dir, source: repo });
   assert.equal(blocked.code, 1);
   assert.match(blocked.stderr, /--force/);
-  const forced = runCli(["update", "--force"], { cwd: dir, source: repo });
+  const forced = runCli(["update", "--force"], { cwd: dir, source: repo, confirmUpdate: () => "y" });
   assert.equal(forced.code, 0, forced.stdout + forced.stderr);
   const cfg = JSON.parse(readFileSync(join(dir, "keel", "config.json"), "utf8")) as { keel_version?: string };
   assert.ok(cfg.keel_version !== "9.9.9");
