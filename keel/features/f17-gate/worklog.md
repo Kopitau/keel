@@ -127,3 +127,8 @@
 - 进度：machine-doc 测试锁定 GitHub workflow 的 Windows/macOS/Linux × Node 22/24 精确矩阵、同一 `gate check` 与逐格 evidence 上传。
 - 边界：按用户要求没有触发 GitHub Actions；`REQ-017/AC-4` 继续是 proxy WARN，只有真实 run URL/ID、SHA、六个 job、日期和工件 hash 才能解除。
 - 证据：`tests/chg010-gates.test.ts` workflow 契约通过；本地 quick 的 proxy 不是 PASS。
+
+## 2026-08-28（P6 本地边界）
+
+- 进度：Windows 本地全量与消费项目 update 已取得，细节见 F23 `consumer-update-p6.md`。
+- 边界：遵照用户要求没有触发 GitHub Actions；无 run URL/ID、SHA 对应六个 job 与工件 hash，REQ-017/AC-4 明确保留 proxy。

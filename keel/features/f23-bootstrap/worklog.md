@@ -50,3 +50,8 @@
 ## 2026-08-28（P4 提交环境复核）
 
 - 摩擦：预提交期间另一个用户任务并行扫描 D 盘，而本机 Node/npm 也安装在 D 盘；同一 `npm pack → prefix install → keel init` 黑盒由先前 34 秒通过变为 pack 120/300 秒超时，并留下已精确终止的测试孤儿进程。定位到外部磁盘争用后，不放宽测试、不改产品；把同版本 Node 22.19/npm 10.9.3 复制到 C 盘一次性运行时后，原始 120 秒/步断言完整通过（191 秒总计）。这是本机执行环境隔离，不是 keel 行为修复，不建 ISS。
+
+## 2026-08-28（P6 本地消费项目）
+
+- 进度：从 commit `eb4e232` 真正执行 npm pack→隔离 prefix install→`keel init`→交互式 `keel update`，消费项目由 0.7.0 升 0.8.0；预览后输入单字母 y，legacy RES 前后规范化 hash 一致，doctor ok，quick fail=0。详见 `consumer-update-p6.md`。
+- 边界：未发布公共 npm、未触发 GitHub Actions；真实六格仍为 proxy。

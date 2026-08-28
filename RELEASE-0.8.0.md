@@ -37,3 +37,9 @@ node tools/gate/gate.ts verify
 ```
 
 未改写的 legacy RES 出现 G-research WARN 是预期迁移状态，不是 PASS。下一次实质修改该报告时必须补上带日期的来源 URL。
+
+## 本地发布验证
+
+2026-08-28 在 Windows / Node 22.19.0 / npm 10.9.3 上完成 320 条全量测试、npm pack 后隔离安装，以及一个 0.7.0 消费项目的交互式 update；旧 RES 的规范化 hash 前后相同，doctor 通过。完整指针见 `keel/features/f23-bootstrap/consumer-update-p6.md`。
+
+本轮未触发 GitHub Windows/macOS/Linux × Node 22/24 六格，也未发布公共 npm；真实 CI 与 macOS/Linux 证据仍是发布限制，不能由本地结果替代。
