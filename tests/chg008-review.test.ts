@@ -8,6 +8,7 @@ import { makeCtx } from "../tools/gate/ctx.ts";
 import { evidenceGaps, readEvidence, writeEvidence, type Evidence } from "../tools/gate/evidence.ts";
 import {
   FUSE_THRESHOLD,
+  PACK_DIFF_ARGS,
   appendAttackSurface,
   bumpRounds,
   canClear,
@@ -101,6 +102,10 @@ test("REQ-027/AC-2 pack with implementation-chat field is refused", () => {
     worklog_summary: "did the slice",
   });
   assert.equal(good.ok, true);
+});
+
+test("ISS-052 review pack partitions unstaged and staged diff sources without overlap", () => {
+  assert.deepEqual(PACK_DIFF_ARGS, [["diff"], ["diff", "--cached"]]);
 });
 
 test("REQ-027/AC-3 heterogeneous required for attack; same harness is not ok", () => {

@@ -48,6 +48,7 @@
     "ISS-027 execModeGaps reports missing hook files instead of skipping",
     "ISS-028 attack lens includes gate-input paths",
     "ISS-028 pack refuses chatty worklog_summary and oversized fields",
+    "ISS-052 review pack partitions unstaged and staged diff sources without overlap",
     "ISS-028 production pack classifies keel/review/ as attack",
     "ISS-029 f07 plan v2 aligns with confirmed DEC-159/160 and does not say het is optional",
     "ISS-030 pack artifacts must not block fallback to HEAD paths",

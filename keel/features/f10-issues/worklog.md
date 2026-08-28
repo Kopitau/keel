@@ -1,5 +1,14 @@
 # worklog — F10 f10-issues
 
+## 2026-08-28（ISS-052 / review pack 暂存差异重复）
+
+- 现场复现：最终实现差异的 `git diff --cached` 为 340149 字符、117 个路径；`gate loop pack --feature f17-gate --implementer openai-codex --reviewer deepseek-via-opencode` 却以 `diff exceeds 400000 bytes` 退出 1。
+- 初始假设：`buildPack` 同时使用 `git diff HEAD` 与 `git diff --cached`；前者已经包含暂存变化，后者又追加一次，导致 staged-only 差异被双计。先以 ISS-052 回归测试固定“低于上限的 staged diff 只能出现一次”，再做最小修复。
+- 红灯：原集成回归以 `pack field 'diff' exceeds 400000 bytes (ISS-028)` 失败；根因假设成立。
+- 修复与绿灯：`PACK_DIFF_ARGS = [["diff"], ["diff", "--cached"]]`；ISS-052 快速防线 1/1，`chg008-review` 14/14，`chg010-review-loop` 6/6。
+- 防线：`tests/chg008-review.test.ts`；ISS-052 已补齐根因、修复、为何漏测与关闭理由。
+- C-34: ref=ISS-052 added one regression name (grow baseline)
+
 ## 2026-08-28（P2 / iss-v2 生命周期门禁）
 
 - 红灯：`tests/chg010-issues.test.ts` 初跑 1/5；旧 gate 没有 `G-issues`，关闭字段、防线指针、同指纹升级都无人读取。

@@ -75,6 +75,8 @@ const PACK_MAX: { [k: string]: number } = {
   worklog_summary: 4000,
 };
 
+export const PACK_DIFF_ARGS = [["diff"], ["diff", "--cached"]] as const;
+
 const ATTACK_RE = [
   /^tools\/gate\//,
   /^tools\/cli\//,
@@ -503,10 +505,7 @@ function flag(args: string[], name: string): string | undefined {
 }
 
 export function buildPack(ctx: Ctx, feature: string): { [k: string]: string } {
-  const diff =
-    git(ctx, ["diff", "HEAD"]).stdout +
-    "\n" +
-    git(ctx, ["diff", "--cached"]).stdout;
+  const diff = PACK_DIFF_ARGS.map((args) => git(ctx, [...args]).stdout).join("\n");
   let plan = "";
   let worklog = "";
   if (feature) {
