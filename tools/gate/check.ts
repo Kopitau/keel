@@ -22,7 +22,7 @@ import { execModeGaps } from "./execmode.ts";
 import { gapHuntGaps } from "./gaphunt.ts";
 import { inspectResSubstance } from "./rescheck.ts";
 import { pendingCandidates, summarizedFeatures } from "./candidates.ts";
-import { claimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
+import { claimedReqs, inspectVerificationProtocol, traceWarnings, uncoveredClaimed } from "./trace.ts";
 import { computeFrontier } from "./frontier.ts";
 import { testBaselineGaps, headBaseline, worktreeBaseline, testFileInventory } from "./testbase.ts";
 import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
@@ -113,6 +113,7 @@ function gReq(ctx: Ctx): CheckItem {
   const activity = hasImplementationActivity(ctx);
   const research = resCount(ctx);
   let approvedChanges = 0;
+  let verifiedReqs = 0;
   const ORDER_FIX = "land REQ entries in keel/requirements/vN.md first (k-new sequence F1 -> F2; C-04/C-05)";
   if ("error" in r) {
     if (research > 0) {
@@ -135,6 +136,17 @@ function gReq(ctx: Ctx): CheckItem {
       "resolve markers or move open branches into the 未决问题 section before baseline (C-05)",
     );
   }
+  const verification = inspectVerificationProtocol(r.text);
+  if (verification.gaps.length > 0) {
+    const shown = verification.gaps.slice(0, 4).join("; ");
+    const more = verification.gaps.length > 4 ? ` (+${verification.gaps.length - 4} more)` : "";
+    return fail(
+      "G-req",
+      `verification protocol: ${shown}${more}`,
+      "make each acceptance/verification array equal length; use only auto, machine-doc, manual (DEC-174)",
+    );
+  }
+  if (verification.active) verifiedReqs = verification.entries.length;
   if (confirmedReqCount(r.text) > 0) {
     const chain = inspectRequirementChangeChain(ctx, r.path, r.text);
     if (chain.gaps.length > 0) {
@@ -153,7 +165,11 @@ function gReq(ctx: Ctx): CheckItem {
     return warn("G-req", "no 未决问题 section", "add the section even if empty (C-05)");
   }
   const chainSummary = approvedChanges > 0 ? `; ${approvedChanges} producing CHG(s) APR-bound` : "";
-  return pass("G-req", `${entries} REQ entr(ies), no NEEDS-CLARIFICATION${chainSummary}`);
+  const verificationSummary = verifiedReqs > 0 ? `; ${verifiedReqs} verification array(s) valid` : "";
+  return pass(
+    "G-req",
+    `${entries} REQ entr(ies), no NEEDS-CLARIFICATION${verificationSummary}${chainSummary}`,
+  );
 }
 
 function resExists(ctx: Ctx, id: string): boolean {

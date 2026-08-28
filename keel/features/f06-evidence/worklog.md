@@ -26,3 +26,14 @@
 - 遗留：`REQ-017/AC-3` 现为 `[proxy]`，本仓 X-trace 从此显示 WARN——CI 从未跑过且该 AC 不可本地验收，按 DEC-168 复审条款应回 k-grill 改写 AC。zhaoxi 六条代理测试按 DEC-168 影响节第 5 条由其自行处理。
 - 证据：`npx tsc --noEmit` 干净；`node --test` **187/187**（179 − 4 占位 + 12 新增）；`gate check --quick` → `PASS_WITH_WARN fail=0 warn=1`（唯一 WARN = X-trace 的 REQ-017/AC-3 proxy，按设计）；`gate verify` exit 0，passed=187，tree `5cd0caa27b273d472209801134615d37d5140293`（dirty=true，未提交）；假 node 20 的启动器拒绝测试在 Windows（gate.ps1）实跑通过，POSIX 分支（gate.sh）待 CI/macOS 首跑。
 
+## 2026-08-28（P1 / verification parser 切片）
+
+- 内部分解：本会话只做 plan v2 步骤 1——requirements 的 acceptance/verification 等长与 `auto`/`machine-doc`/`manual` 枚举；trace 展示、claimed scope 证据判定和 evidence stale 留后续会话。
+- 开工审计：现有 trace 只数 `Given` 行，G-req 完全不读取 verification，少项、多项和非法类型都会静默通过。
+- 兼容边界：DEC-174 明确该协议由 requirements v4 引入；完全没有声明“验证方式”且无 verification 字段的旧格式保持可读，一旦协议出现就对当前文件全部 REQ 严格校验，避免旧 fixture/消费项目被无迁移路径直接阻断。
+- 执行边界：P6 继续只做本地，真实 GitHub 六格不触发，REQ-017/AC-4 保持 proxy WARN。
+- 红灯：`node --test tests/chg010-verification.test.ts` 为 1 pass / 3 fail；少项、多项、非法枚举均被旧 G-req 报 PASS，合法三类型数组为唯一既有 PASS。
+- 实现决定：parser 进入既有 `trace.ts`，G-req 与 trace 共用同一份 REQ/acceptance 结构，避免两套 AC 计数漂移；数组严格区分大小写，只接受确认的三个字面值。
+- C-34: ref=DEC-174 新增四条 verification 协议黑盒测试并更新测试名基线。
+- 绿灯：新增测试 4/4；连同 DEC-168 trace、旧格式兼容、frontier 与既有 F6 回归为 27/27；`npx tsc --noEmit` exit 0；quick 为 PASS_WITH_WARN，G-req 报告 `28 verification array(s) valid`，唯一 WARN 仍是 REQ-017/AC-4 六格 proxy。
+- 追溯：`gate trace` 的 28 条 REQ/AC 数量保持不变，REQ-006/AC-2 与 AC-7 现在由 `tests/chg010-verification.test.ts` 覆盖；本切片尚未把 verification 类型列加入 trace 表，留 plan v2 步骤 2。

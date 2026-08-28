@@ -36,17 +36,98 @@ export type TraceRow = {
   whiteboxAc: { ac: number; name: string }[];
 };
 
-function criteriaLines(body: string, req: string): string[] {
-  const parts = body.split(/^## /m);
-  for (const part of parts) {
-    if (!part.startsWith(req)) continue;
-    return (part.match(/^\s*-\s+Given\b.*$/gm) ?? []).map((l) => l.trim());
+export const VERIFICATION_TYPES = ["auto", "machine-doc", "manual"] as const;
+export type VerificationType = (typeof VERIFICATION_TYPES)[number];
+
+export type RequirementProtocol = {
+  req: string;
+  acceptance: string[];
+  verification: string[];
+  verificationPresent: boolean;
+  verificationMalformed: boolean;
+  verificationFields: number;
+};
+
+export type VerificationInspection = {
+  active: boolean;
+  entries: RequirementProtocol[];
+  gaps: string[];
+};
+
+function acceptanceItems(section: string): string[] {
+  const out: string[] = [];
+  let inAcceptance = false;
+  for (const line of section.split(/\r?\n/)) {
+    if (/^-\s+\*\*acceptance\*\*:\s*$/.test(line)) {
+      inAcceptance = true;
+      continue;
+    }
+    if (/^-\s+\*\*[^*]+\*\*:\s*/.test(line)) {
+      inAcceptance = false;
+      continue;
+    }
+    if (!inAcceptance) continue;
+    const item = line.match(/^\s+-\s+(.+?)\s*$/)?.[1];
+    if (item) out.push(item);
   }
-  return [];
+  return out;
 }
 
-function countCriteria(body: string, req: string): number {
-  return criteriaLines(body, req).length;
+/** Parse the requirements v4 AC↔verification protocol once for G-req and trace. */
+export function parseRequirementProtocols(body: string): RequirementProtocol[] {
+  const headings = [...body.matchAll(/^##\s+(REQ-\d{3})\b[^\r\n]*$/gm)];
+  const out: RequirementProtocol[] = [];
+  for (let index = 0; index < headings.length; index += 1) {
+    const heading = headings[index];
+    const req = heading?.[1] ?? "";
+    if (!req) continue;
+    const start = heading?.index ?? 0;
+    const end = headings[index + 1]?.index ?? body.length;
+    const section = body.slice(start, end);
+    const fields = [...section.matchAll(/^-\s+\*\*verification\*\*:\s*(.*?)\s*$/gm)];
+    const raw = fields[0]?.[1]?.trim() ?? "";
+    const bracketed = /^\[(.*)\]$/.exec(raw);
+    const inner = (bracketed?.[1] ?? "").trim();
+    const verification = bracketed && inner ? inner.split(",").map((value) => value.trim()) : [];
+    out.push({
+      req,
+      acceptance: acceptanceItems(section),
+      verification,
+      verificationPresent: fields.length > 0,
+      verificationMalformed: fields.length > 0 && !bracketed,
+      verificationFields: fields.length,
+    });
+  }
+  return out;
+}
+
+export function inspectVerificationProtocol(body: string): VerificationInspection {
+  const entries = parseRequirementProtocols(body);
+  const active = /^##\s+验证方式\b/m.test(body) || entries.some((entry) => entry.verificationPresent);
+  const gaps: string[] = [];
+  if (!active) return { active, entries, gaps };
+
+  const allowed = new Set<string>(VERIFICATION_TYPES);
+  for (const entry of entries) {
+    if (entry.verificationFields > 1) {
+      gaps.push(`${entry.req} has ${entry.verificationFields} verification fields`);
+    }
+    if (entry.verificationMalformed) {
+      gaps.push(`${entry.req} verification must be a bracketed array`);
+    }
+    const invalid = [...new Set(entry.verification.filter((value) => !allowed.has(value)))];
+    if (invalid.length > 0) {
+      gaps.push(
+        `${entry.req} invalid verification type(s): ${invalid.map((value) => value || "<empty>").join(", ")}`,
+      );
+    }
+    if (entry.acceptance.length !== entry.verification.length) {
+      gaps.push(
+        `${entry.req} acceptance ${entry.acceptance.length} != verification ${entry.verification.length}`,
+      );
+    }
+  }
+  return { active, entries, gaps };
 }
 
 /** Does this text carry the `REQ-nnn/AC-i` (or `REQ-nnn AC-i`) marker? */
@@ -163,21 +244,17 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
   const cur = readCurrent(join(ctx.records, "requirements", "INDEX.md"));
   const reqFile = cur.file ?? "v1.md";
   const reqPath = join(ctx.records, "requirements", reqFile);
-  const reqs: string[] = [];
   const reqBody = existsSync(reqPath) ? readFileSync(reqPath, "utf8") : "";
-  const seen = new Set<string>();
-  for (const m of reqBody.matchAll(/## (REQ-\d{3})/g)) {
-    const id = m[1] ?? "";
-    if (id && !seen.has(id)) {
-      seen.add(id);
-      reqs.push(id);
-    }
+  const protocols = parseRequirementProtocols(reqBody);
+  const reqs: string[] = [];
+  for (const protocol of protocols) {
+    if (!reqs.includes(protocol.req)) reqs.push(protocol.req);
   }
   const infos = testNameInfos(ctx);
   const rows: TraceRow[] = reqs.map((req) => {
     const mine = infos.filter((t) => t.reqs.includes(req));
     const tests = [...new Set(mine.map((t) => t.file))].sort();
-    const n = countCriteria(reqBody, req);
+    const n = protocols.find((protocol) => protocol.req === req)?.acceptance.length ?? 0;
     const uncoveredAc: number[] = [];
     const proxyAc: { ac: number; note: string }[] = [];
     const whiteboxAc: { ac: number; name: string }[] = [];
