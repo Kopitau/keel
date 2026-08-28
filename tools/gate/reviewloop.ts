@@ -21,6 +21,9 @@ export type ReproRun = {
   command: string;
   exit_code: number;
   refused: boolean;
+  round?: number;
+  recorded_at?: string;
+  tree_hash?: string;
 };
 
 export type ReviewClear = {
@@ -421,7 +424,14 @@ export function appendAttackSurface(ctx: Ctx, line: string): void {
 }
 
 export function attachReview(ev: Evidence, review: ReviewClear): Evidence {
-  return { ...ev, review };
+  const history = ev.review?.repro_runs ?? [];
+  return {
+    ...ev,
+    review: {
+      ...review,
+      repro_runs: [...history, ...(review.repro_runs ?? [])],
+    },
+  };
 }
 
 export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState {
@@ -621,15 +631,34 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
   const raw = readLoopState(ctx);
   if (!raw || !raw.pack_hash) return fail("no packed review state; gate loop pack then ingest\n");
   const st = mergeRounds(ctx, raw);
+  const runRound = st.round + 1;
+  const recordedAt = new Date().toISOString();
+  const runTree = gitWriteTree(ctx);
   const runs: ReproRun[] = [];
   for (const id of st.blocking_iss) {
     const cmd = extractRepro(issBody(ctx, id));
     if (!cmd) {
-      runs.push({ iss: id, command: "", exit_code: 0, refused: false });
+      runs.push({
+        iss: id,
+        command: "",
+        exit_code: 0,
+        refused: false,
+        round: runRound,
+        recorded_at: recordedAt,
+        tree_hash: runTree,
+      });
       continue;
     }
     const r = runReproCommand(ctx.root, cmd);
-    runs.push({ iss: id, command: cmd, exit_code: r.exit_code, refused: r.refused });
+    runs.push({
+      iss: id,
+      command: cmd,
+      exit_code: r.exit_code,
+      refused: r.refused,
+      round: runRound,
+      recorded_at: recordedAt,
+      tree_hash: runTree,
+    });
   }
   const still = st.blocking_iss.filter((id) => !runs.some((r) => r.iss === id && r.refused));
   const next = bumpRounds(

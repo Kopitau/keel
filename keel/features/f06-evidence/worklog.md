@@ -46,3 +46,11 @@
 - C-34: ref=DEC-174 —— 新增 claimed/unclaimed 正反向输出测试，以及“claimed manual proxy 只能 WARN、不得 PASS”的黑盒测试；基线更新为 223 个测试名。
 - 绿灯：新文件 6/6；连同 DEC-168、ISS-044、P0/R2 trace 回归共 37/37；`npx tsc --noEmit` exit 0。真实 `gate trace` 显示 2/28 REQ claimed、claimed uncovered=0，REQ-017/AC-4 明确为 manual proxy，未冒充 PASS。
 - 边界：P6 继续本地；GitHub Actions 六格 run 证据未记录，REQ-017/AC-4 proxy 保留。
+
+## 2026-08-28（P1→P2 / evidence stale 与 review 追加历史联动）
+
+- 内部分解：F6 plan v2 步骤 3 与 I-06/I-22；用同一攻击探针贯穿未修复、修复、重复 clear、verify 保留、代码树变化失效和重跑刷新，避免把两个证据写入器分开验证。
+- 红灯：有效跨平台探针夹具下 `node --test tests/chg010-review-loop.test.ts` 为 0/2；第二轮 clear 只留下 1 条最新记录而非 2 条追加历史，重复 clear 还会清空。
+- 实现决定：每条新 `repro_run` 写 `round`、`recorded_at`、`tree_hash`；`attachReview` 追加旧历史；passed 判据按每个 ISS 的最后一次运行判断，早期退出 0 的漏洞态不删除、也不让后来确已拒绝的结果永久失败。
+- C-34: ref=DEC-177 —— 新增 `tests/chg010-review-loop.test.ts` 两条跨模块黑盒；兼容已有无新增元数据的旧 review 证据，不伪造其历史时间/hash。
+- 绿灯：新测试 2/2；连同 W3、CHG-008、R4/R5 为 44/44。ISS-036 按既定回归测试防线关闭；tree change 使旧 evidence stale，重跑 verify 后 fresh 且 review 历史字节级保持。

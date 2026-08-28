@@ -1,5 +1,11 @@
 # worklog — F7 f07-review
 
+## 2026-08-28（DEC-177 / ISS-036 追加式 clear 历史）
+
+- 进度：`gate loop clear` 从覆盖本轮 `repro_runs` 改为追加每轮结果；新记录含 round/time/tree hash，无新命令的重复 clear 不抹除历史。passed 只看每个 ISS 的最新结果，旧漏洞态仍保留审计。
+- 问题链接：DEC-177 DEC-182 ISS-036；防线 `tests/chg010-review-loop.test.ts`。
+- C-34: ref=DEC-177 added append/stale end-to-end tests (grow baseline)
+
 ## 2026-08-25（R5 ISS-030~033）
 
 - 进度：pack 回退先滤 loop 产物；clear 必写 review；advisory 通道；clear 拒绝 exit 1；`X-full` 落成 `--quick` 也会跑的检查。Guard：`tests/r5-rework.test.ts`。

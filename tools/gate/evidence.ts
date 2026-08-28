@@ -10,6 +10,10 @@ export type EvidenceReviewRun = {
   command: string;
   exit_code: number;
   refused: boolean;
+  /** DEC-177/182: new runs are append-only and identify their review round. */
+  round?: number;
+  recorded_at?: string;
+  tree_hash?: string;
 };
 
 export type EvidenceReview = {
@@ -106,12 +110,16 @@ export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
     if (ev.review.heterogeneous_required && !ev.review.heterogeneous_ok) {
       gaps.push("heterogeneous review required; same harness is not a silent fallback (DEC-159)");
     }
+    const latest = new Map<string, EvidenceReviewRun>();
+    for (const run of ev.review.repro_runs ?? []) latest.set(run.iss, run);
     for (const id of ev.review.blocking_iss ?? []) {
-      const run = (ev.review.repro_runs ?? []).find((r) => r.iss === id);
+      const run = latest.get(id);
       if (!run) gaps.push(`review missing repro run for ${id}`);
       else if (!run.refused) gaps.push(`${id} repro still succeeds; cannot clear (REQ-027)`);
     }
-    for (const run of ev.review.repro_runs ?? []) {
+    // DEC-177 keeps earlier vulnerable runs for audit. Only each ISS's latest
+    // observation decides whether a passed review is actually clear.
+    for (const run of latest.values()) {
       if (run.refused === false || run.exit_code === 0) {
         gaps.push(`${run.iss} repro exit=${run.exit_code}; not refused`);
       }

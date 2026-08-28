@@ -1,8 +1,8 @@
 ---
 id: ISS-036
-status: open
+status: closed
 defense_kind: "回归测试"
-defense_pointer: ""
+defense_pointer: "tests/chg010-review-loop.test.ts"
 feature: f07-review
 fingerprint: "redundant-clear-wipes-audit"
 date: 2026-08-25
@@ -52,3 +52,7 @@ ISS-031 的 guard 只验证「review 段存在且能挺过 verify」，未验证
 **回归测试**：断言「clear 成功后再次 clear，`repro_runs` 内容不丢失」。
 
 本条**保持 open**（区别于 ISS-034/035）：它不是自述天花板，而是一个有廉价修法的普通缺陷，留作待办。用户可随时按需处理或转为 wontfix。
+
+## 关闭证据
+
+2026-08-28：按 DEC-177/182 实施追加语义。`recordClear` 新运行记录包含轮次、ISO 时间与当前 tree hash；重复 clear 无新命令时保留已有历史；`evidenceGaps` 只用每个 ISS 的最新运行判定是否已拒绝，早期漏洞态仍保留供审计。黑盒 `tests/chg010-review-loop.test.ts` 实跑同一探针的“未修复退出 0 → 修复后非 0 → 重复 clear → verify → 改树 stale → 再 verify”，2/2 通过；相关评审/证据回归 44/44 通过。

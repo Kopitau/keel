@@ -40,7 +40,7 @@
 | ISS-033 | ISS-033 loop clear 拒绝清零时返回 exit 0，与 ingest 不一致 | closed | `ISS-033-loop-clear-exit-0-ingest.md` |
 | ISS-034 | ISS-034 异构要求可由实施方自述满足 | wontfix | `ISS-034-z-19259ce0.md` |
 | ISS-035 | ISS-035 复现命令读自实施方可写的 ISS 文件，改写即可假清零 | wontfix | `ISS-035-iss.md` |
-| ISS-036 | ISS-036 重复调用 clear 会清空 repro_runs 审计记录 | open | `ISS-036-clear-repro-runs.md` |
+| ISS-036 | ISS-036 重复调用 clear 会清空 repro_runs 审计记录 | closed | `ISS-036-clear-repro-runs.md` |
 | ISS-037 | ISS-037 门禁「空即合规」：项目越早期，绿灯越廉价 | closed | `ISS-037-empty-is-compliant.md` |
 | ISS-038 | ISS-038 C-06 独立缺口猎取：做了和没做，门禁分不出来 | closed | `ISS-038-gap-hunt-unverifiable.md` |
 | ISS-039 | ISS-039 调研阶段选定的开源依赖，OSS 账本看不见 | closed | `ISS-039-oss-blind-in-research.md` |
