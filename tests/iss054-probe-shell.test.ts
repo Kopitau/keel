@@ -21,7 +21,7 @@ test("ISS-054 a probe with nested double quotes runs the same on every OS: exit 
   assert.equal(refuted.refused, true);
 });
 
-test("ISS-054 blocking findings the gate could not verify hold the loop in_review; clear refuses until a new round", () => {
+test("ISS-054 a blocking finding whose probe cannot execute holds the loop in_review; clear refuses until a new round", () => {
   const root = mkdtempSync(join(tmpdir(), "keel-iss054-"));
   for (const d of ["issues", "review"]) mkdirSync(join(root, "keel", d), { recursive: true });
   writeFileSync(join(root, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -33,17 +33,21 @@ test("ISS-054 blocking findings the gate could not verify hold the loop in_revie
   const findings = join(root, "findings.json");
   writeFileSync(
     findings,
-    JSON.stringify([{ title: "unverifiable", blocking: true, repro: "", impact: "gate bypass", fingerprint: "x" }]),
+    JSON.stringify([
+      { title: "unverifiable", blocking: true, repro: "keel-no-such-probe-xyz --check", impact: "gate bypass", fingerprint: "x" },
+      { title: "no probe at all", blocking: true, repro: "", impact: "gate bypass", fingerprint: "y" },
+    ]),
     "utf8",
   );
   const r = runLoop(ctx, ["ingest", findings, "--reviewer", "claude-code"]);
   assert.equal(r.code, 0, r.stdout + r.stderr);
-  assert.match(r.stdout, /deferred=1 .*status=in_review/);
+  assert.match(r.stdout, /deferred=1 probe_errors=1 .*status=in_review/);
   assert.equal(readLoopState(ctx)?.status, "in_review");
-  assert.deepEqual(readLoopState(ctx)?.deferred, ["unverifiable"]);
+  assert.deepEqual(readLoopState(ctx)?.probe_errors, ["unverifiable"]);
+  assert.deepEqual(readLoopState(ctx)?.deferred, ["no probe at all"], "DEC-182: no probe → 待核实, downgraded");
   const cleared = runLoop(ctx, ["clear", "--implementer", "codex", "--reviewer", "claude-code"]);
   assert.equal(cleared.code, 1);
-  assert.match(cleared.stderr, /unverified|待核实/);
+  assert.match(cleared.stderr, /could not execute|ISS-054/);
   assert.notEqual(readLoopState(ctx)?.status, "passed");
   rmSync(root, { recursive: true, force: true });
 });

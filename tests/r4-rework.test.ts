@@ -27,6 +27,7 @@ import {
   emptyLoop,
   packBodyHash,
   readLoopState,
+  recordLoopEvent,
   runLoop,
   validatePack,
   writeLoopState,
@@ -75,6 +76,9 @@ function writePackState(
     ...extra,
   };
   writeLoopState(makeCtx(dir), st);
+  // ISS-056: a passed front matter counts only with the rows gate loop writes.
+  recordLoopEvent(makeCtx(dir), { ...st, round: 0 }, "pack", `pack=${hash.slice(0, 12)}`);
+  if (st.status === "passed") recordLoopEvent(makeCtx(dir), st, "verdict", "reviewer=claude-code still_open=- → passed");
   return { hash };
 }
 
@@ -103,7 +107,7 @@ test("ISS-023 passed loop binds tree_hash; later edits stale G-done", () => {
   const findings = join(tmpdir(), `keel-r4-findings-${process.pid}.json`);
   writeFileSync(findings, "[]", "utf8");
   const packed = runLoop(ctx, [
-    "pack",
+    "pack", "--base", "HEAD",
     "--feature",
     "",
     "--implementer",
@@ -135,7 +139,7 @@ test("ISS-024 production pack classifies a gate file as attack, not classifyLens
   mkdirSync(join(dir, "tools", "gate"), { recursive: true });
   writeFileSync(join(dir, "tools", "gate", "check.ts"), "export const x = 1;\n", "utf8");
   const packed = runLoop(makeCtx(dir), [
-    "pack",
+    "pack", "--base", "HEAD",
     "--implementer",
     "grok-build",
     "--reviewer",
@@ -159,7 +163,7 @@ test("ISS-024 production pack classifies a docs-only dirty tree as requirements"
   git(dir, ["add", "-A"]);
   git(dir, ["commit", "--no-verify", "-m", "gate"]);
   writeFileSync(join(dir, "README.md"), "only docs\n", "utf8");
-  const packed = runLoop(makeCtx(dir), ["pack", "--implementer", "grok-build", "--reviewer", "grok-build"]);
+  const packed = runLoop(makeCtx(dir), ["pack", "--base", "HEAD", "--implementer", "grok-build", "--reviewer", "grok-build"]);
   assert.equal(packed.code, 0, packed.stdout + packed.stderr);
   assert.match(packed.stdout, /lens=requirements/);
   assert.match(packed.stdout, /het_required=false/);
@@ -357,7 +361,7 @@ test("ISS-028 production pack classifies keel/review/ as attack", () => {
   git(dir, ["commit", "--no-verify", "-m", "base"]);
   writeFileSync(join(dir, "keel", "review", "attack-surface.md"), "# a\n- new\n", "utf8");
   const packed = runLoop(makeCtx(dir), [
-    "pack",
+    "pack", "--base", "HEAD",
     "--implementer",
     "grok-build",
     "--reviewer",

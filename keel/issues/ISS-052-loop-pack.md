@@ -50,3 +50,7 @@ node --test --test-name-pattern="ISS-052" tests/chg010-review-loop.test.ts
 选择最高优先级的回归测试：它直接固定两个 Git diff 来源必须互斥，并且真实 340149 字符 staged 差异已重新用于集成打包。无需新增 lint、门禁或 DEC；这是既有 C-39/ISS-028 实现中的局部错误，不改变接口或需求边界。
 
 可能复发的不许只留档。
+
+## 2026-08-29 CHG-011 备注
+
+评审 pack 改为只按 `--base` 范围取 diff（`git diff <base>` 本身覆盖已提交、已暂存、未暂存且不重叠），工作树两段 diff 与 `PACK_DIFF_ARGS` 随之删除（ISS-055）；本条的防线（不重叠）由范围 diff 天然满足，原守卫测试删除。

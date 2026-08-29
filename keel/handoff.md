@@ -1,5 +1,6 @@
 # handoff
 
-- 下一步：CHG-011 Q5（DEC-162/164/176/181 superseded；DEC-174/178/182/161/165 复核；ISS-021 关闭）→ Q6（全量验证、CHANGELOG、zhaoxi `keel update`）→ Q7（方案级评审 `gate loop pack`）→ 请用户点头 v5 + overview-v4（APR-005）。
-- 该读：`keel/plan/overview-v4.md`（切片与「切片 → 测试义务」）、`keel/requirements/v5.md`「未决问题」（待点头的 8 条解读）、`keel/features/f17-gate/worklog.md` 与 `f07-review/worklog.md` 最新一节。
-- 阻塞问题：无（v5/overview-v4 的整体点头留到 Q7 之后一并要）。
+- 下一步（人）：① 对 `keel/requirements/v5.md` + `keel/plan/overview-v4.md` 整体点头一次 → APR-005（v5「未决问题 → 待用户点头的解读」8 条）；② 在交互终端跑 `cd E:\program\zhaoxi && node E:\program\en\bin\keel.js update`（DEC-173 只认 TTY 上的 y）。
+- 下一步（agent，点头后）：`gate approve APR-005` 以用户身份提交；v5/overview-v4 状态改 confirmed；验收（k-accept）。
+- 该读：`keel/review/disposition.md`（CHG-011 方案级评审：Codex 异构，3 ISS 已清）、`keel/review/findings.md`、`keel/features/f07-review/worklog.md` 最新两节、`RELEASE-0.9.0.md`。
+- 阻塞问题：无。

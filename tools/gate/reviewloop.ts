@@ -52,6 +52,14 @@ export type ReviewClear = {
 
 export type LoopStatus = "none" | "packed" | "in_review" | "repairing" | "passed" | "fused";
 
+const LOOP_STATUSES: readonly LoopStatus[] = ["none", "packed", "in_review", "repairing", "passed", "fused"];
+
+/** ISS-056: the front matter is data, not an attestation — an unknown status is "none", never a pass. */
+export function parseLoopStatus(raw: string | undefined): LoopStatus {
+  const v = (raw ?? "").trim().toLowerCase();
+  return (LOOP_STATUSES as readonly string[]).includes(v) ? (v as LoopStatus) : "none";
+}
+
 export type LoopState = {
   status: LoopStatus;
   /** Overview file (plan/INDEX current) the loop reviews; "" = unknown/any. */
@@ -67,8 +75,10 @@ export type LoopState = {
   reviewer_harness: string;
   blocking_iss: string[];
   advisory: string[];
-  /** Blocking findings the gate could not verify (no probe, no impact, or probe not exit 0): they hold the loop in_review. */
+  /** Blocking findings downgraded to 待核实 (no probe, no impact, or the probe ran and did not exit 0 — DEC-182). */
   deferred: string[];
+  /** Blocking findings whose probe could not execute at all (ISS-054): they hold the loop in_review. */
+  probe_errors: string[];
   iss_fp: { [iss: string]: string };
   rounds_on: { [fp: string]: number };
   fuse_threshold: number;
@@ -93,9 +103,6 @@ const PACK_MAX: { [k: string]: number } = {
   evidence: 120000,
   worklog_summary: 4000,
 };
-
-/** ISS-052: unstaged and staged diff sources, partitioned without overlap. */
-export const PACK_DIFF_ARGS = [["diff"], ["diff", "--cached"]] as const;
 
 const ATTACK_RE = [
   /^tools\/gate\//,
@@ -291,6 +298,7 @@ function formatState(state: LoopState): string {
     `blocking_iss: ${JSON.stringify(state.blocking_iss ?? [])}`,
     `advisory: ${JSON.stringify(state.advisory ?? [])}`,
     `deferred: ${JSON.stringify(state.deferred ?? [])}`,
+    `probe_errors: ${JSON.stringify(state.probe_errors ?? [])}`,
     `iss_fp: ${JSON.stringify(state.iss_fp ?? {})}`,
     `rounds_on: ${JSON.stringify(state.rounds_on ?? {})}`,
     `paths: ${JSON.stringify(state.paths ?? [])}`,
@@ -313,7 +321,7 @@ export function readLoopState(ctx: Ctx): LoopState | null {
       }
     };
     return {
-      status: attrs.status as LoopStatus,
+      status: parseLoopStatus(attrs.status),
       plan: attrs.plan ?? "",
       round: Number(attrs.round ?? 0) || 0,
       base: attrs.base ?? "",
@@ -326,6 +334,7 @@ export function readLoopState(ctx: Ctx): LoopState | null {
       blocking_iss: j<string[]>("blocking_iss", []),
       advisory: j<string[]>("advisory", []),
       deferred: j<string[]>("deferred", []),
+      probe_errors: j<string[]>("probe_errors", []),
       iss_fp: j<{ [iss: string]: string }>("iss_fp", {}),
       rounds_on: j<{ [fp: string]: number }>("rounds_on", {}),
       paths: j<string[]>("paths", []),
@@ -349,12 +358,47 @@ export function writeLoopState(ctx: Ctx, state: LoopState): void {
   writeFileSync(p, formatState(state) + body, "utf8");
 }
 
-function appendDisposition(ctx: Ctx, state: LoopState, event: string, detail: string): void {
+/** One append-only history row. Every gate loop step records itself here; G-done reads these rows back (ISS-056). */
+export function recordLoopEvent(ctx: Ctx, state: LoopState, event: string, detail: string): void {
   const p = dispositionPath(ctx);
   if (!existsSync(p)) writeLoopState(ctx, state);
   const tree = (state.tree_hash ?? "").slice(0, 12) || "-";
   const cell = detail.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
   appendFileSync(p, `| ${state.round} | ${new Date().toISOString()} | ${event} | ${tree} | ${cell} |\n`, "utf8");
+}
+
+const appendDisposition = recordLoopEvent;
+
+type HistoryRow = { round: number; event: string; tree: string; detail: string };
+
+function dispositionHistory(ctx: Ctx): HistoryRow[] {
+  const p = dispositionPath(ctx);
+  if (!existsSync(p)) return [];
+  const rows: HistoryRow[] = [];
+  for (const line of readFileSync(p, "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\|\s*(\d+)\s*\|\s*[^|]*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*(.*?)\s*\|\s*$/);
+    if (m) rows.push({ round: Number(m[1]), event: m[2] ?? "", tree: m[3] ?? "", detail: m[4] ?? "" });
+  }
+  return rows;
+}
+
+/**
+ * ISS-056: a `passed` front matter counts only when the append-only history shows
+ * the loop actually ran for that pack — a `pack` row naming the pack hash and a later
+ * `ingest` / `verdict` row that ended in `→ passed`. Hand-editing the front matter
+ * alone leaves no such rows.
+ */
+export function dispositionAttested(ctx: Ctx, state: LoopState): string[] {
+  if (state.status !== "passed") return [];
+  const rows = dispositionHistory(ctx);
+  const pack12 = state.pack_hash.slice(0, 12);
+  const packAt = pack12 ? rows.findIndex((r) => r.event === "pack" && r.detail.includes(`pack=${pack12}`)) : -1;
+  if (packAt < 0) return [`disposition says passed but the history has no pack row for ${pack12 || "(no pack hash)"} — run gate loop, do not edit the front matter (ISS-056)`];
+  const passedRow = rows.slice(packAt + 1).find(
+    (r) => (r.event === "verdict" || r.event === "ingest") && /→\s*passed\s*$/.test(r.detail) && r.round === state.round,
+  );
+  if (!passedRow) return [`disposition says passed at round ${state.round} but the history has no ingest/verdict row ending in → passed for that pack (ISS-056)`];
+  return [];
 }
 
 export function appendFindings(ctx: Ctx, heading: string, lines: string[]): void {
@@ -376,9 +420,17 @@ export function fileFindings(
   ctx: Ctx,
   findings: Finding[],
   worklogRel = "",
-): { iss: string[]; deferred: string[]; advisory: string[]; fps: { [iss: string]: string }; notes: string[] } {
+): {
+  iss: string[];
+  deferred: string[];
+  probe_errors: string[];
+  advisory: string[];
+  fps: { [iss: string]: string };
+  notes: string[];
+} {
   const iss: string[] = [];
   const deferred: string[] = [];
+  const probe_errors: string[] = [];
   const advisory: string[] = [];
   const fps: { [iss: string]: string } = {};
   const notes: string[] = [];
@@ -400,6 +452,16 @@ export function fileFindings(
       const probeTree = gitWriteTree(ctx);
       const probeRecordedAt = new Date().toISOString();
       const probe = runReproCommand(ctx.root, command);
+      if (!probe.ran) {
+        // ISS-054: the probe never executed (missing interpreter, shell/quoting failure).
+        // That refutes nothing — it holds the loop in_review until a probe that runs exists.
+        probe_errors.push(f.title);
+        const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
+        note(
+          `- 待核实（攻击探针无法执行，退出 ${probe.exit_code}，回路停在 in_review）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
+        );
+        continue;
+      }
       if (probe.exit_code !== 0) {
         deferred.push(f.title);
         const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
@@ -454,7 +516,7 @@ export function fileFindings(
       note(`- 待办（advisory）：${f.title}${extra}`);
     }
   }
-  return { iss, deferred, advisory, fps, notes };
+  return { iss, deferred, probe_errors, advisory, fps, notes };
 }
 
 export function reviewClearGaps(rev: {
@@ -521,6 +583,7 @@ export function completionReviewGaps(ctx: Ctx): string[] {
       ? ["plan implemented (every active feature has summary.md) but the plan-level review has not run (REQ-027)"]
       : [];
   }
+  if (loop.status === "none") return ["disposition.md has an invalid status; run gate loop pack (ISS-056)"];
   if (loop.status === "fused") {
     return [`review fused after ${loop.round} round(s); blocking ${loop.blocking_iss.join(",") || "-"} (REQ-027/AC-6)`];
   }
@@ -531,9 +594,22 @@ export function completionReviewGaps(ctx: Ctx): string[] {
   if (sha256Normalized(readFileSync(packFile, "utf8")) !== loop.pack_hash) {
     return ["review pack_hash mismatch (ISS-023)"];
   }
+  const attested = dispositionAttested(ctx, loop);
+  if (attested.length > 0) return attested;
   const lens = derivedLens(loop, ctx);
   if (needsHeterogeneous(lens) && !heterogeneousOk(true, loop.implementer_harness, loop.reviewer_harness)) {
     return ["heterogeneous review required; will not silently use the implementer harness (DEC-159)"];
+  }
+  // ISS-055: a pass taken while the plan was still in progress must not cover the
+  // work that finished it. Once every active feature has its summary, the review
+  // has to have seen this tree.
+  if (planComplete(ctx)) {
+    const tree = gitWriteTree(ctx);
+    if (tree && loop.tree_hash !== tree) {
+      return [
+        `plan implemented after the review passed (review tree ${loop.tree_hash.slice(0, 12)}, now ${tree.slice(0, 12)}); re-pack for a new round (REQ-027/ISS-055)`,
+      ];
+    }
   }
   return [];
 }
@@ -618,16 +694,24 @@ export function probeShell(): string | null {
  * (ISS-054, first live plan-level review). Run through sh wherever it exists;
  * cmd.exe is the last resort only.
  */
+const PROBE_DID_NOT_RUN =
+  /command not found|not recognized as an internal or external command|No such file or directory|SyntaxError|Unterminated string|cannot execute|is not a valid|MODULE_NOT_FOUND|Cannot find module/;
+
 export function runReproCommand(
   cwd: string,
   command: string,
-): { exit_code: number; refused: boolean; stdout: string } {
+): { exit_code: number; refused: boolean; stdout: string; ran: boolean } {
   const sh = probeShell();
   const r = sh
     ? spawnSync(sh, ["-c", command], { encoding: "utf8", cwd, timeout: 60000 })
     : spawnSync("cmd.exe", ["/c", command], { encoding: "utf8", cwd, timeout: 60000 });
   const exit_code = r.status ?? 1;
-  return { exit_code, refused: exit_code !== 0, stdout: (r.stdout || "") + (r.stderr || "") };
+  const stdout = (r.stdout || "") + (r.stderr || "");
+  // ISS-054: exit 126/127, a spawn error, or an interpreter failure means the probe
+  // never tested anything — that is not a refusal.
+  const spawnFailed = Boolean((r as { error?: unknown }).error);
+  const ran = !spawnFailed && exit_code !== 126 && exit_code !== 127 && !(exit_code !== 0 && PROBE_DID_NOT_RUN.test(stdout));
+  return { exit_code, refused: exit_code !== 0, stdout, ran };
 }
 
 export function extractRepro(body: string): string {
@@ -670,6 +754,7 @@ export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState
     blocking_iss: [],
     advisory: [],
     deferred: [],
+    probe_errors: [],
     iss_fp: {},
     rounds_on: {},
     fuse_threshold: FUSE_THRESHOLD,
@@ -697,30 +782,63 @@ function worklogDigest(ctx: Ctx): string {
     const last = (sections[sections.length - 1] ?? "").trim().replace(/\s+/g, " ");
     if (last) parts.push(`${name}: ${last.slice(0, 400)}`);
   }
-  const text = parts.join("\n");
-  return text.length > 3500 ? text.slice(text.length - 3500) : text;
+  // ISS-055: every feature gets an equal share of the cap; the digest never drops early features.
+  if (parts.length === 0) return "";
+  const share = Math.max(80, Math.floor((3500 - parts.length * 2) / parts.length));
+  return parts.map((p) => p.slice(0, share)).join("\n");
+}
+
+/**
+ * ISS-055: the pack base is what makes a plan-level review a review of the plan.
+ * Explicit `--base` wins; a re-pack of the same plan inherits its base; otherwise
+ * the tree of the last passed review; with none of those the caller must say.
+ */
+export function defaultBase(ctx: Ctx): string {
+  const st = readLoopState(ctx);
+  if (!st) return "";
+  const cur = currentPlanFile(ctx);
+  if (st.base && (!st.plan || !cur || st.plan === cur)) return st.base;
+  if (st.status === "passed" && st.tree_hash) return st.tree_hash;
+  return "";
 }
 
 /**
  * Diff since `base` for a plan-level pack: files deleted outright are listed by
  * name only (their bodies say nothing about the new behaviour), context is two
- * lines. Working-tree packs keep the plain ISS-052 two-command diff.
+ * lines. `git diff <base>` already covers committed, staged and unstaged work
+ * without overlap, so the ISS-052 two-command working-tree diff is gone (ISS-055).
  */
+const PACK_EXCLUDES = [
+  "--",
+  ".",
+  ":(exclude)keel/review/disposition.md",
+  ":(exclude)keel/review/findings.md",
+  ":(exclude)keel/evidence",
+];
+
 export function baseDiff(ctx: Ctx, base: string): string {
-  const body = git(ctx, ["diff", "--diff-filter=d", "-U2", base]).stdout;
+  const body = git(ctx, ["diff", "--diff-filter=d", "-U2", base, ...PACK_EXCLUDES]).stdout;
+  // Untracked files are part of the working tree under review (a new test file not
+  // yet `git add`ed must reach the reviewer): show each as a new file.
+  const untracked = git(ctx, ["ls-files", "--others", "--exclude-standard"]).stdout
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter((p) => p && !LOOP_ARTIFACT_RE.test(p));
+  const added = untracked
+    .map((p) => git(ctx, ["diff", "--no-index", "-U2", "--", "/dev/null", p]).stdout)
+    .filter(Boolean)
+    .join("\n");
   const deleted = git(ctx, ["diff", "--diff-filter=D", "--name-only", base]).stdout
     .split(/\n/)
     .map((l) => l.trim())
     .filter(Boolean);
   const tail = deleted.length > 0 ? `\n# deleted files (bodies omitted):\n${deleted.map((p) => `- ${p}`).join("\n")}\n` : "";
-  return body + tail;
+  return [body, added].filter(Boolean).join("\n") + tail;
 }
 
-/** The five C-39 inputs: diff since base (or the working tree), the current overview, requirements, evidence, worklog digest. */
-export function buildPack(ctx: Ctx, base = ""): { [k: string]: string } {
-  const diff = base
-    ? baseDiff(ctx, base)
-    : PACK_DIFF_ARGS.map((args) => git(ctx, [...args]).stdout).join("\n");
+/** The five C-39 inputs: diff since base, the current overview, requirements, evidence, worklog digest. */
+export function buildPack(ctx: Ctx, base: string): { [k: string]: string } {
+  const diff = baseDiff(ctx, base);
   let plan = "";
   const cur = currentPlanFile(ctx);
   if (cur && existsSync(join(ctx.records, "plan", cur))) {
@@ -773,15 +891,27 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     );
   }
   if (sub === "pack") {
-    const base = flag(args, "base") || "";
+    const base = flag(args, "base") || defaultBase(ctx);
+    if (!base) {
+      return fail(
+        "plan-level pack needs --base <rev>: the commit or tree the plan started from (no earlier review of this plan to inherit it from) (ISS-055)\n",
+      );
+    }
+    if (git(ctx, ["rev-parse", "--verify", "--quiet", `${base}^{tree}`]).status !== 0) {
+      return fail(`--base ${base} is not a commit or tree in this repository (ISS-055)\n`);
+    }
     const impl = flag(args, "implementer") || process.env.KEEL_HARNESS || "unknown";
     const reviewer = flag(args, "reviewer") || "";
     const paths = collectChangedPaths(ctx, base);
+    if (paths.length === 0) {
+      return fail(`nothing to review: no path changed since ${base} (ISS-055)\n`);
+    }
     const lens = classifyLens(paths);
     const pack = buildPack(ctx, base);
     const wr = writeGeneratedPack(ctx, pack);
     if (wr.result.code !== 0) return wr.result;
     const plan = currentPlanFile(ctx);
+    const complete = planComplete(ctx);
     // A new plan starts a fresh loop; the history rows below the front matter stay.
     const prev = loopForCurrentPlan(ctx);
     const st: LoopState = {
@@ -801,7 +931,7 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       ctx,
       st,
       "pack",
-      `plan=${plan || "-"} base=${base || "worktree"} lens=${lens} files=${paths.length} implementer=${impl} reviewer=${reviewer || "-"} pack=${wr.hash.slice(0, 12)}`,
+      `plan=${plan || "-"} base=${base} plan_complete=${complete} lens=${lens} files=${paths.length} implementer=${impl} reviewer=${reviewer || "-"} pack=${wr.hash.slice(0, 12)}`,
     );
     return ok(
       `${wr.result.stdout}lens=${lens} het_required=${needsHeterogeneous(lens)} files=${paths.length}\n`,
@@ -839,10 +969,11 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       return fail("attack-lens changes require a different reviewer harness (DEC-159/ISS-024)\n");
     }
     const out = fileFindings(ctx, findings, worklogRel);
-    // A blocking finding the gate could not verify is not refuted: it holds the
-    // loop in_review until a fresh review round drops it or supplies a probe that
-    // runs (C-42). Only "no ISS and nothing deferred" is a pass.
-    const status: LoopStatus = out.iss.length > 0 ? "repairing" : out.deferred.length > 0 ? "in_review" : "passed";
+    // DEC-182: a blocking finding without a probe, or whose probe ran and did not
+    // exit 0, is downgraded to 待核实. A probe that could not execute refutes
+    // nothing (ISS-054): it holds the loop in_review until a fresh round supplies a
+    // probe that runs or drops the finding (C-42).
+    const status: LoopStatus = out.iss.length > 0 ? "repairing" : out.probe_errors.length > 0 ? "in_review" : "passed";
     const next: LoopState = {
       ...st,
       implementer_harness: impl,
@@ -850,6 +981,7 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       blocking_iss: out.iss,
       advisory: [...new Set([...(st.advisory ?? []), ...out.advisory])],
       deferred: out.deferred,
+      probe_errors: out.probe_errors,
       iss_fp: { ...st.iss_fp, ...out.fps },
       lens,
       tree_hash: gitWriteTree(ctx),
@@ -865,10 +997,10 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       ctx,
       next,
       "ingest",
-      `reviewer=${reviewer} iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} advisory=${out.advisory.length} → ${next.status}`,
+      `reviewer=${reviewer} iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} probe_errors=${out.probe_errors.length} advisory=${out.advisory.length} → ${next.status}`,
     );
     return ok(
-      `filed iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} advisory=${out.advisory.length} status=${next.status}\n`,
+      `filed iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} probe_errors=${out.probe_errors.length} advisory=${out.advisory.length} status=${next.status}\n`,
     );
   }
   if (sub === "clear") {
@@ -897,9 +1029,9 @@ function issBody(ctx: Ctx, id: string): string {
 export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult {
   const st = readLoopState(ctx);
   if (!st || !st.pack_hash) return fail("no packed review state; gate loop pack then ingest\n");
-  if (st.blocking_iss.length === 0 && (st.deferred ?? []).length > 0 && st.status !== "passed") {
+  if (st.blocking_iss.length === 0 && (st.probe_errors ?? []).length > 0 && st.status !== "passed") {
     return fail(
-      `nothing to clear: ${st.deferred.length} blocking finding(s) are unverified (待核实); a fresh review round must drop them or supply a probe that runs — re-pack, re-review, re-ingest (C-42)\n`,
+      `nothing to clear: ${st.probe_errors.length} blocking finding(s) have a probe that could not execute (ISS-054); a fresh review round must supply a probe that runs or drop them — re-pack, re-review, re-ingest (C-42)\n`,
     );
   }
   const runRound = st.round + 1;
@@ -932,7 +1064,7 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
     });
   }
   const still = st.blocking_iss.filter((id) => !runs.some((r) => r.iss === id && r.refused));
-  const next = bumpRounds(
+  const bumped = bumpRounds(
     {
       ...st,
       implementer_harness: impl,
@@ -941,6 +1073,9 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
     },
     still,
   );
+  // Probes that never executed keep the loop open even when every ISS is refused (ISS-054).
+  const next: LoopState =
+    bumped.status === "passed" && (st.probe_errors ?? []).length > 0 ? { ...bumped, status: "in_review" } : bumped;
   const lens = derivedLens(next, ctx);
   const hetReq = needsHeterogeneous(lens);
   writeLoopState(ctx, next);
@@ -974,6 +1109,11 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
     const gaps = reviewClearGaps(review);
     if (gaps.length) return fail(gaps.join("; ") + "\n");
     return ok("review loop passed\n");
+  }
+  if (next.status === "in_review") {
+    return fail(
+      `review loop in_review: every ISS is refused but ${st.probe_errors.length} blocking finding(s) never had an executable probe (ISS-054); a fresh round must resolve them\n`,
+    );
   }
   return fail(`review loop ${next.status} still_open=${still.join(",")}\n`);
 }

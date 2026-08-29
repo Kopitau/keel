@@ -8,7 +8,6 @@ import { makeCtx } from "../tools/gate/ctx.ts";
 import { evidenceGaps, readEvidence, writeEvidence, type Evidence } from "../tools/gate/evidence.ts";
 import {
   FUSE_THRESHOLD,
-  PACK_DIFF_ARGS,
   appendAttackSurface,
   bumpRounds,
   canClear,
@@ -21,6 +20,7 @@ import {
   needsHeterogeneous,
   packBodyHash,
   recordClear,
+  recordLoopEvent,
   validatePack,
   writeLoopState,
 } from "../tools/gate/reviewloop.ts";
@@ -104,10 +104,6 @@ test("REQ-027/AC-2 pack with implementation-chat field is refused", () => {
   assert.equal(good.ok, true);
 });
 
-test("ISS-052 review pack partitions unstaged and staged diff sources without overlap", () => {
-  assert.deepEqual(PACK_DIFF_ARGS, [["diff"], ["diff", "--cached"]]);
-});
-
 test("REQ-027/AC-3 heterogeneous required for attack; same harness is not ok", () => {
   assert.equal(heterogeneousOk(true, "grok-build", "grok-build"), false);
   assert.equal(heterogeneousOk(true, "grok-build", "claude-code"), true);
@@ -188,11 +184,16 @@ test("REQ-027/AC-1 claiming done without a passed loop is a G-done gap", () => {
   const pack = { diff: "d", plan: "p", reqs: "r", evidence: "{}", worklog_summary: "slice" };
   const { body, hash } = packBodyHash(pack);
   writeFileSync(join(dir, "keel", "review", "pack.json"), body, "utf8");
-  writeLoopState(makeCtx(dir), {
+  const st = {
     ...emptyLoop("robustness", "grok-build", "grok-build"),
-    status: "passed",
+    status: "passed" as const,
+    round: 1,
     pack_hash: hash,
-  });
+  };
+  writeLoopState(makeCtx(dir), st);
+  // ISS-056: the front matter counts only with the rows gate loop writes.
+  recordLoopEvent(makeCtx(dir), { ...st, round: 0 }, "pack", `pack=${hash.slice(0, 12)}`);
+  recordLoopEvent(makeCtx(dir), st, "ingest", "reviewer=grok-build iss=- → passed");
   assert.deepEqual(completionReviewGaps(makeCtx(dir)), []);
   rmSync(dir, { recursive: true, force: true });
 });

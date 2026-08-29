@@ -10,11 +10,13 @@ type ApprovalArtifact = {
   contentSha256: string;
 };
 
+/** Body edited after approval: a WARN, waived only by a worklog line citing the APR that bound that artifact. */
+export type ChainWarning = { change: string; apr: string; text: string };
+
 export type ChangeChainInspection = {
   checked: string[];
   gaps: string[];
-  /** Body edited after approval: a WARN (typo fix cites the APR in the worklog), not a FAIL. */
-  warnings: string[];
+  warnings: ChainWarning[];
 };
 
 function unquote(value: string): string {
@@ -111,7 +113,7 @@ export function inspectRequirementChangeChain(
 ): ChangeChainInspection {
   const checked = producingChangeIds(currentPath, currentText);
   const gaps: string[] = [];
-  const warnings: string[] = [];
+  const warnings: ChainWarning[] = [];
   const approvals = mdFiles(join(ctx.records, "approvals"), "APR-").map((path) => {
     const text = readFileSync(path, "utf8");
     return { path, attrs: parseFrontmatter(text).attrs, artifacts: approvalArtifacts(text) };
@@ -141,18 +143,18 @@ export function inspectRequirementChangeChain(
     const bodyDigest = sha256Body(raw);
     const fullDigest = sha256Normalized(raw);
     let bound = false;
-    let approvedArtifactFound = false;
+    let boundBy = "";
     for (const approval of approvals) {
       if ((approval.attrs.status ?? "").toLowerCase() !== "approved") continue;
       for (const artifact of approval.artifacts) {
         if (artifact.path.replace(/^\.\//, "") !== relativePath) continue;
-        approvedArtifactFound = true;
+        boundBy = (approval.attrs.id ?? "").match(/^APR-\d+/)?.[0] ?? basename(approval.path).match(/^APR-\d+/)?.[0] ?? basename(approval.path);
         if (artifact.contentSha256 === bodyDigest || artifact.contentSha256 === fullDigest) bound = true;
       }
     }
     if (bound) continue;
-    if (approvedArtifactFound) {
-      warnings.push(`${id} body changed after approval (APR artifact hash mismatch)`);
+    if (boundBy) {
+      warnings.push({ change: id, apr: boundBy, text: `${id} body changed after its approval ${boundBy} (artifact hash mismatch)` });
       continue;
     }
     gaps.push(`${id} has no approved APR artifact`);

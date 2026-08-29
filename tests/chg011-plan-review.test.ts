@@ -17,6 +17,7 @@ import {
   emptyLoop,
   packBodyHash,
   readLoopState,
+  recordLoopEvent,
   runLoop,
   writeLoopState,
 } from "../tools/gate/reviewloop.ts";
@@ -64,30 +65,34 @@ function line(stdout: string, id: string): string {
   return stdout.split("\n").find((l) => l.includes(` ${id}  `)) ?? `<no ${id} line>`;
 }
 
-function packedState(root: string, extra: { [k: string]: unknown }): void {
+/** A loop state the way gate loop leaves it: front matter plus the history rows G-done reads back (ISS-056). */
+function loopState(root: string, extra: { [k: string]: unknown }): void {
   const pack = { diff: "d", plan: "p", reqs: "r", evidence: "{}", worklog_summary: "slice" };
   const { body, hash } = packBodyHash(pack);
   writeFileSync(join(root, "keel", "review", "pack.json"), body, "utf8");
   const ctx = makeCtx(root);
-  writeLoopState(ctx, {
+  const st = {
     ...emptyLoop("requirements", "codex", "claude-code"),
     plan: "overview-v1.md",
     pack_hash: hash,
     tree_hash: gitWriteTree(ctx),
     ...extra,
-  } as ReturnType<typeof emptyLoop>);
+  } as ReturnType<typeof emptyLoop>;
+  writeLoopState(ctx, st);
+  recordLoopEvent(ctx, { ...st, round: 0 }, "pack", `plan=overview-v1.md base=HEAD lens=requirements files=1 pack=${hash.slice(0, 12)}`);
+  if (st.status === "passed") recordLoopEvent(ctx, st, "verdict", "reviewer=claude-code still_open=- → passed");
 }
 
 test("REQ-027/AC-10 G-done reads the disposition: passed → PASS, repairing → WARN, fused → FAIL", () => {
   const root = fixture("verdicts");
   const ctx = makeCtx(root);
-  packedState(root, { status: "passed", round: 1 });
+  loopState(root, { status: "passed", round: 1 });
   assert.match(line(runCheck(ctx, []).stdout, "G-done"), /^PASS/);
-  packedState(root, { status: "repairing", round: 1, blocking_iss: ["ISS-001"] });
+  loopState(root, { status: "repairing", round: 1, blocking_iss: ["ISS-001"] });
   const amber = runCheck(ctx, []);
   assert.match(line(amber.stdout, "G-done"), /^WARN.*repairing/);
   assert.equal(amber.code, 0, amber.stdout);
-  packedState(root, { status: "fused", round: 3, blocking_iss: ["ISS-001"] });
+  loopState(root, { status: "fused", round: 3, blocking_iss: ["ISS-001"] });
   const red = runCheck(ctx, []);
   assert.match(line(red.stdout, "G-done"), /^FAIL.*fused/);
   assert.equal(red.code, 1);
@@ -139,7 +144,7 @@ test("REQ-027/AC-10 a full loop leaves only findings.md and disposition.md as re
     ]),
     "utf8",
   );
-  const packed = runLoop(ctx, ["pack", "--implementer", "codex", "--reviewer", "claude-code"]);
+  const packed = runLoop(ctx, ["pack", "--base", "HEAD", "--implementer", "codex", "--reviewer", "claude-code"]);
   assert.equal(packed.code, 0, packed.stdout + packed.stderr);
   const ingested = runLoop(ctx, ["ingest", findings, "--reviewer", "claude-code"]);
   assert.equal(ingested.code, 0, ingested.stdout + ingested.stderr);
@@ -175,7 +180,7 @@ test("REQ-027/AC-6 the third uncleared round fuses; the report lands in disposit
     "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 0\n```\n",
     "utf8",
   );
-  packedState(root, { status: "repairing", blocking_iss: ["ISS-001"], iss_fp: { "ISS-001": "x" } });
+  loopState(root, { status: "repairing", blocking_iss: ["ISS-001"], iss_fp: { "ISS-001": "x" } });
   let last = runLoop(ctx, ["clear", "--implementer", "codex", "--reviewer", "claude-code"]);
   last = runLoop(ctx, ["clear", "--implementer", "codex", "--reviewer", "claude-code"]);
   last = runLoop(ctx, ["clear", "--implementer", "codex", "--reviewer", "claude-code"]);
@@ -190,7 +195,7 @@ test("REQ-027/AC-6 the third uncleared round fuses; the report lands in disposit
 test("REQ-027/AC-10 a passed review whose tree moved is a WARN, never silently green", () => {
   const root = fixture("moved");
   const ctx = makeCtx(root);
-  packedState(root, { status: "passed", round: 1 });
+  loopState(root, { status: "passed", round: 1 });
   assert.deepEqual(completionReviewWarnings(ctx), []);
   writeFileSync(join(root, "later.txt"), "edit after review\n", "utf8");
   const warnings = completionReviewWarnings(ctx);

@@ -8,6 +8,8 @@ export type CheckItem = {
   /** A warn whose reason already lives in the artifact it reports (e.g. a `[proxy:...]`
    *  test name, DEC-168). C-103 escalation leaves it as WARN; it is still never a PASS. */
   acknowledged?: boolean;
+  /** Scoped WARN: every listed record must be cited by its own worklog waiver line (fp:g-req-apr-waiver). */
+  waivers?: string[];
 };
 
 export type CmdResult = {

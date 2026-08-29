@@ -55,3 +55,11 @@
 - 旁车证据：implementer=claude-code（本会话）；reviewer=openai-codex，`codex-cli 0.144.1`，`codex exec --ephemeral --ignore-user-config --ignore-rules --sandbox read-only --skip-git-repo-check -C <iso> -m gpt-5.6-sol -c model_reasoning_effort="high" -c web_search="disabled" --json --output-schema schema.json --output-last-message result.json <rubric>`；隔离目录只放 pack.json 副本 + schema + rubric；started 2026-08-29T05:09:48Z，finished 05:20:52Z，exit 0，events 97，恰 1 个 turn.completed、0 个 turn.failed/error；usage input 3,520,430（cached 3,341,824）/ output 22,699；pack d230b41c87c2（--base 8f77b84，152 文件，lens=attack），tree a6399b86d79d。
 - 结果：4 条 blocking、0 advisory：① 回路可用空 pack / 同源 harness 通过且不绑定规划范围；② 手改 disposition 前言即可伪造 passed；③ `gate-warn: G-req ref=APR-nnn` 一行放行全部哈希不符且不校验 APR 归属；④ 切片义务表点名的 8 个测试标记缺失（REQ-018/AC-6、REQ-009/AC-4、REQ-016/AC-3、AC-9、REQ-004/AC-10、REQ-009/AC-1、REQ-002/AC-4、REQ-003/AC-5）。
 - 首轮 ingest 在 Windows 全部探针被 cmd.exe 截断 → 误判 passed → ISS-054（运行器改 sh；待核实 blocking → in_review）。修复后重新 pack / ingest，四条探针退出 0 开 ISS，进入修复。
+
+## 2026-08-29（CHG-011 Q7 第二轮：修复三条 ISS 并 clear）
+
+- ISS-055：pack 必须有范围（显式 `--base` / 同一规划继承 / 上次 passed 的树），空范围与非法 base 拒绝；diff 含未跟踪文件（no-index）并排除回路产物；worklog 摘要按功能均分配额；G-done：活动功能全有 summary 后，旧 pass 变 FAIL。
+- ISS-056：G-done 的 passed 须有历史行出处（记录 pack 哈希的 pack 行 + 同轮以 `→ passed` 结尾的 ingest/verdict 行）；前言 status 只认六个合法值。仍是「防呆不防恶」（C-111），最终以 CI 复算与人对 disposition.md 的 diff 复核为准。
+- ISS-057：补 8 条黑盒测试（REQ-018/AC-6、REQ-009/AC-4、REQ-016/AC-3、REQ-016/AC-9、REQ-004/AC-10、REQ-009/AC-1、REQ-002/AC-4、REQ-003/AC-5）。
+- 第 4 条（waiver 范围）探针因自身 `\d` 转义错误首次退出 1 → 按 DEC-182 待核实；自愿修复：G-req 哈希不符 WARN 携带 `waivers`，每个绑定该工件的 APR 各需一行 `gate-warn: G-req ref=APR-nnn`，无关 APR 不放行（`fp:g-req-apr-waiver` 两条回归）。
+- 证据：`npx tsc --noEmit` 0 错；`node --test` 245 passed / 0 failed；`gate loop clear`（reviewer=openai-codex 探针实跑）三条全部退出 1 → passed，见 disposition.md 的 clear / verdict 行。

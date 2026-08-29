@@ -124,12 +124,17 @@ function gReq(ctx: Ctx): CheckItem {
     }
     if (chain.warnings.length > 0) {
       // CHG-011: freezing binds semantics. Metadata never moves the body hash; a typo
-      // fix does, and stands with a worklog line 'gate-warn: G-req ref=APR-nnn'.
-      return warn(
-        "G-req",
-        chain.warnings.join("; "),
-        "typo fix: worklog 'gate-warn: G-req ref=APR-nnn'; semantic change: new version + re-approve (REQ-011/AC-4)",
-      );
+      // fix does, and stands only with one worklog line per approval it touches —
+      // 'gate-warn: G-req ref=<the APR that bound that artifact>' (fp:g-req-apr-waiver).
+      const needed = [...new Set(chain.warnings.map((w) => w.apr))];
+      return {
+        ...warn(
+          "G-req",
+          chain.warnings.map((w) => w.text).join("; "),
+          `typo fix: worklog line(s) ${needed.map((a) => `'gate-warn: G-req ref=${a}'`).join(" and ")}; semantic change: new version + re-approve (REQ-011/AC-4)`,
+        ),
+        waivers: needed,
+      };
     }
     approvedChanges = chain.checked.length;
   }
@@ -427,13 +432,22 @@ function refIsOpenIss(ctx: Ctx, ref: string): boolean {
   return (attrs.status ?? "") === "open";
 }
 
-function warnAcknowledged(ctx: Ctx, id: string, blob: string): boolean {
-  if (NO_WAIVE.has(id)) return false;
-  const re = new RegExp(`gate-warn:\\s*${id}\\s+ref=(ISS-\\d+|DEC-\\d+|APR-\\d+)`);
-  const m = blob.match(re);
-  if (!m?.[1]) return false;
-  const ref = m[1];
-  return recordRefExists(ctx, ref) && refIsOpenIss(ctx, ref);
+/** C-103 waiver lines in the worklogs: `gate-warn: <check> ref=<record>`, one record per line. */
+function waiverRefs(id: string, blob: string): string[] {
+  const re = new RegExp(`gate-warn:\\s*${id}\\s+ref=((?:ISS|DEC|APR)-\\d+)`, "g");
+  return [...blob.matchAll(re)].map((m) => m[1] ?? "").filter(Boolean);
+}
+
+function warnAcknowledged(ctx: Ctx, it: CheckItem, blob: string): boolean {
+  if (NO_WAIVE.has(it.id)) return false;
+  const refs = waiverRefs(it.id, blob);
+  if (it.waivers && it.waivers.length > 0) {
+    // Scoped WARN: every approval that bound a changed artifact must be cited by its
+    // own line; an unrelated APR waives nothing (fp:g-req-apr-waiver).
+    return it.waivers.every((need) => refs.includes(need) && recordRefExists(ctx, need));
+  }
+  const ref = refs.find((r) => !r.startsWith("APR-"));
+  return Boolean(ref) && recordRefExists(ctx, ref as string) && refIsOpenIss(ctx, ref as string);
 }
 
 /** C-103: a WARN stands only when a worklog line cites an open ISS or a DEC; otherwise it is a FAIL. */
@@ -450,7 +464,7 @@ function warnWorklogCovered(ctx: Ctx, items: CheckItem[]): CheckItem[] {
   return items.map((it) => {
     if (it.verdict !== "warn") return it;
     if (it.acknowledged) return it;
-    if (warnAcknowledged(ctx, it.id, blob)) return it;
+    if (warnAcknowledged(ctx, it, blob)) return it;
     return {
       ...it,
       verdict: "fail" as const,

@@ -7,7 +7,7 @@
 
 ## 共同输入与输出
 
-1. 先运行 `node tools/gate/gate.ts loop pack [--base <rev>] --implementer <h> --reviewer <other-h>`。带 `--base` 时 diff 只列出整文件删除的名字（正文省略）、上下文 2 行；不带时是工作树对 HEAD 的两段 diff（ISS-052）。
+1. 先运行 `node tools/gate/gate.ts loop pack --base <rev> --implementer <h> --reviewer <other-h>`。`--base` 是规划起点的 commit 或 tree；同一规划再次 pack 继承上次的 base，否则取上次 passed 的树；都没有就拒绝，范围为空也拒绝（ISS-055）。diff 对整文件删除只列名（正文省略）、上下文 2 行。探针在所有平台经 `sh -c` 执行（ISS-054）。
 2. 调用前重新解析 `keel/review/pack.json`，顶层键必须恰为 `diff`、`plan`、`reqs`、`evidence`、`worklog_summary`，并记录 `pack_hash` 与当前 tree hash。只把这五样复制到一次性输入目录；实现聊天、handoff、完整 worklog 和主仓不得作为额外项目材料交给 reviewer。
 3. 统一 finding 字段为 `title`、`blocking`、`repro`、`impact`、`fingerprint`，可选 `body` 与 `pending_defense`。blocking finding 缺 `repro` 或 `impact` 时不得开 ISS；问题存在时攻击探针退出 0，修复或拒绝后退出非 0。
 4. 调用成功至少同时满足：进程退出 0、出现各 harness 的正常终态、最终输出可解析并通过本地 schema、pack/tree 未漂移、旁车证据含 implementer/reviewer family、CLI 版本、显式 model、脱敏 argv、stdout/stderr、退出码、日期。调用成功不等于评审通过；仍须把 `Finding[]` 交给 `gate loop ingest`。

@@ -149,14 +149,14 @@ test("REQ-011/AC-4 after approval a front-matter edit keeps G-req green; a body 
   // body: a typo fix moves the hash → WARN, escalated until the worklog cites the APR
   writeFileSync(change, readFileSync(change, "utf8").replace("正文。", "正文（错字已改）。"), "utf8");
   const red = runCheck(ctx, ["--quick"]);
-  assert.match(line(red.stdout, "G-req"), /^FAIL.*body changed after approval.*warn not acknowledged/);
+  assert.match(line(red.stdout, "G-req"), /^FAIL.*body changed after its approval.*warn not acknowledged/);
   mkdirSync(join(root, "keel", "features", "f01-x"), { recursive: true });
   writeFileSync(
     join(root, "keel", "features", "f01-x", "worklog.md"),
     "- 2026-08-30 错字修正，语义未变。gate-warn: G-req ref=APR-001\n",
     "utf8",
   );
-  assert.match(line(runCheck(ctx, ["--quick"]).stdout, "G-req"), /^WARN.*body changed after approval/);
+  assert.match(line(runCheck(ctx, ["--quick"]).stdout, "G-req"), /^WARN.*body changed after its approval/);
   rmSync(root, { recursive: true, force: true });
 });
 

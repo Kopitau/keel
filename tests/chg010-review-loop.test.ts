@@ -161,8 +161,12 @@ function ingestFixture(
   git(root, ["config", "user.name", "ingest"]);
   git(root, ["add", "-A"]);
   git(root, ["commit", "--no-verify", "-m", "fixture"]);
+  // ISS-055: a pack reviews a range; give it one change after the commit and the base.
+  writeFileSync(join(root, "reviewed.txt"), "slice under review\n", "utf8");
   const packed = runLoop(makeCtx(root), [
     "pack",
+    "--base",
+    "HEAD",
     "--implementer",
     "codex",
     "--reviewer",
