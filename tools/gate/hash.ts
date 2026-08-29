@@ -12,3 +12,17 @@ export function sha256Normalized(input: string | Uint8Array): string {
   const normalized = normalizeText(input);
   return createHash("sha256").update(normalized, "utf8").digest("hex");
 }
+
+/**
+ * CHG-011 / REQ-018 AC-1: approvals bind the body — the normalized text after a
+ * leading front-matter block. Metadata edits (status, date, ids) never move it.
+ */
+export function bodyText(input: string | Uint8Array): string {
+  const text = normalizeText(input);
+  const fm = text.match(/^---\n[\s\S]*?\n---\n?/);
+  return fm ? text.slice(fm[0].length) : text;
+}
+
+export function sha256Body(input: string | Uint8Array): string {
+  return createHash("sha256").update(bodyText(input), "utf8").digest("hex");
+}

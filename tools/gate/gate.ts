@@ -4,13 +4,13 @@ import process from "node:process";
 import { runApprove } from "./approve.ts";
 import { runCheck } from "./check.ts";
 import { makeCtx } from "./ctx.ts";
-import { sha256Normalized } from "./hash.ts";
+import { sha256Body } from "./hash.ts";
 import { runHook } from "./hook.ts";
 import { runIndex } from "./indexgen.ts";
 import { runNew } from "./new.ts";
 import { isAtLeast, MIN_NODE } from "./node-version.ts";
 import { repoRootFromGateFile } from "./paths.ts";
-import { fail, ok, usage, type CmdResult } from "./result.ts";
+import { compactCheckOutput, fail, ok, usage, type CmdResult } from "./result.ts";
 import { runStatus } from "./status.ts";
 import { runSync } from "./sync.ts";
 import { runTrace } from "./trace.ts";
@@ -51,12 +51,12 @@ function parseRoot(argv: string[]): { root: string; rest: string[] } {
 }
 
 function cmdHash(root: string, args: string[]): CmdResult {
-  if (args.length !== 1) return usage("usage: gate hash <file>\n");
+  if (args.length !== 1) return usage("usage: gate hash <file>  (body hash — what an APR binds, CHG-011)\n");
   const target = args[0] ?? "";
   const abs = /^[A-Za-z]:[\\/]/.test(target) || target.startsWith("/")
     ? target
     : join(root, target);
-  return ok(`${sha256Normalized(readFileSync(abs))}\n`);
+  return ok(`${sha256Body(readFileSync(abs))}\n`);
 }
 
 function help(): CmdResult {
@@ -89,7 +89,11 @@ function dispatch(root: string, args: string[]): CmdResult {
   const rest = args.slice(1);
   if (!cmd || cmd === "-h" || cmd === "--help" || cmd === "help") return help();
   if (cmd === "status") return runStatus(ctx);
-  if (cmd === "check") return runCheck(ctx, rest);
+  if (cmd === "check") {
+    // CHG-011: humans see only what needs them; `--all` prints every row.
+    const r = runCheck(ctx, rest);
+    return rest.includes("--all") ? r : { ...r, stdout: compactCheckOutput(r.stdout) };
+  }
   if (cmd === "new") return runNew(ctx, rest);
   if (cmd === "index") return runIndex(ctx);
   if (cmd === "trace") return runTrace(ctx);

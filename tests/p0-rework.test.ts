@@ -125,55 +125,12 @@ test("REQ-006 ISS-003 claimed REQ with no tests/ hit fails X-trace", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-017 ISS-004 index mode 100644 on a hook fails X-hooks", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-p0-004-"));
-  skeleton(dir);
-  writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
-  mkdirSync(join(dir, ".githooks"), { recursive: true });
-  writeFileSync(join(dir, ".githooks", "pre-commit"), "#!/bin/sh\nexit 0\n", "utf8");
-  git(dir, ["init"]);
-  git(dir, ["config", "user.email", "p0@example.com"]);
-  git(dir, ["config", "user.name", "p0"]);
-  git(dir, ["config", "core.hooksPath", ".githooks"]);
-  git(dir, ["add", "-A"]);
-  git(dir, ["commit", "-m", "hooks"]);
-  const ctx = makeCtx(dir);
-  assert.equal(gitIndexMode(ctx, ".githooks/pre-commit"), "100644");
-  const r = runCheck(ctx, []);
-  assert.equal(r.code, 1, r.stdout);
-  assert.match(r.stdout, /FAIL X-hooks/);
-  assert.match(r.stdout, /100644/);
-  rmSync(dir, { recursive: true, force: true });
-});
-
 test("REQ-017 ISS-004 this repo required scripts are 100755", () => {
   const ctx = makeCtx(repo);
   assert.deepEqual(execModeGaps(ctx), []);
   for (const rel of EXEC_REQUIRED) {
     assert.equal(gitIndexMode(ctx, rel), "100755", rel);
   }
-});
-
-test("REQ-017/AC-5 ISS-005 bare gate-warn password still FAILs", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-p0-005-"));
-  skeleton(dir);
-  writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
-  mkdirSync(join(dir, "keel", "features", "f17-gate"), { recursive: true });
-  writeFileSync(
-    join(dir, "keel", "features", "f17-gate", "worklog.md"),
-    "gate-warn: X-hooks\n",
-    "utf8",
-  );
-  git(dir, ["init"]);
-  git(dir, ["config", "user.email", "p0@example.com"]);
-  git(dir, ["config", "user.name", "p0"]);
-  git(dir, ["config", "core.hooksPath", ""]);
-  git(dir, ["add", "-A"]);
-  git(dir, ["commit", "-m", "w"]);
-  const r = runCheck(makeCtx(dir), []);
-  assert.equal(r.code, 1, r.stdout);
-  assert.match(r.stdout, /FAIL X-hooks/);
-  rmSync(dir, { recursive: true, force: true });
 });
 
 test("REQ-017 ISS-001 CI has independent node --test and verify before check", () => {

@@ -84,14 +84,6 @@ test("ISS-045 the scrubber strips everything git exports to hooks and nothing el
   for (const k of ["GIT_AUTHOR_NAME", "GIT_COMMITTER_EMAIL", "GIT_DIR"]) assert.ok(HOOK_LEAKED_GIT_ENV.test(k), k);
 });
 
-test("ISS-045 pre-commit unsets the author and committer variables before running the full suite", () => {
-  const hook = readFileSync(join(repo, ".githooks", "pre-commit"), "utf8");
-  const unsetLine = hook.split(/\n/).find((l) => /\bunset\b.*GIT_DIR/.test(l)) ?? "";
-  for (const v of ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_AUTHOR_DATE", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL", "GIT_COMMITTER_DATE"]) {
-    assert.ok(unsetLine.includes(v), `${v} missing from: ${unsetLine}`);
-  }
-});
-
 test("ISS-045 every test file that touches git scrubs the hook environment at load", () => {
   // The r6 guards were the victims; the DEC-168 file and this one spawn git too.
   for (const f of ["r6-field-guards.test.ts", "dec168-test-kinds.test.ts", "iss045-hook-git-env.test.ts"]) {

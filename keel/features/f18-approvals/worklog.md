@@ -22,3 +22,8 @@
 - 修复：`approve.ts` 正则允许 `path: "…"`；找不到哈希行时拒绝（fail-closed）。红灯：修复前 quoted 用例 not ok；修复后 2/2；stash 掉修复回红；还原绿。
 - APR-004 以 kopit 身份重新 approve，回填 CHG-011 / DEC-183 两条哈希，委托原话在 `delegated:`。
 - 遗留（记进 CHG-011 影响评估）：X-apr 是否拒绝 `pending` 哈希的 approved APR，在保留的 8 条门禁里一并处理。
+
+## 2026-08-29（CHG-011：审批哈希只算正文）
+
+- 进度：`approve.ts` 写入 `sha256Body`（前言之外的规范化正文）；`changechain.ts` 同时接受正文哈希与旧全文哈希；正文不符降为 G-req WARN（worklog `gate-warn: G-req ref=APR-nnn` 放行），元数据改动不再作废审批。X-apr 拒绝 `pending` 哈希的 approved APR（ISS-053 遗留项闭环）。
+- 证据：`tests/chg011-quick-gate.test.ts` REQ-011/AC-4、REQ-018/AC-1；`tests/r6-field-guards.test.ts` ISS-053 X-apr pending 用例。

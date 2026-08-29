@@ -11,7 +11,6 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { measureAutoload } from "../tools/gate/autoload.ts";
 import {
   ciWorkflowGaps,
   collectBypassFindings,
@@ -20,7 +19,6 @@ import {
 } from "../tools/gate/bypass.ts";
 import { makeCtx } from "../tools/gate/ctx.ts";
 import { runCheck } from "../tools/gate/check.ts";
-import { isReviewDue, inspectOss, packageDirectDeps } from "../tools/gate/osscheck.ts";
 import { CHECK_IDS, formatReview, reviewMentionsAllIds } from "../tools/gate/review.ts";
 import { runHook } from "../tools/gate/hook.ts";
 
@@ -89,28 +87,11 @@ test("REQ-017/AC-3 this repo CI workflow declares check, verify and the OS matri
   assert.deepEqual(ciWorkflowGaps(repo), []);
 });
 
-test("REQ-020 autoload stays under the 10KB initial cap", () => {
-  const auto = measureAutoload(repo);
-  assert.ok(auto.agents > 0);
-  assert.ok(auto.catalog > 0);
-  assert.ok(auto.total <= 10240, `autoload ${auto.total}`);
-});
-
-test("REQ-015 direct npm deps have OSS records", () => {
-  const deps = packageDirectDeps(repo);
-  assert.deepEqual(deps, ["typescript"]);
-  const report = inspectOss(makeCtx(repo));
-  assert.deepEqual(report.missing, []);
-  assert.ok(report.records.some((r) => r.project === "typescript" && r.status !== "retired"));
-  assert.equal(isReviewDue("none"), false);
-  assert.equal(isReviewDue("2099-01-01"), false);
-  assert.equal(isReviewDue("2000-01-01"), true);
-});
-
 test("REQ-017 C-105 review inventory lists every check id", () => {
   const text = formatReview(makeCtx(repo));
   assert.deepEqual(reviewMentionsAllIds(text), []);
-  assert.equal(CHECK_IDS.length, 22);
+  // CHG-011 (DEC-183): eight checks. Adding one needs a DEC.
+  assert.equal(CHECK_IDS.length, 8);
 });
 
 test("REQ-017 W6 annual review and F17 summary exist", () => {

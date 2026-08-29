@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
-import { sha256Normalized } from "./hash.ts";
+import { sha256Body, sha256Normalized } from "./hash.ts";
 import { mdFiles, posixRel } from "./walk.ts";
 
 type ApprovalArtifact = {
@@ -13,6 +13,8 @@ type ApprovalArtifact = {
 export type ChangeChainInspection = {
   checked: string[];
   gaps: string[];
+  /** Body edited after approval: a WARN (typo fix cites the APR in the worklog), not a FAIL. */
+  warnings: string[];
 };
 
 function unquote(value: string): string {
@@ -109,6 +111,7 @@ export function inspectRequirementChangeChain(
 ): ChangeChainInspection {
   const checked = producingChangeIds(currentPath, currentText);
   const gaps: string[] = [];
+  const warnings: string[] = [];
   const approvals = mdFiles(join(ctx.records, "approvals"), "APR-").map((path) => {
     const text = readFileSync(path, "utf8");
     return { path, attrs: parseFrontmatter(text).attrs, artifacts: approvalArtifacts(text) };
@@ -133,7 +136,10 @@ export function inspectRequirementChangeChain(
     }
 
     const relativePath = posixRel(ctx.root, path);
-    const digest = sha256Normalized(raw);
+    // CHG-011 / REQ-018 AC-1: the binding hash is the body hash; the whole-file
+    // hash of older approvals is still accepted while the file is untouched.
+    const bodyDigest = sha256Body(raw);
+    const fullDigest = sha256Normalized(raw);
     let bound = false;
     let approvedArtifactFound = false;
     for (const approval of approvals) {
@@ -141,16 +147,16 @@ export function inspectRequirementChangeChain(
       for (const artifact of approval.artifacts) {
         if (artifact.path.replace(/^\.\//, "") !== relativePath) continue;
         approvedArtifactFound = true;
-        if (artifact.contentSha256 === digest) bound = true;
+        if (artifact.contentSha256 === bodyDigest || artifact.contentSha256 === fullDigest) bound = true;
       }
     }
     if (bound) continue;
-    gaps.push(
-      approvedArtifactFound
-        ? `${id} approved APR artifact hash mismatch`
-        : `${id} has no approved APR artifact`,
-    );
+    if (approvedArtifactFound) {
+      warnings.push(`${id} body changed after approval (APR artifact hash mismatch)`);
+      continue;
+    }
+    gaps.push(`${id} has no approved APR artifact`);
   }
 
-  return { checked, gaps };
+  return { checked, gaps, warnings };
 }

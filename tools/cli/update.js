@@ -12,12 +12,7 @@ import {
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { fail, ok } from "./result.js";
 import { hasFlag, readInstallerVersion } from "./layout.js";
-import {
-  compareSemanticVersions,
-  legacyEntryChanges,
-  makeLegacyManifest,
-  parseSemanticVersion,
-} from "./migration.js";
+import { compareSemanticVersions, parseSemanticVersion } from "./migration.js";
 
 const FULLY_MANAGED_DIRS = ["tools/gate", "keel/templates", ".githooks"];
 const MANAGED_FILES = ["CLAUDE.md", ".gitattributes"];
@@ -273,11 +268,10 @@ function displayOperation(op) {
   return `${label} ${op.path}${op.node === "dir" ? "/" : ""}`;
 }
 
-function formatPreview(sourceVersion, targetVersion, operations, legacyLines) {
+function formatPreview(sourceVersion, targetVersion, operations) {
   const lines = [`keel update preview ${sourceVersion} -> ${targetVersion}`];
   if (operations.length === 0) lines.push("NO FILE CHANGES");
   else lines.push(...operations.map(displayOperation));
-  if (legacyLines.length > 0) lines.push(...legacyLines);
   lines.push("Proceed? [y/N] ");
   return lines.join("\n");
 }
@@ -307,21 +301,10 @@ export function runUpdate(cwd, source, args, io) {
     const nextConfig = { ...cfg, keel_version: targetVersion };
     addDesiredFile(desired, configRel, JSON.stringify(nextConfig, null, 2) + "\n");
 
-    const generatedAt = new Date().toISOString().slice(0, 10);
-    const migration = makeLegacyManifest(cwd, loaded.records, sourceVersion, targetVersion, generatedAt);
-    let manifestRel = null;
-    let legacyLines = [];
-    if (migration) {
-      manifestRel = `${loaded.records}/migrations/res-citation-legacy.json`;
-      const manifestPath = fsPath(cwd, manifestRel);
-      const existingText = existsSync(manifestPath) ? readFileSync(manifestPath, "utf8") : undefined;
-      legacyLines = legacyEntryChanges(existingText, migration.value.entries);
-      addDesiredFile(desired, manifestRel, migration.text);
-    }
-
-    const current = collectTarget(cwd, desired, configRel, manifestRel);
+    // CHG-011: no legacy RES manifest any more (DEC-176/181 superseded).
+    const current = collectTarget(cwd, desired, configRel, null);
     const operations = makeOperations(desired, current);
-    const preview = formatPreview(sourceVersion, targetVersion, operations, legacyLines);
+    const preview = formatPreview(sourceVersion, targetVersion, operations);
     if (typeof io?.emitUpdatePreview === "function") io.emitUpdatePreview(preview);
     let answer = null;
     if (typeof io?.confirmUpdate === "function") {

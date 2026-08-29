@@ -134,3 +134,11 @@
 - 边界：遵照用户要求没有触发 GitHub Actions；无 run URL/ID、SHA 对应六个 job 与工件 hash，REQ-017/AC-4 明确保留 proxy。
 
 - 待办（advisory）：k-grill REQ row schema diverges from the authoritative requirement shape: it mandates 'verification' but omits the mandatory 'feature'/'must' fields, and REQ-001 acceptance C-04 was not updated to include 'verification' repro=Compare .agents/skills/k-grill/SKILL.md field list introduced by the diff ('id, status, source, description, acceptance (…), verification, bounds and counterexamples, non-goals') against the actual requirement rows in the reqs document (REQ-001 lists status/source/feature/must/description/acceptance/verification) and against REQ-001 acceptance C-04, which enumerates required fields as 编号/状态/来源/描述/验收标准/边界与反例/非目标 with no 'verification'. The skill now mandates 'verification' but omits the 'feature' ('每条 REQ 有且只有一个 owner F') and 'must' fields that appear in every requirement row.
+
+## 2026-08-29（CHG-011 Q1 门禁裁剪 + Q2 钩子/输出/审批哈希）
+
+- 进度：`check.ts` 重写为 8 条（quick = G-req / G-plan / X-trace / X-bypass；全量加 G-done / G-merge / X-evidence / X-apr）。删除 15 条门禁（CHG-011 列的 14 条 + CHG-010 加的 G-issues）及其模块 rescheck / gaphunt / candidates / osscheck / knowledge / testbase / decisions / lessons / autoload / issues / gen-test-baseline、`keel/test-baseline.json`、`keel/migrations/`、13 个门禁自测文件；`review.ts` / `skills.ts` / `trace.ts` / `cli/{init,doctor,update,migration}.js` 去掉对已删模块的依赖。
+- 进度：X-apr 拒绝 `content_sha256: pending` 的 approved APR；X-evidence 只在全量判（缺证据但有 summary 仍 FAIL，ISS-002 不变）；`gate check` 默认只打印非 PASS，`--all` 全打；`gate status` 前三行 commit / missing / next；pre-commit 只跑 `check --quick` + 暂存了 approvals 时的身份守卫，不再跑全量测试。
+- 决定（worklog 级，见 v5 未决问题第 1 点）：审批哈希改为正文哈希（`sha256Body`，去掉前言），旧全文哈希在文件未动时仍接受；正文不符 → G-req WARN，`gate-warn: G-req ref=APR-nnn` 放行；`gate approve` / `gate hash` 同步。理由：CHG-011 的状态翻转曾迫使重绑 APR-004（8f77b84），这正是要去掉的摩擦。
+- 缺口猎取（C-06）：新上下文子代理对 v5 报 40 条，处置全部写进 v5「未决问题」；v5 / overview-v4 状态改 proposed，待 APR-005 一次点头（含 8 条超出 CHG-011 字面的解读）。
+- 证据：`npx tsc --noEmit` 0 错；`node --test` 222 passed / 0 failed；`gate check --quick` = PASS_WITH_WARN（仅 REQ-017/AC-4 proxy），`checks=4`；新黑盒 `tests/chg011-quick-gate.test.ts` 6 条（REQ-017/AC-6、REQ-005/AC-6、AC-7、REQ-011/AC-4、REQ-018/AC-1、REQ-006/AC-4）。

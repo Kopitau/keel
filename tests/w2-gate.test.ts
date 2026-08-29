@@ -88,11 +88,15 @@ function fixture(): string {
 }
 
 test("REQ-017 gate check --quick on this repo exits 0", () => {
-  const r = gate(["check", "--quick"]);
+  const r = gate(["check", "--quick", "--all"]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /PASS G-plan/);
   assert.match(r.stdout, /PASS G-req/);
-  assert.match(r.stdout, /PASS X-casefold/);
+  // CHG-011: the CLI hides PASS rows unless --all is given; the result line always stays.
+  const compact = gate(["check", "--quick"]);
+  assert.equal(compact.status, 0, compact.stdout + compact.stderr);
+  assert.doesNotMatch(compact.stdout, /^PASS /m);
+  assert.match(compact.stdout, /^result: /m);
 });
 
 test("REQ-017 G-plan fails when INDEX has two current pointers", () => {

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
-import { sha256Normalized } from "./hash.ts";
+import { sha256Body } from "./hash.ts";
 import { gitIdentity } from "./git.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
@@ -89,7 +89,8 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   for (const rel of paths) {
     const abs = join(ctx.root, rel);
     if (!existsSync(abs)) return fail(`artifact missing: ${rel}\n`);
-    const digest = sha256Normalized(readFileSync(abs));
+    // CHG-011 / REQ-018 AC-1: bind the body; metadata edits never void an approval.
+    const digest = sha256Body(readFileSync(abs));
     const pathEsc = rel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     // ISS-053: the path may be quoted (`path: "keel/x.md"`); a block that cannot be
     // found must refuse, not silently leave content_sha256 at "pending".

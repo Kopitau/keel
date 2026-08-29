@@ -3,8 +3,29 @@ import { join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { readCurrent } from "./indexgen.ts";
 import { fail, ok, type CmdResult } from "./result.ts";
-import { parseTestInventory } from "./testbase.ts";
 import { listFiles, posixRel } from "./walk.ts";
+
+export type TestInventory = { names: string[]; skipped: number };
+
+/** Strip comments then collect test('name') / test.skip('name') in a JS/TS test file. */
+export function parseTestInventory(text: string): TestInventory {
+  const stripped = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
+  const names: string[] = [];
+  let skipped = 0;
+  const re = /^[ \t]*(test|it)\s*(\.skip|\.todo)?\s*\(\s*(['"])((?:\\.|[^\\])*?)\3/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(stripped))) {
+    const name = (m[4] ?? "").replace(/\\(['"])/g, "$1");
+    names.push(name);
+    if (m[2]) {
+      skipped += 1;
+      continue;
+    }
+    const after = stripped.slice(m.index + m[0].length, m.index + m[0].length + 80);
+    if (/^\s*,\s*\{[^}]{0,80}\bskip\s*:/.test(after)) skipped += 1;
+  }
+  return { names, skipped };
+}
 
 const REQ = /REQ-\d{3}/g;
 const AC_MARK = /(REQ-\d{3})(?:\/AC-|\s+AC-)(\d+)\b/g;
@@ -52,12 +73,6 @@ export type RequirementProtocol = {
   verificationFields: number;
 };
 
-export type VerificationInspection = {
-  active: boolean;
-  entries: RequirementProtocol[];
-  gaps: string[];
-};
-
 function acceptanceItems(section: string): string[] {
   const out: string[] = [];
   let inAcceptance = false;
@@ -103,35 +118,6 @@ export function parseRequirementProtocols(body: string): RequirementProtocol[] {
     });
   }
   return out;
-}
-
-export function inspectVerificationProtocol(body: string): VerificationInspection {
-  const entries = parseRequirementProtocols(body);
-  const active = /^##\s+验证方式\b/m.test(body) || entries.some((entry) => entry.verificationPresent);
-  const gaps: string[] = [];
-  if (!active) return { active, entries, gaps };
-
-  const allowed = new Set<string>(VERIFICATION_TYPES);
-  for (const entry of entries) {
-    if (entry.verificationFields > 1) {
-      gaps.push(`${entry.req} has ${entry.verificationFields} verification fields`);
-    }
-    if (entry.verificationMalformed) {
-      gaps.push(`${entry.req} verification must be a bracketed array`);
-    }
-    const invalid = [...new Set(entry.verification.filter((value) => !allowed.has(value)))];
-    if (invalid.length > 0) {
-      gaps.push(
-        `${entry.req} invalid verification type(s): ${invalid.map((value) => value || "<empty>").join(", ")}`,
-      );
-    }
-    if (entry.acceptance.length !== entry.verification.length) {
-      gaps.push(
-        `${entry.req} acceptance ${entry.acceptance.length} != verification ${entry.verification.length}`,
-      );
-    }
-  }
-  return { active, entries, gaps };
 }
 
 /** Does this text carry the `REQ-nnn/AC-i` (or `REQ-nnn AC-i`) marker? */

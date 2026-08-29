@@ -40,7 +40,22 @@ export function formatCheck(items: CheckItem[]): CmdResult {
     if (it.verdict === "warn") warns += 1;
   }
   const overall = fails > 0 ? "FAIL" : warns > 0 ? "PASS_WITH_WARN" : "PASS";
-  lines.push(`result: ${overall}  fail=${fails} warn=${warns}`);
+  lines.push(`result: ${overall}  fail=${fails} warn=${warns} checks=${items.length}`);
   const text = lines.join("\n") + "\n";
   return { code: fails > 0 ? 1 : 0, stdout: text, stderr: "" };
+}
+
+/**
+ * CHG-011: the CLI prints only what needs a human — FAIL/WARN items, their fix
+ * lines, and the one-line result. PASS/SKIP rows stay available via `--all`.
+ */
+export function compactCheckOutput(stdout: string): string {
+  const out: string[] = [];
+  for (const line of stdout.split("\n")) {
+    // SKIP rows stay: on a fresh project they carry the "run k-new" hint.
+    if (/^PASS /.test(line)) continue;
+    if (line.trim() === "") continue;
+    out.push(line);
+  }
+  return out.join("\n") + "\n";
 }

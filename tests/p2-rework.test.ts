@@ -72,23 +72,6 @@ test("REQ-024 P2-6 DEC-148 LF fixture has a golden digest", () => {
   assert.equal(disk, sha256Normalized("keel-dec148-fixture\r\n"));
 });
 
-test("REQ-018 P2-7 local tier skips CODEOWNERS enforcement", () => {
-  // Pin the rule, not this repo's current setting. Asserting against the live
-  // config made the test flip red the day the repo moved local -> github
-  // (b74b4a0, 2026-08-25) and it stayed red unnoticed, because nothing runs the
-  // full suite on a config change. A fixture keeps the rule under test.
-  const dir = mkdtempSync(join(tmpdir(), "keel-p2-owners-"));
-  mkdirSync(join(dir, "keel"), { recursive: true });
-  writeFileSync(
-    join(dir, "keel", "config.json"),
-    JSON.stringify({ records_dir: "keel", enforcement_tier: "local" }),
-    "utf8",
-  );
-  const r = runCheck(makeCtx(dir), ["--quick"]);
-  assert.match(r.stdout, /SKIP X-owners/, r.stdout);
-  rmSync(dir, { recursive: true, force: true });
-});
-
 test("REQ-016 P2-1 skill bodies are executable protocols not DESIGN dumps", () => {
   for (const name of SKILL_CATALOG) {
     const text = readFileSync(join(repo, ".agents", "skills", name, "SKILL.md"), "utf8");

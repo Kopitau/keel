@@ -84,15 +84,6 @@ export function buildCleanConfig(opts) {
   return JSON.stringify(body, null, 2) + "\n";
 }
 
-function writeEmptyBaseline(cwd) {
-  mkdirSync(join(cwd, "keel"), { recursive: true });
-  writeFileSync(
-    join(cwd, "keel", "test-baseline.json"),
-    JSON.stringify({ schema_version: 1, names: [] }, null, 2) + "\n",
-    "utf8",
-  );
-}
-
 function syncSkills(cwd) {
   const src = join(cwd, ".agents", "skills");
   const dest = join(cwd, ".claude", "skills");
@@ -141,7 +132,6 @@ export function runInit(opts) {
     "node_modules/\nkeel/evidence/*.json\nkeel/evidence/*.xml\n",
     "utf8",
   );
-  writeEmptyBaseline(cwd);
   syncSkills(cwd);
   if (!existsSync(join(cwd, ".git"))) {
     git(cwd, ["init"]);

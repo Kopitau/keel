@@ -71,9 +71,6 @@ export function runDoctor(cwd, source, nodeVer) {
       findings.push({ code: "missing-hooks", summary: hooks[h] + " missing" });
     }
   }
-  if (!existsSync(join(cwd, "keel", "test-baseline.json"))) {
-    findings.push({ code: "missing-baseline", summary: "keel/test-baseline.json missing" });
-  }
   if (!existsSync(join(cwd, ".claude", "skills"))) {
     findings.push({ code: "missing-skills", summary: ".claude/skills missing; run gate sync" });
   }

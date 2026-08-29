@@ -36,34 +36,6 @@ test("REQ-001 P1-5 Given-line live marker counts; backtick and 标-docs do not",
   );
 });
 
-test("REQ-002 P1-6 adr research pointer must exist on disk", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-p1-res-"));
-  mkdirSync(join(dir, "keel", "decisions"), { recursive: true });
-  mkdirSync(join(dir, "keel", "research"), { recursive: true });
-  mkdirSync(join(dir, "keel", "requirements"), { recursive: true });
-  mkdirSync(join(dir, "keel", "plan"), { recursive: true });
-  writeFileSync(join(dir, "AGENTS.md"), "# k\n", "utf8");
-  writeFileSync(join(dir, "CLAUDE.md"), "@AGENTS.md\n", "utf8");
-  writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
-  writeFileSync(
-    join(dir, "keel", "decisions", "DEC-001.md"),
-    "---\nid: DEC-001\nadr: true\nresearch: [RES-999]\n---\n# d\n",
-    "utf8",
-  );
-  writeFileSync(join(dir, "keel", "requirements", "v1.md"), "# r\n\n## 未决问题\n", "utf8");
-  writeFileSync(join(dir, "keel", "requirements", "INDEX.md"), "- current: v1.md\n", "utf8");
-  writeFileSync(
-    join(dir, "keel", "plan", "overview-v1.md"),
-    "# p\n\n## 接口与耦合\n\n| ID | 从 → 到 |\n| I-01 | A → B |\n",
-    "utf8",
-  );
-  writeFileSync(join(dir, "keel", "plan", "INDEX.md"), "- current: overview-v1.md\n", "utf8");
-  const r = runCheck(makeCtx(dir), ["--quick"]);
-  assert.equal(r.code, 1, r.stdout);
-  assert.match(r.stdout, /FAIL G-research/);
-  rmSync(dir, { recursive: true, force: true });
-});
-
 test("REQ-006 P1-3 evidenceGaps flags missing junit and dirty", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-p1-ev-"));
   mkdirSync(join(dir, "keel", "evidence"), { recursive: true });

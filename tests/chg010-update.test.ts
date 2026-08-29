@@ -137,7 +137,7 @@ function cleanup(...roots: string[]): void {
   for (const root of roots) rmSync(root, { recursive: true, force: true });
 }
 
-test("REQ-025/AC-7 update previews add overwrite delete and legacy entries before y/N", () => {
+test("REQ-025/AC-7 update previews add overwrite delete before y/N", () => {
   const source = sourceFixture();
   const root = projectFixture();
   const events: string[] = [];
@@ -158,8 +158,8 @@ test("REQ-025/AC-7 update previews add overwrite delete and legacy entries befor
     assert.match(events[0] ?? "", /preview:[\s\S]*ADD tools\/gate\/new\.txt/);
     assert.match(events[0] ?? "", /OVERWRITE tools\/gate\/keep\.txt/);
     assert.match(events[0] ?? "", /DELETE tools\/gate\/stale\.txt/);
-    assert.match(events[0] ?? "", /ADD keel\/migrations\/res-citation-legacy\.json/);
-    assert.match(events[0] ?? "", /LEGACY ADD RES-001 keel\/research\/RES-001-old\.md [a-f0-9]{64}/);
+    // CHG-011: no legacy RES manifest is generated or previewed any more.
+    assert.doesNotMatch(events[0] ?? "", /migrations|LEGACY/);
     assert.match(events[0] ?? "", /Proceed\? \[y\/N\]/);
     assert.equal(events[1], "confirm", "confirmation must happen after the complete preview");
     assert.match(result.stdout, /cancelled; no files changed/);
@@ -190,12 +190,12 @@ test("REQ-025/AC-7 N non-y EOF and absent stdin keep the entire target tree byte
   }
 });
 
-test("REQ-022/AC-6 REQ-025/AC-7 explicit y writes the manifest without changing a legacy RES or unrelated files", () => {
+test("REQ-025/AC-7 explicit y applies only the listed operations and leaves records and unrelated files untouched", () => {
   const source = sourceFixture();
   const root = projectFixture();
   try {
     const beforeUser = statSync(join(root, "user", "data.txt"));
-    const legacyBefore = readFileSync(join(root, "keel", "research", "RES-001-old.md"));
+    const resBefore = readFileSync(join(root, "keel", "research", "RES-001-old.md"));
     const result = runCli(["update"], { cwd: root, source, confirmUpdate: () => "y" });
     assert.equal(result.code, 0, result.stderr);
     assert.match(result.stdout, /keel update preview 0\.7\.0 -> 0\.8\.0/);
@@ -208,23 +208,11 @@ test("REQ-022/AC-6 REQ-025/AC-7 explicit y writes the manifest without changing 
     assert.equal(readFileSync(join(root, ".agents", "skills", "personal", "SKILL.md"), "utf8"), "# preserve personal skill\n");
     assert.equal(readFileSync(join(root, ".claude", "skills", "personal", "SKILL.md"), "utf8"), "# preserve personal mirror\n");
     assert.equal(readFileSync(join(root, "user", "data.txt"), "utf8"), "never touch me\n");
-    assert.deepEqual(readFileSync(join(root, "keel", "research", "RES-001-old.md")), legacyBefore);
+    assert.deepEqual(readFileSync(join(root, "keel", "research", "RES-001-old.md")), resBefore);
     assert.equal(statSync(join(root, "user", "data.txt")).mtimeMs, beforeUser.mtimeMs);
     const cfg = JSON.parse(readFileSync(join(root, "keel", "config.json"), "utf8")) as { keel_version?: string };
     assert.equal(cfg.keel_version, "0.8.0");
-    const manifest = JSON.parse(
-      readFileSync(join(root, "keel", "migrations", "res-citation-legacy.json"), "utf8"),
-    ) as {
-      source_keel_version?: string;
-      target_keel_version?: string;
-      entries?: Array<{ id?: string; path?: string; sha256?: string }>;
-    };
-    assert.equal(manifest.source_keel_version, "0.7.0");
-    assert.equal(manifest.target_keel_version, "0.8.0");
-    assert.deepEqual(manifest.entries?.map(({ id, path }) => ({ id, path })), [
-      { id: "RES-001", path: "keel/research/RES-001-old.md" },
-    ]);
-    assert.match(manifest.entries?.[0]?.sha256 ?? "", /^[a-f0-9]{64}$/);
+    assert.equal(existsSync(join(root, "keel", "migrations")), false, "CHG-011: no legacy manifest");
   } finally {
     cleanup(root, source);
   }
@@ -242,7 +230,7 @@ test("REQ-025/AC-7 only one-letter y is affirmative; uppercase Y is accepted", (
   }
 });
 
-test("DEC-181 missing or invalid source keel_version refuses migration with zero writes", () => {
+test("REQ-025/AC-6 missing or invalid project keel_version refuses update with zero writes", () => {
   for (const version of ["", "banana", "0.7", "v0.7.0"]) {
     const source = sourceFixture();
     const root = projectFixture(version);
@@ -268,22 +256,6 @@ test("DEC-173 incomplete installer source refuses before confirmation instead of
     assert.equal(result.code, 1, result.stdout);
     assert.match(result.stderr, /installer is incomplete.*tools\/gate/);
     assert.deepEqual(snapshot(root), before);
-  } finally {
-    cleanup(root, source);
-  }
-});
-
-test("DEC-181 SemVer prerelease 0.8.0-rc.1 is objectively below the 0.8.0 migration boundary", () => {
-  const source = sourceFixture("0.8.0");
-  const root = projectFixture("0.8.0-rc.1");
-  try {
-    const result = runCli(["update"], { cwd: root, source, confirmUpdate: () => "y" });
-    assert.equal(result.code, 0, result.stderr);
-    const manifest = JSON.parse(
-      readFileSync(join(root, "keel", "migrations", "res-citation-legacy.json"), "utf8"),
-    ) as { source_keel_version?: string; target_keel_version?: string };
-    assert.equal(manifest.source_keel_version, "0.8.0-rc.1");
-    assert.equal(manifest.target_keel_version, "0.8.0");
   } finally {
     cleanup(root, source);
   }

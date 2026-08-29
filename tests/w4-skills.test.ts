@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { makeCtx } from "../tools/gate/ctx.ts";
 import { runSync } from "../tools/gate/sync.ts";
-import { inspectSkills, listSkillDirs, SKILL_CATALOG } from "../tools/gate/skills.ts";
+import { listSkillDirs, SKILL_CATALOG } from "../tools/gate/skills.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -15,13 +15,12 @@ test("REQ-016 catalog matches k-* directories on disk", () => {
   assert.deepEqual([...dirs].sort(), [...SKILL_CATALOG].sort());
 });
 
-test("REQ-016 every skill exists with matching name and Use when description", () => {
-  const issues = inspectSkills(root, 500, 1024, 16);
-  assert.deepEqual(issues, []);
+test("REQ-016 every skill exists with a matching name and a Use-when description", () => {
   for (const name of SKILL_CATALOG) {
     const text = readFileSync(join(root, ".agents", "skills", name, "SKILL.md"), "utf8");
     assert.match(text, /^---\nname: /);
     assert.ok(text.includes(`name: ${name}`));
+    assert.match(text, /^description: Use when\b/m, name);
   }
 });
 

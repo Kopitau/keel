@@ -7,9 +7,29 @@ import { mdFiles } from "./walk.ts";
 import { ok, type CmdResult } from "./result.ts";
 import { liveClarifications } from "./check.ts";
 import { readCurrent } from "./indexgen.ts";
-import { pendingCandidates } from "./candidates.ts";
+import { runCheck } from "./check.ts";
 import { computeFrontier } from "./frontier.ts";
 import { buildTrace } from "./trace.ts";
+
+/** CHG-011: the first three lines answer the only three questions a session has. */
+function humanLines(ctx: Ctx, frontier: string[], handoff: string): string[] {
+  const quick = runCheck(ctx, ["--quick"]);
+  const fails = quick.stdout.split("\n").filter((l) => l.startsWith("FAIL "));
+  const warns = quick.stdout.split("\n").filter((l) => l.startsWith("WARN "));
+  const commit =
+    fails.length === 0
+      ? `yes — quick check green${warns.length > 0 ? ` (${warns.length} warn)` : ""}`
+      : `no — ${fails.map((l) => l.replace(/^FAIL /, "")).join("; ")}`;
+  const missing =
+    fails.length === 0 && warns.length === 0
+      ? "nothing"
+      : [...fails, ...warns].map((l) => l.replace(/^(FAIL|WARN) /, "")).join("; ");
+  const next =
+    frontier.length > 0
+      ? `start ${frontier[0]} (frontier); then read ${handoff}`
+      : `no unblocked feature left — plan-level review (k-review), then acceptance; read ${handoff}`;
+  return [`commit: ${commit}`, `missing: ${missing}`, `next: ${next}`];
+}
 
 export function runStatus(ctx: Ctx): CmdResult {
   const cfg = ctx.config;
@@ -45,6 +65,7 @@ export function runStatus(ctx: Ctx): CmdResult {
   const proxyAcs = buildTrace(ctx).rows.reduce((n, r) => n + r.proxyAc.length, 0);
   const lines = [
     "keel status",
+    ...humanLines(ctx, fr.frontier, handoff),
     `wave: ${typeof cfg.wave === "string" && cfg.wave ? cfg.wave : "unknown"}`,
     `runtime: node+ts ${process.versions.node}`,
     `root: ${ctx.root}`,
@@ -57,7 +78,6 @@ export function runStatus(ctx: Ctx): CmdResult {
     `enforcement_tier: ${tier}`,
     `provisional_decisions: ${provisional}`,
     `open_issues: ${openIssues}`,
-    `lesson_candidates: ${pendingCandidates(ctx).length}`,
     `needs_clarification: ${openQuestions}`,
     // DEC-169: what can start now / what waits on whom. DEC-168 review threshold reader.
     `frontier: ${fr.frontier.join(" ")}`,

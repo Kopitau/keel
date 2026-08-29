@@ -9,13 +9,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { makeCtx } from "../tools/gate/ctx.ts";
-import {
-  MODEL_SKILLS,
-  SKILL_CATALOG,
-  USER_SKILLS,
-  inspectSkills,
-  openaiYamlFor,
-} from "../tools/gate/skills.ts";
+import { MODEL_SKILLS, SKILL_CATALOG, USER_SKILLS, openaiYamlFor } from "../tools/gate/skills.ts";
 import { runSync } from "../tools/gate/sync.ts";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -64,23 +58,26 @@ test("DEC-170 gate sync writes agents/openai.yaml beside every SKILL.md and mirr
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("DEC-170 X-skills flags a missing or stale agents/openai.yaml and points at gate sync", () => {
-  const dir = skillsFixture("inspect");
+test("DEC-170 gate sync regenerates a deleted or hand-edited agents/openai.yaml from SKILL.md", () => {
+  const dir = skillsFixture("regen");
   runSync(makeCtx(dir));
-  assert.deepEqual(inspectSkills(dir, 500, 1024, 16), []);
+  const yaml = join(dir, ".agents", "skills", "k-accept", "agents", "openai.yaml");
   rmSync(join(dir, ".agents", "skills", "k-accept", "agents"), { recursive: true, force: true });
-  let issues = inspectSkills(dir, 500, 1024, 16);
-  assert.ok(issues.some((i) => i.skill === "k-accept" && /openai\.yaml missing/.test(i.message)), JSON.stringify(issues));
   runSync(makeCtx(dir));
-  const stale = join(dir, ".agents", "skills", "k-accept", "agents", "openai.yaml");
-  writeFileSync(stale, readFileSync(stale, "utf8").replace("allow_implicit_invocation: false", "allow_implicit_invocation: true"), "utf8");
-  issues = inspectSkills(dir, 500, 1024, 16);
-  assert.ok(issues.some((i) => i.skill === "k-accept" && /openai\.yaml stale/.test(i.message)), JSON.stringify(issues));
+  assert.ok(existsSync(yaml), "sync must recreate the file");
+  writeFileSync(yaml, readFileSync(yaml, "utf8").replace("allow_implicit_invocation: false", "allow_implicit_invocation: true"), "utf8");
+  runSync(makeCtx(dir));
+  assert.match(readFileSync(yaml, "utf8"), /allow_implicit_invocation: false/, "sync overwrites a hand edit; SKILL.md is the only source");
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("DEC-170 this repo: every k-* carries a current agents/openai.yaml", () => {
-  assert.deepEqual(inspectSkills(repo, 500, 1024, 16), []);
+test("DEC-170 this repo: every k-* carries an agents/openai.yaml equal to what sync derives from its SKILL.md", () => {
+  for (const name of SKILL_CATALOG) {
+    const skill = readFileSync(join(repo, ".agents", "skills", name, "SKILL.md"), "utf8");
+    const desc = /^description:\s*(.*)$/m.exec(skill)?.[1]?.trim() ?? "";
+    const yaml = readFileSync(join(repo, ".agents", "skills", name, "agents", "openai.yaml"), "utf8");
+    assert.equal(yaml, openaiYamlFor(name, desc), name);
+  }
   for (const name of USER_SKILLS) {
     assert.match(readFileSync(join(repo, ".agents", "skills", name, "agents", "openai.yaml"), "utf8"), /allow_implicit_invocation: false/, name);
   }

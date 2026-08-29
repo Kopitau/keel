@@ -19,7 +19,6 @@ import { makeCtx } from "../tools/gate/ctx.ts";
 import { hasImplementationActivity, runCheck } from "../tools/gate/check.ts";
 import { runVerify } from "../tools/gate/verify.ts";
 import { gitIndexMode } from "../tools/gate/execmode.ts";
-import { writeTestBaseline, worktreeBaseline } from "../tools/gate/testbase.ts";
 import { runCli } from "../tools/cli/main.js";
 import { nodeVersionFinding } from "../tools/cli/doctor.js";
 import { EXEC_REQUIRED } from "../tools/gate/execmode.ts";
@@ -105,22 +104,6 @@ test("REQ-025 ISS-022 npm pack then prefix install then keel init", () => {
   rmSync(packDir, { recursive: true, force: true });
   rmSync(prefix, { recursive: true, force: true });
   rmSync(proj, { recursive: true, force: true });
-});
-
-test("REQ-025 init↔testbase writeTestBaseline contract", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-c7-base-"));
-  mkdirSync(join(dir, "keel"), { recursive: true });
-  mkdirSync(join(dir, "tests"), { recursive: true });
-  writeFileSync(
-    join(dir, "tests", "a.test.js"),
-    "const { test } = require('node:test');\ntest('alpha', () => {});\n",
-    "utf8",
-  );
-  const ctx = makeCtx(dir);
-  const dest = writeTestBaseline(ctx);
-  assert.match(dest, /test-baseline\.json$/);
-  assert.deepEqual(worktreeBaseline(ctx), ["alpha"]);
-  rmSync(dir, { recursive: true, force: true });
 });
 
 test("REQ-026/AC-1 vacuum project SKIPs G-req and G-plan", () => {
