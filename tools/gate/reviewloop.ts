@@ -223,7 +223,9 @@ export function validatePack(input: { [k: string]: unknown }): { ok: true } | { 
     if (s.length > max) {
       return { ok: false, error: `pack field '${k}' exceeds ${max} bytes (ISS-028)` };
     }
-    if (looksLikeChat(s)) {
+    // The diff legitimately contains anything — including docs and tests about
+    // this very heuristic — so the transcript check guards the prose fields only.
+    if (k !== "diff" && looksLikeChat(s)) {
       return { ok: false, error: `pack field '${k}' looks like an implementation transcript (C-39/ISS-028)` };
     }
   }
