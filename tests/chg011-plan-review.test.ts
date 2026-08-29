@@ -209,3 +209,25 @@ test("REQ-007/AC-6 k-impl and k-review say a finished feature moves on; the revi
   assert.match(review, /findings\.md/);
   assert.match(review, /finished feature does not trigger a review/);
 });
+
+test("REQ-027/AC-2 a pack taken since a base lists deleted files by name only and keeps the five keys", () => {
+  const root = fixture("basediff");
+  const ctx = makeCtx(root);
+  writeFileSync(join(root, "gone.txt"), "secret body that must not travel\n", "utf8");
+  writeFileSync(join(root, "kept.txt"), "one\n", "utf8");
+  git(root, ["add", "-A"]);
+  git(root, ["commit", "-q", "-m", "base"]);
+  const base = spawnSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).stdout.trim();
+  rmSync(join(root, "gone.txt"));
+  writeFileSync(join(root, "kept.txt"), "one\ntwo\n", "utf8");
+  const packed = runLoop(ctx, ["pack", "--base", base, "--implementer", "codex", "--reviewer", "claude-code"]);
+  assert.equal(packed.code, 0, packed.stdout + packed.stderr);
+  const pack = JSON.parse(readFileSync(join(root, "keel", "review", "pack.json"), "utf8")) as { [k: string]: string };
+  assert.deepEqual(Object.keys(pack).sort(), ["diff", "evidence", "plan", "reqs", "worklog_summary"]);
+  assert.match(pack.diff ?? "", /\+two/);
+  assert.match(pack.diff ?? "", /# deleted files \(bodies omitted\):\n- gone\.txt/);
+  assert.doesNotMatch(pack.diff ?? "", /secret body/);
+  assert.match(pack.plan ?? "", /接口与耦合/);
+  assert.equal(readLoopState(ctx)?.base, base);
+  rmSync(root, { recursive: true, force: true });
+});

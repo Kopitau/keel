@@ -670,10 +670,25 @@ function worklogDigest(ctx: Ctx): string {
   return text.length > 3500 ? text.slice(text.length - 3500) : text;
 }
 
+/**
+ * Diff since `base` for a plan-level pack: files deleted outright are listed by
+ * name only (their bodies say nothing about the new behaviour), context is two
+ * lines. Working-tree packs keep the plain ISS-052 two-command diff.
+ */
+export function baseDiff(ctx: Ctx, base: string): string {
+  const body = git(ctx, ["diff", "--diff-filter=d", "-U2", base]).stdout;
+  const deleted = git(ctx, ["diff", "--diff-filter=D", "--name-only", base]).stdout
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const tail = deleted.length > 0 ? `\n# deleted files (bodies omitted):\n${deleted.map((p) => `- ${p}`).join("\n")}\n` : "";
+  return body + tail;
+}
+
 /** The five C-39 inputs: diff since base (or the working tree), the current overview, requirements, evidence, worklog digest. */
 export function buildPack(ctx: Ctx, base = ""): { [k: string]: string } {
   const diff = base
-    ? git(ctx, ["diff", base]).stdout
+    ? baseDiff(ctx, base)
     : PACK_DIFF_ARGS.map((args) => git(ctx, [...args]).stdout).join("\n");
   let plan = "";
   const cur = currentPlanFile(ctx);
