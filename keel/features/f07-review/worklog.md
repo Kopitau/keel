@@ -63,3 +63,9 @@
 - ISS-057：补 8 条黑盒测试（REQ-018/AC-6、REQ-009/AC-4、REQ-016/AC-3、REQ-016/AC-9、REQ-004/AC-10、REQ-009/AC-1、REQ-002/AC-4、REQ-003/AC-5）。
 - 第 4 条（waiver 范围）探针因自身 `\d` 转义错误首次退出 1 → 按 DEC-182 待核实；自愿修复：G-req 哈希不符 WARN 携带 `waivers`，每个绑定该工件的 APR 各需一行 `gate-warn: G-req ref=APR-nnn`，无关 APR 不放行（`fp:g-req-apr-waiver` 两条回归）。
 - 证据：`npx tsc --noEmit` 0 错；`node --test` 245 passed / 0 failed；`gate loop clear`（reviewer=openai-codex 探针实跑）三条全部退出 1 → passed，见 disposition.md 的 clear / verdict 行。
+
+## 2026-08-29（CHG-013 / DEC-184：去掉攻击面视角，不强制异构）
+
+- 用户原话：「attack review 为什么还是这个？不是主要是功能测试和代码和功能测试审核么？」→「需要 去掉attack面，同时审核不应该强制要求使用不同的cli。只需要运行空白的子代理就可以了」。
+- 进度：`reviewloop.ts` 删除 lens 分类 / 异构判定 / `paths` / `append-attack`；`evidence.review` 去掉 lens 与 heterogeneous 字段；k-review 重写为两轴 + C-31 分级清单；`attack-surface.md` 删除，边界输入并入 `robustness.md`；`headless.md` 改可选；config 去掉 `heterogeneous_review`。DEC-159/160 superseded → DEC-184；DEC-178 复核保留；ISS-024/028/029 备注。需求 v6 改 REQ-007 / 027 / 028；F7 计划 v4；APR-006 同批绑定 CHG-012 + CHG-013 + v6。
+- 证据：`npx tsc --noEmit` 0 错；`node --test` 全绿（见提交）；REQ-027/AC-3 与 REQ-028/AC-1..3 新黑盒在 `tests/chg008-review.test.ts`。

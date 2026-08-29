@@ -1,3 +1,6 @@
+// F7 review loop guards (CHG-008 → CHG-011 plan-level → CHG-013: no attack lens, no
+// heterogeneity rule). What remains: the pack contract, the probe protocol, the fuse,
+// G-done's gap, and the two review axes plus the robustness checklist (REQ-028).
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -8,19 +11,15 @@ import { makeCtx } from "../tools/gate/ctx.ts";
 import { evidenceGaps, readEvidence, writeEvidence, type Evidence } from "../tools/gate/evidence.ts";
 import {
   FUSE_THRESHOLD,
-  appendAttackSurface,
   bumpRounds,
   canClear,
-  checklistExists,
-  classifyLens,
   completionReviewGaps,
   emptyLoop,
   fileFindings,
-  heterogeneousOk,
-  needsHeterogeneous,
   packBodyHash,
   recordClear,
   recordLoopEvent,
+  runLoop,
   validatePack,
   writeLoopState,
 } from "../tools/gate/reviewloop.ts";
@@ -44,43 +43,26 @@ function stubEvidence(): Evidence {
   };
 }
 
-test("REQ-028/AC-1 attack lens for gate and test-mechanism paths", () => {
-  assert.equal(classifyLens(["tools/gate/check.ts"]), "attack");
-  assert.equal(classifyLens(["tests/chg008-review.test.ts"]), "attack");
-  assert.equal(needsHeterogeneous("attack"), true);
+test("REQ-028/AC-1 core code is reviewed with the robustness checklist, which demands running the failure cases", () => {
+  const checklist = readFileSync(join(repo, "keel", "review", "robustness.md"), "utf8");
+  for (const item of ["中途失败", "脏数据", "边界"]) assert.ok(checklist.includes(item), item);
+  const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+  assert.match(skill, /Core code.*robustness\.md/);
+  assert.match(skill, /actually run/i);
 });
 
-test("REQ-028/AC-2 robustness lens for core feature samples", () => {
-  assert.equal(classifyLens(["samples/greet/greet.js"]), "robustness");
-  assert.equal(needsHeterogeneous("robustness"), false);
+test("REQ-028/AC-2 auxiliary code and records get requirements coverage and obvious error paths only", () => {
+  const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+  assert.match(skill, /Auxiliary code and records.*requirements\.md/);
+  assert.ok(readFileSync(join(repo, "keel", "review", "requirements.md"), "utf8").length > 0);
 });
 
-test("REQ-028/AC-3 auxiliary lens for records; skills are attack-lens (ISS-028)", () => {
-  assert.equal(classifyLens([".agents/skills/k-review/SKILL.md"]), "attack");
-  assert.equal(classifyLens(["keel/OVERVIEW.md"]), "requirements");
-});
-
-test("REQ-028 cross-category uses the strictest lens", () => {
-  assert.equal(classifyLens(["samples/greet/greet.js", "tools/gate/verify.ts"]), "attack");
-});
-
-test("REQ-028 checklists exist with section headings", () => {
-  const ctx = makeCtx(repo);
-  const ex = checklistExists(ctx);
-  assert.equal(ex.attack, true);
-  assert.equal(ex.robustness, true);
-  assert.equal(ex.requirements, true);
-  assert.match(readFileSync(join(repo, "keel", "review", "attack-surface.md"), "utf8"), /^# /m);
-  assert.match(readFileSync(join(repo, "keel", "review", "robustness.md"), "utf8"), /中途失败/);
-});
-
-test("REQ-028/AC-5 appending a new attack grows the living list", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-c8-atk-"));
-  mkdirSync(join(dir, "keel", "review"), { recursive: true });
-  writeFileSync(join(dir, "keel", "review", "attack-surface.md"), "# a\n", "utf8");
-  appendAttackSurface(makeCtx(dir), "new bypass: shrink junit");
-  assert.match(readFileSync(join(dir, "keel", "review", "attack-surface.md"), "utf8"), /shrink junit/);
-  rmSync(dir, { recursive: true, force: true });
+test("REQ-028/AC-3 every review keeps to C-41 findings, and there is no attack-surface lens any more", () => {
+  const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+  assert.match(skill, /C-41/);
+  assert.match(skill, /No attack-surface lens/);
+  assert.doesNotMatch(skill, /attack-surface\.md|heterogeneous|provider family/);
+  assert.equal(readdirSync(join(repo, "keel", "review")).includes("attack-surface.md"), false);
 });
 
 test("REQ-027/AC-2 pack with implementation-chat field is refused", () => {
@@ -104,10 +86,23 @@ test("REQ-027/AC-2 pack with implementation-chat field is refused", () => {
   assert.equal(good.ok, true);
 });
 
-test("REQ-027/AC-3 heterogeneous required for attack; same harness is not ok", () => {
-  assert.equal(heterogeneousOk(true, "grok-build", "grok-build"), false);
-  assert.equal(heterogeneousOk(true, "grok-build", "claude-code"), true);
-  assert.equal(heterogeneousOk(false, "grok-build", "grok-build"), true);
+test("REQ-027/AC-3 a fresh-context reviewer on the implementer's own harness is accepted by ingest and recorded", () => {
+  const dir = mkdtempSync(join(tmpdir(), "keel-c8-same-"));
+  mkdirSync(join(dir, "keel", "review"), { recursive: true });
+  mkdirSync(join(dir, "keel", "issues"), { recursive: true });
+  writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
+  const ctx = makeCtx(dir);
+  const pack = { diff: "d", plan: "p", reqs: "r", evidence: "{}", worklog_summary: "slice" };
+  const { body, hash } = packBodyHash(pack);
+  writeFileSync(join(dir, "keel", "review", "pack.json"), body, "utf8");
+  writeLoopState(ctx, { ...emptyLoop("claude-code", ""), status: "packed", pack_hash: hash });
+  const findings = join(dir, "findings.json");
+  writeFileSync(findings, "[]", "utf8");
+  const r = runLoop(ctx, ["ingest", findings, "--reviewer", "claude-code-subagent", "--implementer", "claude-code"]);
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /status=passed/);
+  assert.match(readFileSync(join(dir, "keel", "review", "disposition.md"), "utf8"), /reviewer_harness: claude-code-subagent/);
+  rmSync(dir, { recursive: true, force: true });
 });
 
 test("REQ-027/AC-4 blocking without a repro command does not open an ISS", () => {
@@ -148,7 +143,7 @@ test("REQ-027/AC-5 repro that still succeeds cannot clear", () => {
   mkdirSync(join(dir, "keel", "review"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
   const ctx = makeCtx(dir);
-  const st = emptyLoop("attack", "grok-build", "claude-code");
+  const st = emptyLoop("grok-build", "claude-code");
   st.blocking_iss = ["ISS-001"];
   st.pack_hash = "pack";
   writeLoopState(ctx, st);
@@ -165,7 +160,7 @@ test("REQ-027/AC-5 repro that still succeeds cannot clear", () => {
 });
 
 test("REQ-027/AC-6 three uncleared rounds fuse", () => {
-  let st = emptyLoop("attack", "a", "b");
+  let st = emptyLoop("a", "b");
   st.blocking_iss = ["ISS-009"];
   st = bumpRounds(st, ["ISS-009"]);
   st = bumpRounds(st, ["ISS-009"]);
@@ -185,7 +180,7 @@ test("REQ-027/AC-1 claiming done without a passed loop is a G-done gap", () => {
   const { body, hash } = packBodyHash(pack);
   writeFileSync(join(dir, "keel", "review", "pack.json"), body, "utf8");
   const st = {
-    ...emptyLoop("robustness", "grok-build", "grok-build"),
+    ...emptyLoop("grok-build", "grok-build"),
     status: "passed" as const,
     round: 1,
     pack_hash: hash,
@@ -207,13 +202,11 @@ test("REQ-027 evidenceGaps flags a passed review whose repro still exits 0", () 
     ...stubEvidence(),
     review: {
       status: "passed",
-      heterogeneous_required: true,
-      heterogeneous_ok: false,
       blocking_iss: ["ISS-001"],
       repro_runs: [{ iss: "ISS-001", command: "true", exit_code: 0, refused: false }],
     },
   });
   const gaps = evidenceGaps(ctx, readEvidence(ctx));
-  assert.ok(gaps.some((g) => /heterogeneous|still succeeds|not refused/.test(g)));
+  assert.ok(gaps.some((g) => /still succeeds|not refused/.test(g)));
   rmSync(dir, { recursive: true, force: true });
 });

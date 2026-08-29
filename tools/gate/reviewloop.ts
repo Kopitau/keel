@@ -1,7 +1,9 @@
 // F7 plan-level review loop (REQ-027 / REQ-028, CHG-011).
 //
 // One loop per confirmed plan, run once after the whole plan is implemented; a
-// finished feature does not trigger a review. Products, both append-only:
+// finished feature does not trigger a review. The reviewer is a fresh-context
+// subagent — same harness is fine, there is no lens and no heterogeneity rule
+// (DEC-184 / CHG-013). Products, both append-only:
 //   keel/review/findings.md     what each round's reviewer found and where it went
 //   keel/review/disposition.md  machine state (front matter) + one history row per event
 // keel/review/pack.json is the hashed reviewer input (gitignored). No state.json,
@@ -26,8 +28,6 @@ import { mdFiles } from "./walk.ts";
 
 export const FUSE_THRESHOLD = 3;
 
-export type Lens = "attack" | "robustness" | "requirements";
-
 export type ReproRun = {
   iss: string;
   command: string;
@@ -40,11 +40,8 @@ export type ReproRun = {
 
 export type ReviewClear = {
   status: "pending" | "passed" | "fused";
-  lens: Lens;
   implementer_harness: string;
   reviewer_harness: string;
-  heterogeneous_required: boolean;
-  heterogeneous_ok: boolean;
   blocking_iss: string[];
   repro_runs: ReproRun[];
   round: number;
@@ -69,8 +66,6 @@ export type LoopState = {
   base: string;
   tree_hash: string;
   pack_hash: string;
-  paths: string[];
-  lens: Lens;
   implementer_harness: string;
   reviewer_harness: string;
   blocking_iss: string[];
@@ -104,24 +99,6 @@ const PACK_MAX: { [k: string]: number } = {
   worklog_summary: 4000,
 };
 
-const ATTACK_RE = [
-  /^tools\/gate\//,
-  /^tools\/cli\//,
-  /^\.githooks\//,
-  /^bin\//,
-  /^\.github\/workflows\//,
-  /^keel\/approvals\//,
-  /^keel\/evidence\//,
-  /^keel\/config\.json$/,
-  /^keel\/review\//,
-  /^package\.json$/,
-  /^\.agents\/skills\//,
-  /^\.claude\/skills\//,
-  /^tests\//,
-];
-
-const CORE_RE = [/^tools\//, /^samples\//];
-
 const LOOP_ARTIFACT_RE = /^keel\/review\/(pack\.json|disposition\.md|findings\.md)$|^keel\/evidence\//;
 
 export function reviewDir(ctx: Ctx): string {
@@ -147,25 +124,6 @@ export function currentPlanFile(ctx: Ctx): string {
   return (readFileSync(idx, "utf8").match(/^- current:\s+(\S+)/m) ?? [])[1] ?? "";
 }
 
-export function classifyLens(paths: string[]): Lens {
-  const norm = paths.map((p) => p.replace(/\\/g, "/"));
-  if (norm.some((p) => ATTACK_RE.some((re) => re.test(p)))) return "attack";
-  if (norm.some((p) => CORE_RE.some((re) => re.test(p)))) return "robustness";
-  return "requirements";
-}
-
-export function needsHeterogeneous(lens: Lens): boolean {
-  return lens === "attack";
-}
-
-export function heterogeneousOk(required: boolean, implementer: string, reviewer: string): boolean {
-  if (!required) return true;
-  const a = implementer.trim().toLowerCase();
-  const b = reviewer.trim().toLowerCase();
-  if (!a || !b) return false;
-  return a !== b;
-}
-
 /** Changed paths since `base` (or the working tree against HEAD), loop artifacts excluded. */
 export function collectChangedPaths(ctx: Ctx, base = ""): string[] {
   const names = new Set<string>();
@@ -188,26 +146,9 @@ export function collectChangedPaths(ctx: Ctx, base = ""): string[] {
   return [...names].sort();
 }
 
-/** ISS-024: the lens follows real paths — stored at pack time plus whatever moved since. */
-export function derivedLens(state: LoopState, ctx: Ctx): Lens {
-  const live = collectChangedPaths(ctx, state.base);
-  const stored = state.paths ?? [];
-  if (stored.length === 0) return classifyLens(live);
-  return classifyLens([...new Set([...stored, ...live])]);
-}
-
 export function packBodyHash(pack: { [k: string]: string }): { body: string; hash: string } {
   const body = JSON.stringify(pack, null, 2) + "\n";
   return { body, hash: sha256Normalized(body) };
-}
-
-export function checklistExists(ctx: Ctx): { attack: boolean; robustness: boolean; requirements: boolean } {
-  const d = reviewDir(ctx);
-  return {
-    attack: existsSync(join(d, "attack-surface.md")),
-    robustness: existsSync(join(d, "robustness.md")),
-    requirements: existsSync(join(d, "requirements.md")),
-  };
 }
 
 export function looksLikeChat(text: string): boolean {
@@ -291,7 +232,6 @@ function formatState(state: LoopState): string {
     `base: ${fmValue(state.base)}`,
     `tree_hash: ${fmValue(state.tree_hash)}`,
     `pack_hash: ${fmValue(state.pack_hash)}`,
-    `lens: ${state.lens}`,
     `implementer_harness: ${fmValue(state.implementer_harness)}`,
     `reviewer_harness: ${fmValue(state.reviewer_harness)}`,
     `fuse_threshold: ${state.fuse_threshold || FUSE_THRESHOLD}`,
@@ -301,7 +241,6 @@ function formatState(state: LoopState): string {
     `probe_errors: ${JSON.stringify(state.probe_errors ?? [])}`,
     `iss_fp: ${JSON.stringify(state.iss_fp ?? {})}`,
     `rounds_on: ${JSON.stringify(state.rounds_on ?? {})}`,
-    `paths: ${JSON.stringify(state.paths ?? [])}`,
     "---",
   ].join("\n") + "\n";
 }
@@ -327,7 +266,6 @@ export function readLoopState(ctx: Ctx): LoopState | null {
       base: attrs.base ?? "",
       tree_hash: attrs.tree_hash ?? "",
       pack_hash: attrs.pack_hash ?? "",
-      lens: (attrs.lens as Lens) || "requirements",
       implementer_harness: attrs.implementer_harness ?? "",
       reviewer_harness: attrs.reviewer_harness ?? "",
       fuse_threshold: Number(attrs.fuse_threshold ?? FUSE_THRESHOLD) || FUSE_THRESHOLD,
@@ -337,7 +275,6 @@ export function readLoopState(ctx: Ctx): LoopState | null {
       probe_errors: j<string[]>("probe_errors", []),
       iss_fp: j<{ [iss: string]: string }>("iss_fp", {}),
       rounds_on: j<{ [fp: string]: number }>("rounds_on", {}),
-      paths: j<string[]>("paths", []),
     };
   } catch {
     return null;
@@ -521,16 +458,11 @@ export function fileFindings(
 
 export function reviewClearGaps(rev: {
   status: string;
-  heterogeneous_required?: boolean;
-  heterogeneous_ok?: boolean;
   blocking_iss?: string[];
   repro_runs?: ReproRun[];
 }): string[] {
   const gaps: string[] = [];
   if (rev.status === "passed") {
-    if (rev.heterogeneous_required && !rev.heterogeneous_ok) {
-      gaps.push("heterogeneous review required; same harness is not a silent fallback (DEC-159)");
-    }
     for (const id of rev.blocking_iss ?? []) {
       const run = (rev.repro_runs ?? []).find((r) => r.iss === id);
       if (!run) gaps.push(`no repro run for ${id}`);
@@ -596,10 +528,6 @@ export function completionReviewGaps(ctx: Ctx): string[] {
   }
   const attested = dispositionAttested(ctx, loop);
   if (attested.length > 0) return attested;
-  const lens = derivedLens(loop, ctx);
-  if (needsHeterogeneous(lens) && !heterogeneousOk(true, loop.implementer_harness, loop.reviewer_harness)) {
-    return ["heterogeneous review required; will not silently use the implementer harness (DEC-159)"];
-  }
   // ISS-055: a pass taken while the plan was still in progress must not cover the
   // work that finished it. Once every active feature has its summary, the review
   // has to have seen this tree.
@@ -721,13 +649,6 @@ export function extractRepro(body: string): string {
   return (m?.[1] ?? "").trim();
 }
 
-export function appendAttackSurface(ctx: Ctx, line: string): void {
-  const p = join(reviewDir(ctx), "attack-surface.md");
-  mkdirSync(reviewDir(ctx), { recursive: true });
-  const bullet = line.trim().startsWith("-") ? line.trim() : `- ${line.trim()}`;
-  appendFileSync(p, `\n${bullet}\n`, "utf8");
-}
-
 export function attachReview(ev: Evidence, review: ReviewClear): Evidence {
   const history = ev.review?.repro_runs ?? [];
   return {
@@ -739,7 +660,7 @@ export function attachReview(ev: Evidence, review: ReviewClear): Evidence {
   };
 }
 
-export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState {
+export function emptyLoop(impl: string, reviewer: string): LoopState {
   return {
     status: "in_review",
     plan: "",
@@ -747,8 +668,6 @@ export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState
     base: "",
     tree_hash: "",
     pack_hash: "",
-    paths: [],
-    lens,
     implementer_harness: impl,
     reviewer_harness: reviewer,
     blocking_iss: [],
@@ -884,10 +803,8 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
   if (sub === "status") {
     const st = readLoopState(ctx);
     if (!st) return ok("review loop: none\n");
-    const lens = derivedLens(st, ctx);
-    const het = needsHeterogeneous(lens);
     return ok(
-      `review loop: ${st.status} plan=${st.plan || "-"} round=${st.round} lens=${lens} het_required=${het} blocking=${st.blocking_iss.join(",") || "-"} advisory=${(st.advisory ?? []).length}\n`,
+      `review loop: ${st.status} plan=${st.plan || "-"} round=${st.round} blocking=${st.blocking_iss.join(",") || "-"} advisory=${(st.advisory ?? []).length}\n`,
     );
   }
   if (sub === "pack") {
@@ -906,7 +823,6 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     if (paths.length === 0) {
       return fail(`nothing to review: no path changed since ${base} (ISS-055)\n`);
     }
-    const lens = classifyLens(paths);
     const pack = buildPack(ctx, base);
     const wr = writeGeneratedPack(ctx, pack);
     if (wr.result.code !== 0) return wr.result;
@@ -915,13 +831,11 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     // A new plan starts a fresh loop; the history rows below the front matter stay.
     const prev = loopForCurrentPlan(ctx);
     const st: LoopState = {
-      ...(prev ?? emptyLoop(lens, impl, reviewer)),
+      ...(prev ?? emptyLoop(impl, reviewer)),
       status: "packed",
       plan,
       base,
       tree_hash: gitWriteTree(ctx),
-      paths,
-      lens,
       implementer_harness: impl,
       reviewer_harness: reviewer,
       pack_hash: wr.hash,
@@ -931,10 +845,10 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       ctx,
       st,
       "pack",
-      `plan=${plan || "-"} base=${base} plan_complete=${complete} lens=${lens} files=${paths.length} implementer=${impl} reviewer=${reviewer || "-"} pack=${wr.hash.slice(0, 12)}`,
+      `plan=${plan || "-"} base=${base} plan_complete=${complete} files=${paths.length} implementer=${impl} reviewer=${reviewer || "-"} pack=${wr.hash.slice(0, 12)}`,
     );
     return ok(
-      `${wr.result.stdout}lens=${lens} het_required=${needsHeterogeneous(lens)} files=${paths.length}\n`,
+      `${wr.result.stdout}files=${paths.length}\n`,
     );
   }
   if (sub === "ingest") {
@@ -964,10 +878,6 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       return fail("ingest requires --reviewer <harness>; empty findings are not a review (ISS-023)\n");
     }
     const impl = flag(args, "implementer") || st.implementer_harness || "unknown";
-    const lens = derivedLens(st, ctx);
-    if (needsHeterogeneous(lens) && !heterogeneousOk(true, impl, reviewer)) {
-      return fail("attack-lens changes require a different reviewer harness (DEC-159/ISS-024)\n");
-    }
     const out = fileFindings(ctx, findings, worklogRel);
     // DEC-182: a blocking finding without a probe, or whose probe ran and did not
     // exit 0, is downgraded to 待核实. A probe that could not execute refutes
@@ -983,14 +893,13 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       deferred: out.deferred,
       probe_errors: out.probe_errors,
       iss_fp: { ...st.iss_fp, ...out.fps },
-      lens,
       tree_hash: gitWriteTree(ctx),
       status,
     };
     writeLoopState(ctx, next);
     appendFindings(
       ctx,
-      `第 ${st.round + 1} 轮 · ${new Date().toISOString().slice(0, 10)} · pack=${st.pack_hash.slice(0, 12)} · reviewer=${reviewer} · lens=${lens}`,
+      `第 ${st.round + 1} 轮 · ${new Date().toISOString().slice(0, 10)} · pack=${st.pack_hash.slice(0, 12)} · reviewer=${reviewer}`,
       out.notes,
     );
     appendDisposition(
@@ -1008,14 +917,8 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     const reviewer = flag(args, "reviewer") || process.env.KEEL_REVIEWER || "";
     return recordClear(ctx, impl, reviewer);
   }
-  if (sub === "append-attack") {
-    const line = args.slice(1).join(" ").trim();
-    if (!line) return fail("usage: gate loop append-attack <bullet>\n");
-    appendAttackSurface(ctx, line);
-    return ok("appended attack-surface.md\n");
-  }
   return fail(
-    "usage: gate loop status|pack [--base <rev>]|ingest <findings.json>|clear|append-attack <line>\n",
+    "usage: gate loop status|pack [--base <rev>]|ingest <findings.json>|clear\n",
   );
 }
 
@@ -1076,8 +979,6 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
   // Probes that never executed keep the loop open even when every ISS is refused (ISS-054).
   const next: LoopState =
     bumped.status === "passed" && (st.probe_errors ?? []).length > 0 ? { ...bumped, status: "in_review" } : bumped;
-  const lens = derivedLens(next, ctx);
-  const hetReq = needsHeterogeneous(lens);
   writeLoopState(ctx, next);
   for (const run of runs) {
     appendDisposition(
@@ -1090,11 +991,8 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
   appendDisposition(ctx, next, "verdict", `reviewer=${reviewer || st.reviewer_harness || "-"} still_open=${still.join(",") || "-"} → ${next.status}`);
   const review: ReviewClear = {
     status: next.status === "passed" ? "passed" : next.status === "fused" ? "fused" : "pending",
-    lens,
     implementer_harness: impl,
     reviewer_harness: reviewer || st.reviewer_harness,
-    heterogeneous_required: hetReq,
-    heterogeneous_ok: heterogeneousOk(hetReq, impl, reviewer || st.reviewer_harness),
     blocking_iss: next.blocking_iss,
     repro_runs: runs,
     round: next.round,

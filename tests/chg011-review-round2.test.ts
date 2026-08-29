@@ -95,7 +95,7 @@ function passedLoop(root: string, extra: { [k: string]: unknown } = {}, withRows
   writeFileSync(join(root, "keel", "review", "pack.json"), body, "utf8");
   const ctx = makeCtx(root);
   const st = {
-    ...emptyLoop("requirements", "codex", "claude-code"),
+    ...emptyLoop("codex", "claude-code"),
     plan: "overview-v1.md",
     status: "passed" as const,
     round: 1,

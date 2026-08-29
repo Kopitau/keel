@@ -88,7 +88,6 @@
   },
   "optional": {
     "no_mistakes": false,
-    "heterogeneous_review": false,
     "recorder_medium_for_longform": true
   }
 }

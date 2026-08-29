@@ -43,3 +43,7 @@ CHG-008 的联动更新漏了功能规划文件。C-65 要求变更批准后「�
 **回归测试**：校验被 DEC 引用的功能规划文件中，不存在与该 DEC 相反的表述（至少对「异构」这类关键词做一致性断言）。若做不到语义级校验，退一步：规划文件必须声明它对齐到哪些 DEC 编号，且这些 DEC 均为 confirmed 且未被 superseded。
 
 落地：按 C-24 新增 `keel/features/f07-review/plan/v2.md`（不改 v1）；frontmatter `aligns: [DEC-159, DEC-160]`。Guard：`tests/r4-rework.test.ts` ISS-029。
+
+## 2026-08-29 CHG-013 备注
+
+f07 计划与 DEC-159/160 的对齐守卫随 DEC-184 作废（两条 DEC 已 superseded）；现行计划为 f07-review/plan/v4.md。

@@ -60,5 +60,6 @@ test("REQ-027/AC-2 k-review points to the recipe page and requires the shared fi
   for (const key of ["title", "blocking", "repro", "impact", "fingerprint"]) {
     assert.match(skill, new RegExp(`\\b${key}\\b`), key);
   }
-  assert.match(skill, /same-harness fallback.*forbidden|不得.*同源/i);
+  // DEC-184: cross-harness is optional; what stays forbidden is reporting a review that never happened.
+  assert.match(skill, /if you choose one and it fails, stop|never report a review that did not happen/i);
 });

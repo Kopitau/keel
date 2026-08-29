@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 183
+- count: 184
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -163,8 +163,8 @@
 | DEC-156 | C-139 技能验收 v1 = 协议机检 + 发现层；五家 live 实点另开 | confirmed | `DEC-156-C-139-skill-acceptance-v1.md` |
 | DEC-157 | 全局安装器 + 项目内运行（Trellis 式「在项目文件夹激活」） | confirmed | `DEC-157-C-157-global-installer.md` |
 | DEC-158 | G-req / G-plan 改条件判定：真空项目 SKIP，有实施活动无基线才 FAIL | confirmed | `DEC-158-C-158-empty-project-gates.md` |
-| DEC-159 | F7 自动评审回路：触发、异构策略、落盘门槛、清零判定 | confirmed | `DEC-159-C-159-auto-review-loop.md` |
-| DEC-160 | 评审视角按代码性质分类：攻击面 vs 鲁棒性 vs 需求达成 | confirmed | `DEC-160-C-160-review-lens-by-code-kind.md` |
+| DEC-159 | F7 自动评审回路：触发、异构策略、落盘门槛、清零判定 | superseded | `DEC-159-C-159-auto-review-loop.md` |
+| DEC-160 | 评审视角按代码性质分类：攻击面 vs 鲁棒性 vs 需求达成 | superseded | `DEC-160-C-160-review-lens-by-code-kind.md` |
 | DEC-161 | 首次真实使用后的四条防线 | confirmed | `DEC-161-field-hardening-four-defenses.md` |
 | DEC-162 | 框架敏感路径入库前强制全量测试 | superseded | `DEC-162-precommit-full-suite-on-framework-paths.md` |
 | DEC-163 | G-research 开检 RES 实质 | superseded | `DEC-163-res-substance-floor.md` |
@@ -188,3 +188,4 @@
 | DEC-181 | 旧 RES 身份使用外置迁移清单 | superseded | `DEC-181-legacy-res-external-migration-manifest.md` |
 | DEC-182 | 自动评审复现命令的漏洞态与修复态判定 | confirmed | `DEC-182-review-repro-exit-code-contract.md` |
 | DEC-183 | keel 减重：门禁留 8 条骨架、预提交只跑秒级检查、评审改为方案级一轮、记录三合一 | confirmed | `DEC-183-lighten-keel-keep-8-gates-quick-only-hoo.md` |
+| DEC-184 | 评审不设攻击面视角、不强制异构：未参与实现的空白上下文子代理即可 | confirmed | `DEC-184-review-no-attack-lens-fresh-subagent-same-harness.md` |

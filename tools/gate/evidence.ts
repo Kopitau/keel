@@ -18,11 +18,8 @@ export type EvidenceReviewRun = {
 
 export type EvidenceReview = {
   status: string;
-  lens?: string;
   implementer_harness?: string;
   reviewer_harness?: string;
-  heterogeneous_required?: boolean;
-  heterogeneous_ok?: boolean;
   blocking_iss?: string[];
   repro_runs?: EvidenceReviewRun[];
   round?: number;
@@ -107,9 +104,6 @@ export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
   if (!(actor.model ?? "").trim()) gaps.push("actor.model empty");
   if (!(actor.session ?? "").trim()) gaps.push("actor.session empty");
   if (ev.review && ev.review.status === "passed") {
-    if (ev.review.heterogeneous_required && !ev.review.heterogeneous_ok) {
-      gaps.push("heterogeneous review required; same harness is not a silent fallback (DEC-159)");
-    }
     const latest = new Map<string, EvidenceReviewRun>();
     for (const run of ev.review.repro_runs ?? []) latest.set(run.iss, run);
     for (const id of ev.review.blocking_iss ?? []) {

@@ -111,10 +111,9 @@ function fixture(): string {
   const { body, hash } = packBodyHash(pack);
   writeFileSync(join(root, "keel", "review", "pack.json"), body, "utf8");
   writeLoopState(makeCtx(root), {
-    ...emptyLoop("requirements", "codex", "claude-code"),
+    ...emptyLoop("codex", "claude-code"),
     status: "repairing",
     blocking_iss: ["ISS-001"],
-    paths: ["src.txt"],
     pack_hash: hash,
   });
   return root;

@@ -72,7 +72,7 @@ function loopState(root: string, extra: { [k: string]: unknown }): void {
   writeFileSync(join(root, "keel", "review", "pack.json"), body, "utf8");
   const ctx = makeCtx(root);
   const st = {
-    ...emptyLoop("requirements", "codex", "claude-code"),
+    ...emptyLoop("codex", "claude-code"),
     plan: "overview-v1.md",
     pack_hash: hash,
     tree_hash: gitWriteTree(ctx),

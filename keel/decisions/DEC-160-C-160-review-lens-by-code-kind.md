@@ -1,7 +1,9 @@
 ---
 id: DEC-160
 title: 评审视角按代码性质分类：攻击面 vs 鲁棒性 vs 需求达成
-status: confirmed
+status: superseded
+superseded_by: DEC-184
+superseded_date: 2026-08-29
 date: 2026-08-24
 features: [F7]
 research: []
@@ -45,3 +47,7 @@ requirements: [REQ-028]
 - 分类由**被改动文件的性质**决定，不由实现方自述；跨类别改动按最严的一类处理。
 - 攻击面清单**随每轮新发现追加**，使经验固化——子代理每次都是新的、没有跨轮记忆，清单是唯一的经验载体。
 - 三类一律遵守 C-41：只报影响正确性与需求达成的问题。
+
+## 复核（2026-08-29，CHG-013 / DEC-184）
+
+用户 2026-08-29 决定去掉攻击面视角（「需要 去掉attack面」）：不再按改动路径选视角，评审 = spec 轴 + 工程轴 + 按 C-31 分级的鲁棒性 / 需求清单；`attack-surface.md` 删除，仍有价值的失败模式并入 `robustness.md`。 状态改为 superseded → DEC-184。

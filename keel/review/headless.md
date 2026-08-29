@@ -3,7 +3,7 @@
 - status: 0.8.0 本地配方；命令面已核对，真实模型调用仍须另留人工证据
 - research: RES-905 / RES-906 / RES-907
 - harnesses: Claude Code / Codex / OpenCode / Grok Build / DeepSeek Harness / Pi
-- rule: 调用失败就是“未取得评审”，不得把失败包装成空 findings，也不得静默回退到实现方同源 harness
+- rule: 跨 harness 复审是**可选**的（DEC-184：评审者是未参与实现的空白上下文子代理，同一 harness 即可，不设攻击面视角）。若选择了跨 harness 调用，调用失败就是“未取得评审”，不得把失败包装成空 findings、也不得静默换成同源并声称异构完成——各家 `same_harness_fallback: forbidden` 指的是这一点
 
 ## 共同输入与输出
 

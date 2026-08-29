@@ -29,7 +29,7 @@ test("ISS-054 a blocking finding whose probe cannot execute holds the loop in_re
   const pack = { diff: "d", plan: "p", reqs: "r", evidence: "{}", worklog_summary: "slice" };
   const { body, hash } = packBodyHash(pack);
   writeFileSync(join(root, "keel", "review", "pack.json"), body, "utf8");
-  writeLoopState(ctx, { ...emptyLoop("requirements", "codex", "claude-code"), status: "packed", pack_hash: hash });
+  writeLoopState(ctx, { ...emptyLoop("codex", "claude-code"), status: "packed", pack_hash: hash });
   const findings = join(root, "findings.json");
   writeFileSync(
     findings,

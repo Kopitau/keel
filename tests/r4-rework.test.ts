@@ -21,7 +21,6 @@ import { runVerify } from "../tools/gate/verify.ts";
 import {
   FUSE_THRESHOLD,
   bumpRounds,
-  classifyLens,
   completionReviewGaps,
   completionReviewWarnings,
   emptyLoop,
@@ -70,7 +69,7 @@ function writePackState(
   mkdirSync(join(dir, "keel", "review"), { recursive: true });
   writeFileSync(join(dir, "keel", "review", "pack.json"), body, "utf8");
   const st = {
-    ...emptyLoop("requirements", "grok-build", "claude-code"),
+    ...emptyLoop("grok-build", "claude-code"),
     status: "passed" as const,
     pack_hash: hash,
     ...extra,
@@ -116,7 +115,6 @@ test("ISS-023 passed loop binds tree_hash; later edits stale G-done", () => {
     "grok-build",
   ]);
   assert.equal(packed.code, 0, packed.stdout + packed.stderr);
-  assert.match(packed.stdout, /lens=requirements/);
   const ing = runLoop(ctx, ["ingest", findings, "--reviewer", "grok-build"]);
   assert.equal(ing.code, 0, ing.stdout + ing.stderr);
   assert.match(ing.stdout, /status=passed/);
@@ -126,62 +124,6 @@ test("ISS-023 passed loop binds tree_hash; later edits stale G-done", () => {
   const warnings = completionReviewWarnings(ctx);
   assert.ok(warnings.some((g) => /tree is now/.test(g)), warnings.join("; "));
   rmSync(findings, { force: true });
-  rmSync(dir, { recursive: true, force: true });
-});
-
-test("ISS-024 production pack classifies a gate file as attack, not classifyLens([])", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-r4-024-atk-"));
-  keelCfg(dir);
-  gitReady(dir);
-  writeFileSync(join(dir, "README.md"), "doc\n", "utf8");
-  git(dir, ["add", "-A"]);
-  git(dir, ["commit", "--no-verify", "-m", "docs"]);
-  mkdirSync(join(dir, "tools", "gate"), { recursive: true });
-  writeFileSync(join(dir, "tools", "gate", "check.ts"), "export const x = 1;\n", "utf8");
-  const packed = runLoop(makeCtx(dir), [
-    "pack", "--base", "HEAD",
-    "--implementer",
-    "grok-build",
-    "--reviewer",
-    "claude-code",
-  ]);
-  assert.equal(packed.code, 0, packed.stdout + packed.stderr);
-  assert.match(packed.stdout, /lens=attack/);
-  assert.match(packed.stdout, /het_required=true/);
-  const st = runLoop(makeCtx(dir), ["status"]);
-  assert.match(st.stdout, /lens=attack/);
-  assert.match(st.stdout, /het_required=true/);
-  rmSync(dir, { recursive: true, force: true });
-});
-
-test("ISS-024 production pack classifies a docs-only dirty tree as requirements", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-r4-024-doc-"));
-  keelCfg(dir);
-  gitReady(dir);
-  mkdirSync(join(dir, "tools", "gate"), { recursive: true });
-  writeFileSync(join(dir, "tools", "gate", "check.ts"), "export const x = 1;\n", "utf8");
-  git(dir, ["add", "-A"]);
-  git(dir, ["commit", "--no-verify", "-m", "gate"]);
-  writeFileSync(join(dir, "README.md"), "only docs\n", "utf8");
-  const packed = runLoop(makeCtx(dir), ["pack", "--base", "HEAD", "--implementer", "grok-build", "--reviewer", "grok-build"]);
-  assert.equal(packed.code, 0, packed.stdout + packed.stderr);
-  assert.match(packed.stdout, /lens=requirements/);
-  assert.match(packed.stdout, /het_required=false/);
-  rmSync(dir, { recursive: true, force: true });
-});
-
-test("ISS-024 flipping heterogeneous_required in state.json does not drop the het gap", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-r4-024-flag-"));
-  keelCfg(dir);
-  writePackState(dir, {
-    status: "passed",
-    paths: ["tools/gate/check.ts"],
-    implementer_harness: "grok-build",
-    reviewer_harness: "grok-build",
-    heterogeneous_required: false,
-  });
-  const gaps = completionReviewGaps(makeCtx(dir));
-  assert.ok(gaps.some((g) => /heterogeneous/.test(g)), gaps.join("; "));
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -252,11 +194,8 @@ test("ISS-026 verify preserves the evidence review field", () => {
   const ctx = makeCtx(dir);
   const review: EvidenceReview = {
     status: "passed",
-    lens: "requirements",
     implementer_harness: "grok-build",
     reviewer_harness: "claude-code",
-    heterogeneous_required: false,
-    heterogeneous_ok: true,
     blocking_iss: [],
     repro_runs: [],
     round: 1,
@@ -286,7 +225,7 @@ test("ISS-026 verify preserves the evidence review field", () => {
 });
 
 test("ISS-026 fuse counts by fingerprint across new ISS ids", () => {
-  let st = emptyLoop("attack", "a", "b");
+  let st = emptyLoop("a", "b");
   st.iss_fp = { "ISS-010": "stable-fp", "ISS-011": "stable-fp", "ISS-012": "stable-fp" };
   st.blocking_iss = ["ISS-010"];
   st = bumpRounds(st, ["ISS-010"]);
@@ -337,41 +276,6 @@ test("ISS-027 execModeGaps reports missing hook files instead of skipping", () =
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("ISS-028 attack lens includes gate-input paths", () => {
-  const attack = [
-    "keel/evidence/verify.json",
-    "keel/config.json",
-    "package.json",
-    ".agents/skills/k-review/SKILL.md",
-    ".claude/skills/k-review/SKILL.md",
-    "keel/review/attack-surface.md",
-    "keel/review/disposition.md",
-  ];
-  for (const p of attack) {
-    assert.equal(classifyLens([p]), "attack", p);
-  }
-});
-
-test("ISS-028 production pack classifies keel/review/ as attack", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-r4-028-rev-"));
-  keelCfg(dir);
-  gitReady(dir);
-  writeFileSync(join(dir, "README.md"), "d\n", "utf8");
-  git(dir, ["add", "-A"]);
-  git(dir, ["commit", "--no-verify", "-m", "base"]);
-  writeFileSync(join(dir, "keel", "review", "attack-surface.md"), "# a\n- new\n", "utf8");
-  const packed = runLoop(makeCtx(dir), [
-    "pack", "--base", "HEAD",
-    "--implementer",
-    "grok-build",
-    "--reviewer",
-    "claude-code",
-  ]);
-  assert.equal(packed.code, 0, packed.stdout + packed.stderr);
-  assert.match(packed.stdout, /lens=attack/);
-  rmSync(dir, { recursive: true, force: true });
-});
-
 test("ISS-028 pack refuses chatty worklog_summary and oversized fields", () => {
   const chat = validatePack({
     diff: "x",
@@ -393,24 +297,3 @@ test("ISS-028 pack refuses chatty worklog_summary and oversized fields", () => {
   if (!big.ok) assert.match(big.error, /exceeds/);
 });
 
-test("ISS-029 f07 plan v2 aligns with confirmed DEC-159/160 and does not say het is optional", () => {
-  const planDir = join(repo, "keel", "features", "f07-review", "plan");
-  const v2 = readFileSync(join(planDir, "v2.md"), "utf8");
-  const v1 = readFileSync(join(planDir, "v1.md"), "utf8");
-  assert.match(v1, /异构复审是可选配置，默认关/);
-  assert.doesNotMatch(v2, /异构复审是可选配置，默认关/);
-  const { attrs } = parseFrontmatter(v2);
-  const aligns = readAttrList(attrs.aligns);
-  assert.ok(aligns.includes("DEC-159"), attrs.aligns);
-  assert.ok(aligns.includes("DEC-160"), attrs.aligns);
-  for (const id of aligns) {
-    const names = ["DEC-159-C-159-auto-review-loop.md", "DEC-160-C-160-review-lens-by-code-kind.md"];
-    const hit = names.find((n) => n.startsWith(id));
-    if (!hit) throw new Error(`missing DEC file for ${id}`);
-    const dec = readFileSync(join(repo, "keel", "decisions", hit), "utf8");
-    const st = parseFrontmatter(dec).attrs.status;
-    assert.equal(st, "confirmed", id);
-  }
-  assert.match(v2, /强制异构/);
-  assert.match(v2, /DEC-159/);
-});
