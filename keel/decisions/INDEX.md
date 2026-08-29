@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 182
+- count: 183
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -187,3 +187,4 @@
 | DEC-180 | REQ-025 唯一归属 F23，F16 仅作关联 | confirmed | `DEC-180-req025-owned-by-f23-related-f16.md` |
 | DEC-181 | 旧 RES 身份使用外置迁移清单 | confirmed | `DEC-181-legacy-res-external-migration-manifest.md` |
 | DEC-182 | 自动评审复现命令的漏洞态与修复态判定 | confirmed | `DEC-182-review-repro-exit-code-contract.md` |
+| DEC-183 | keel 减重：门禁留 8 条骨架、预提交只跑秒级检查、评审改为方案级一轮、记录三合一 | confirmed | `DEC-183-lighten-keel-keep-8-gates-quick-only-hoo.md` |
