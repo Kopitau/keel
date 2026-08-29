@@ -2,7 +2,7 @@
 id: ISS-021
 status: closed
 defense_kind: "回归测试 + 门禁判据"
-defense_pointer: "tests/r3-rework.test.ts; tools/gate/testbase.ts; tools/gate/check.ts xTests; keel/test-baseline.json"
+defense_pointer: "tools/gate/trace.ts（X-trace：宣称完成时每条 AC 须有黑盒或 proxy 测试）; keel/review/disposition.md（方案级评审 spec 轴）"
 feature: f17-gate
 fingerprint: "tests-can-vanish-unnoticed"
 date: 2026-08-24
@@ -74,3 +74,7 @@ grep -c replace tools/gate/hash.ts                 # 0  ← 规范化确实已�
 落地：`X-tests` 进 `--quick`；锁文件 `keel/test-baseline.json`；相对 HEAD 名称消失或 skip 须 **本轮新增** worklog 行 `C-34: ref=ISS-nnn|DEC-nnn`（记录须在盘）。重命名视为删除名称，须引用，堵住同计数替换。verify 不改锁文件。CHG-006 approved（2026-08-24，kopit）。
 
 可能复发，不许只留档。
+
+## 2026-08-29 CHG-011 备注
+
+测试名称基线（`keel/test-baseline.json`、`X-tests`、C-34 引用规则、`tests/r3-rework.test.ts`）随 CHG-011 删除。防线改由两处承担：X-trace 在功能宣称完成时要求每条被认领 AC 有黑盒或 proxy 测试（删了测试 → 追溯变红）；方案级评审的 spec 轴核对被删或跳过的测试是否在 worklog 留了理由。三条负面测试里「跳过测试不靠 tsc 偶然拦截」不再机检，属用户接受的减重代价（DEC-183）。

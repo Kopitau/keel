@@ -1,7 +1,9 @@
 ---
 id: DEC-181
 title: 旧 RES 身份使用外置迁移清单
-status: confirmed
+status: superseded
+superseded_by: DEC-183
+superseded_date: 2026-08-29
 date: 2026-08-27
 features: [F2, F17, F22, F23]
 research: []
@@ -47,3 +49,7 @@ DEC-176 要求升级前已有、正文零 URL 的标准/深度 RES 可以先 WAR
 - **无上下文会意外**：清单中的 WARN 不是永久豁免；任何正文实质修改都会因全文哈希变化而自动失效。
 - **真权衡**：保留历史 RES 原貌与集中审计，换来一份必须长期校验和迁移的外置状态文件。
 - **复审触发**：清单规模明显影响 gate 性能、records_dir 协议改变、或需要跨仓搬迁 RES 时，重新评估路径/主键与哈希材料；变更仍须走 CHG 并提供确定性迁移。
+
+## 复核（2026-08-29，CHG-011 / DEC-183）
+
+外置迁移清单 `keel/migrations/res-citation-legacy.json` 及安装器的 legacy 预览 / 写入随 CHG-011 删除；旧 RES 不再需要身份清单。 状态改为 superseded → DEC-183（CHG-011，APR-004）。

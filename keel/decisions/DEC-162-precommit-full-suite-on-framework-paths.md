@@ -1,7 +1,9 @@
 ---
 id: DEC-162
 title: 框架敏感路径入库前强制全量测试
-status: confirmed
+status: superseded
+superseded_by: DEC-183
+superseded_date: 2026-08-29
 date: 2026-08-26
 features: [F17]
 research: [RES-903]
@@ -36,3 +38,7 @@ source_id: ""
 ## 影响
 
 `.githooks/pre-commit`：staged 路径命中清单 → `node --test` 全量，红则拒绝提交。守卫测试断言 hook 文本含触发器（tests/r6-field-guards.test.ts）。C-119 的 quick 权衡对其余路径不变。
+
+## 复核（2026-08-29，CHG-011 / DEC-183）
+
+预提交钩子改为只跑 `check --quick`（四条，秒级）与审批身份守卫；全量测试与类型检查回到 `gate verify` 与 CI（C-100 权威不变）。「框架敏感路径强制全量」与用户 2026-08-29「预提交只跑秒级检查」相抵。 状态改为 superseded → DEC-183（CHG-011，APR-004）。

@@ -37,3 +37,7 @@ source_id: "REQ-006"
 - `auto` 必须由黑盒验收测试证明；`machine-doc` 必须有可运行的协议/记录检查；`manual` 必须给出人工或真实环境证据条件。
 - 功能未声明完成前，`gate trace` 可报告缺口，但不把尚未开工的全仓功能一律判失败。
 - `[proxy:<解除条件>]` 仍是 WARN，不得计作 PASS。
+
+## 复核（2026-08-29，CHG-011 / DEC-183）
+
+保留。`verification` 数组仍与 acceptance 一一对应，但长度不再机检；X-trace 对被认领功能的每条 AC 仍一律要求黑盒或 proxy 测试，`machine-doc` 明确为「可运行的协议/记录一致性检查」而非技能步骤（requirements v5「验证方式」）。三种方式的语义未变。

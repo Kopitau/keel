@@ -35,3 +35,7 @@
 ## 2026-08-21（W5）
 
 - 进度：冒烟先让 greet 断言红灯，开 ISS，再修回绿灯。
+
+## 2026-08-29（CHG-011 Q5）
+
+- 进度：ISS-021 防线由测试名基线改为 X-trace（宣称完成时缺测即红）+ 方案级评审 spec 轴，备注已追加；ISS-036 2026-08-28 已关闭，方案级 findings / disposition 沿用追加语义；ISS-026 备注 rounds.json 作废。G-issues 删除后 ISS 字段由 k-log 技能约束。

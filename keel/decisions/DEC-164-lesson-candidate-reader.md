@@ -1,7 +1,9 @@
 ---
 id: DEC-164
 title: 经验候选标签接上读取端
-status: confirmed
+status: superseded
+superseded_by: DEC-183
+superseded_date: 2026-08-29
 date: 2026-08-26
 features: [F13, F17]
 research: [RES-903]
@@ -36,3 +38,7 @@ C-77 设计是「worklog 一行打标签，**脚本汇集**」——脚本从未
 ## 影响
 
 `tools/gate/candidates.ts` 新模块；`gate status` 增 `lesson_candidates: N` 行（C-27 开场三跳可见）；G-retro 增判据；k-retro / k-log / worklog 模板同步该约定。本仓 2 条存量标签已按各自实情处置（f17 → 弃（已入正式记录），f19 → 弃（已被 DEC-155 吸收））；新增 1 条并当场沉淀为 KLES-001（F13 管道首次端到端跑通）。
+
+## 复核（2026-08-29，CHG-011 / DEC-183）
+
+候选标签的机器读取端（`candidates.ts`、`gate status` 计数、G-retro 判据）删除；处置改为复盘时在标签行追加 `→ 经验：…` / `→ 弃`，由 k-retro 技能规则约束。 状态改为 superseded → DEC-183（CHG-011，APR-004）。

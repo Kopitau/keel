@@ -1,7 +1,9 @@
 ---
 id: DEC-163
 title: G-research 开检 RES 实质
-status: confirmed
+status: superseded
+superseded_by: DEC-183
+superseded_date: 2026-08-29
 date: 2026-08-26
 features: [F2, F17]
 research: [RES-903]
@@ -36,3 +38,7 @@ G-research 此前只判"DEC 指向的 RES 文件存在"，**从不打开文件**
 ## 影响
 
 `tools/gate/rescheck.ts` 新模块，G-research 接线；六条守卫测试含"本仓全部 RES 通过自己施加的底线"。消费项目既有空壳 RES 会变红——这正是目的。
+
+## 复核（2026-08-29，CHG-011 / DEC-183）
+
+G-research 及 `rescheck.ts` 随 CHG-011 删除；RES 实质由 k-research 技能规则承担，不再机检（N5：不为记录的形状设机器判据）。 状态改为 superseded → DEC-183（CHG-011，APR-004）。

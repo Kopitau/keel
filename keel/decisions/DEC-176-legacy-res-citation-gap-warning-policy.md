@@ -1,7 +1,9 @@
 ---
 id: DEC-176
 title: 旧 RES 缺引用只警告新记录严格失败
-status: confirmed
+status: superseded
+superseded_by: DEC-183
+superseded_date: 2026-08-29
 date: 2026-08-27
 features: [F2, F17, F22]
 research: []
@@ -35,3 +37,7 @@ G-research 新增 URL 实质判据后，旧消费项目中已存在但没有 URL
 - G-research 对旧 RES 的零 URL 报 WARN，对新建或实质修改后的标准/深度 RES 报 FAIL。
 - legacy 身份必须持久且可机检，不能只依赖当前工作区 diff；具体记录字段或迁移清单在实施前另行落定。
 - requirements v4 与迁移协议必须写明 WARN 的解除方式。
+
+## 复核（2026-08-29，CHG-011 / DEC-183）
+
+G-research 删除后不再有引用检查，「旧 RES 只警告、新 RES 严格」的分级失去落点；引用要求保留为 k-research 技能规则。 状态改为 superseded → DEC-183（CHG-011，APR-004）。

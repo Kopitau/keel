@@ -166,10 +166,10 @@
 | DEC-159 | F7 自动评审回路：触发、异构策略、落盘门槛、清零判定 | confirmed | `DEC-159-C-159-auto-review-loop.md` |
 | DEC-160 | 评审视角按代码性质分类：攻击面 vs 鲁棒性 vs 需求达成 | confirmed | `DEC-160-C-160-review-lens-by-code-kind.md` |
 | DEC-161 | 首次真实使用后的四条防线 | confirmed | `DEC-161-field-hardening-four-defenses.md` |
-| DEC-162 | 框架敏感路径入库前强制全量测试 | confirmed | `DEC-162-precommit-full-suite-on-framework-paths.md` |
-| DEC-163 | G-research 开检 RES 实质 | confirmed | `DEC-163-res-substance-floor.md` |
-| DEC-164 | 经验候选标签接上读取端 | confirmed | `DEC-164-lesson-candidate-reader.md` |
-| DEC-165 | 其余五项「空即合规」检查暂不审计 | confirmed | `DEC-165-defer-empty-compliant-audit.md` |
+| DEC-162 | 框架敏感路径入库前强制全量测试 | superseded | `DEC-162-precommit-full-suite-on-framework-paths.md` |
+| DEC-163 | G-research 开检 RES 实质 | superseded | `DEC-163-res-substance-floor.md` |
+| DEC-164 | 经验候选标签接上读取端 | superseded | `DEC-164-lesson-candidate-reader.md` |
+| DEC-165 | 其余五项「空即合规」检查暂不审计 | superseded | `DEC-165-defer-empty-compliant-audit.md` |
 | DEC-166 | C-107 修订：审批提交允许记录在案的委托 | confirmed | `DEC-166-apr-recorded-delegation.md` |
 | DEC-167 | 审批路径触发提交时守卫（代替字面上的全量 check） | confirmed | `DEC-167-apr-commit-time-guard.md` |
 | DEC-168 | 测试分黑盒验收与白盒回归：只有黑盒可挂 AC 名，X-trace 只数黑盒 | confirmed | `DEC-168-test-kinds-black-box-acceptance-vs-white.md` |
@@ -180,11 +180,11 @@
 | DEC-173 | keel update 采用交互式 y/N 确认 | confirmed | `DEC-173-update-interactive-y-n-confirmation.md` |
 | DEC-174 | 验收验证按功能完成声明收口并区分三种方式 | confirmed | `DEC-174-feature-scoped-acceptance-verification-m.md` |
 | DEC-175 | CI 验收拆为本地契约测试与真实运行证据 | confirmed | `DEC-175-split-ci-contract-test-from-real-run-evi.md` |
-| DEC-176 | 旧 RES 缺引用只警告新记录严格失败 | confirmed | `DEC-176-legacy-res-citation-gap-warning-policy.md` |
+| DEC-176 | 旧 RES 缺引用只警告新记录严格失败 | superseded | `DEC-176-legacy-res-citation-gap-warning-policy.md` |
 | DEC-177 | gate loop clear 追加复现运行历史 | confirmed | `DEC-177-append-review-clear-repro-history.md` |
 | DEC-178 | 批准 CHG-008 核心方向并在 requirements v4 修正缺口 | confirmed | `DEC-178-approve-chg008-direction-correct-in-v4.md` |
 | DEC-179 | CHG-008、CHG-010 与 requirements v4 合并一次 APR | confirmed | `DEC-179-combined-apr-for-chg008-chg010-v4.md` |
 | DEC-180 | REQ-025 唯一归属 F23，F16 仅作关联 | confirmed | `DEC-180-req025-owned-by-f23-related-f16.md` |
-| DEC-181 | 旧 RES 身份使用外置迁移清单 | confirmed | `DEC-181-legacy-res-external-migration-manifest.md` |
+| DEC-181 | 旧 RES 身份使用外置迁移清单 | superseded | `DEC-181-legacy-res-external-migration-manifest.md` |
 | DEC-182 | 自动评审复现命令的漏洞态与修复态判定 | confirmed | `DEC-182-review-repro-exit-code-contract.md` |
 | DEC-183 | keel 减重：门禁留 8 条骨架、预提交只跑秒级检查、评审改为方案级一轮、记录三合一 | confirmed | `DEC-183-lighten-keel-keep-8-gates-quick-only-hoo.md` |
