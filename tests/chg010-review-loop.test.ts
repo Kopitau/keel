@@ -288,7 +288,7 @@ test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding whose
     assert.equal(result.code, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /filed iss=- deferred=1/);
     assert.deepEqual(issueFiles(root), []);
-    const worklog = readFileSync(join(root, "keel", "features", "f07-review", "worklog.md"), "utf8");
+    const worklog = readFileSync(join(root, "keel", "review", "findings.md"), "utf8");
     assert.match(worklog, /攻击探针首次退出 7/);
     assert.match(worklog, /probe already refused/);
   } finally {
@@ -308,7 +308,7 @@ test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding with 
     assert.equal(result.code, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /filed iss=- deferred=1/);
     assert.deepEqual(issueFiles(root), []);
-    const worklog = readFileSync(join(root, "keel", "features", "f07-review", "worklog.md"), "utf8");
+    const worklog = readFileSync(join(root, "keel", "review", "findings.md"), "utf8");
     assert.match(worklog, /无复现命令/);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -326,7 +326,7 @@ test("REQ-010/AC-2 gate loop ingest defers a blocking finding whose impact is ab
     assert.equal(result.code, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /filed iss=- deferred=1/);
     assert.deepEqual(issueFiles(root), []);
-    const worklog = readFileSync(join(root, "keel", "features", "f07-review", "worklog.md"), "utf8");
+    const worklog = readFileSync(join(root, "keel", "review", "findings.md"), "utf8");
     assert.match(worklog, /无影响说明/);
   } finally {
     rmSync(root, { recursive: true, force: true });

@@ -14,9 +14,6 @@ artifacts/tmp/
 keel/evidence/*.json
 keel/evidence/*.xml
 keel/review/pack.json
-keel/review/state.json
-keel/review/rounds.json
-keel/review/fuse-report.md
 *.orig
 Thumbs.db
 .DS_Store

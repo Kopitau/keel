@@ -1,16 +1,28 @@
+// F7 plan-level review loop (REQ-027 / REQ-028, CHG-011).
+//
+// One loop per confirmed plan, run once after the whole plan is implemented; a
+// finished feature does not trigger a review. Products, both append-only:
+//   keel/review/findings.md     what each round's reviewer found and where it went
+//   keel/review/disposition.md  machine state (front matter) + one history row per event
+// keel/review/pack.json is the hashed reviewer input (gitignored). No state.json,
+// rounds.json or fuse-report.md any more: the fuse counters live in the disposition
+// front matter and a fuse report is appended to its body.
+//
+// ISS ingest / clear keep DEC-182: a blocking finding opens an ISS only when its
+// attack probe exits 0 on the unfixed tree; clear reruns every probe and needs a
+// nonzero exit; every run is appended to the disposition and to evidence.
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 import type { Ctx } from "./ctx.ts";
 import { runNew } from "./new.ts";
 import { fail, ok, type CmdResult } from "./result.ts";
 import { readEvidence, writeEvidence, type Evidence } from "./evidence.ts";
-import { git, gitWriteTree, gitHead } from "./git.ts";
+import { git, gitHead, gitWriteTree } from "./git.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { sha256Normalized } from "./hash.ts";
 import { mdFiles } from "./walk.ts";
-import { basename } from "node:path";
 
 export const FUSE_THRESHOLD = 3;
 
@@ -38,11 +50,17 @@ export type ReviewClear = {
   round: number;
 };
 
+export type LoopStatus = "none" | "packed" | "in_review" | "repairing" | "passed" | "fused";
+
 export type LoopState = {
-  status: "none" | "packed" | "in_review" | "repairing" | "passed" | "fused";
+  status: LoopStatus;
+  /** Overview file (plan/INDEX current) the loop reviews; "" = unknown/any. */
+  plan: string;
   round: number;
-  feature: string;
+  /** Git rev the pack diff starts from; "" = working tree against HEAD. */
+  base: string;
   tree_hash: string;
+  pack_hash: string;
   paths: string[];
   lens: Lens;
   implementer_harness: string;
@@ -52,7 +70,6 @@ export type LoopState = {
   iss_fp: { [iss: string]: string };
   rounds_on: { [fp: string]: number };
   fuse_threshold: number;
-  pack_hash: string;
 };
 
 export type Finding = {
@@ -75,6 +92,7 @@ const PACK_MAX: { [k: string]: number } = {
   worklog_summary: 4000,
 };
 
+/** ISS-052: unstaged and staged diff sources, partitioned without overlap. */
 export const PACK_DIFF_ARGS = [["diff"], ["diff", "--cached"]] as const;
 
 const ATTACK_RE = [
@@ -86,7 +104,6 @@ const ATTACK_RE = [
   /^keel\/approvals\//,
   /^keel\/evidence\//,
   /^keel\/config\.json$/,
-  /^keel\/test-baseline\.json$/,
   /^keel\/review\//,
   /^package\.json$/,
   /^\.agents\/skills\//,
@@ -96,15 +113,29 @@ const ATTACK_RE = [
 
 const CORE_RE = [/^tools\//, /^samples\//];
 
-const LOOP_ARTIFACT_RE =
-  /^keel\/review\/(pack\.json|state\.json|rounds\.json|fuse-report\.md)$|^keel\/evidence\//;
+const LOOP_ARTIFACT_RE = /^keel\/review\/(pack\.json|disposition\.md|findings\.md)$|^keel\/evidence\//;
 
 export function reviewDir(ctx: Ctx): string {
   return join(ctx.records, "review");
 }
 
+export function dispositionPath(ctx: Ctx): string {
+  return join(reviewDir(ctx), "disposition.md");
+}
+
+export function findingsPath(ctx: Ctx): string {
+  return join(reviewDir(ctx), "findings.md");
+}
+
+/** Compatibility alias: the loop state lives in disposition.md (CHG-011). */
 export function loopStatePath(ctx: Ctx): string {
-  return join(reviewDir(ctx), "state.json");
+  return dispositionPath(ctx);
+}
+
+export function currentPlanFile(ctx: Ctx): string {
+  const idx = join(ctx.records, "plan", "INDEX.md");
+  if (!existsSync(idx)) return "";
+  return (readFileSync(idx, "utf8").match(/^- current:\s+(\S+)/m) ?? [])[1] ?? "";
 }
 
 export function classifyLens(paths: string[]): Lens {
@@ -126,7 +157,8 @@ export function heterogeneousOk(required: boolean, implementer: string, reviewer
   return a !== b;
 }
 
-export function collectChangedPaths(ctx: Ctx): string[] {
+/** Changed paths since `base` (or the working tree against HEAD), loop artifacts excluded. */
+export function collectChangedPaths(ctx: Ctx, base = ""): string[] {
   const names = new Set<string>();
   const add = (out: string): void => {
     for (const line of out.split(/\n/)) {
@@ -134,17 +166,22 @@ export function collectChangedPaths(ctx: Ctx): string[] {
       if (s && !LOOP_ARTIFACT_RE.test(s)) names.add(s);
     }
   };
-  add(git(ctx, ["diff", "--name-only", "HEAD"]).stdout);
-  add(git(ctx, ["diff", "--name-only", "--cached"]).stdout);
+  if (base) {
+    add(git(ctx, ["diff", "--name-only", base]).stdout);
+  } else {
+    add(git(ctx, ["diff", "--name-only", "HEAD"]).stdout);
+    add(git(ctx, ["diff", "--name-only", "--cached"]).stdout);
+  }
   add(git(ctx, ["ls-files", "--others", "--exclude-standard"]).stdout);
-  if (names.size === 0 && gitHead(ctx)) {
+  if (names.size === 0 && !base && gitHead(ctx)) {
     add(git(ctx, ["diff-tree", "--no-commit-id", "--name-only", "-r", "--root", "HEAD"]).stdout);
   }
   return [...names].sort();
 }
 
+/** ISS-024: the lens follows real paths — stored at pack time plus whatever moved since. */
 export function derivedLens(state: LoopState, ctx: Ctx): Lens {
-  const live = collectChangedPaths(ctx);
+  const live = collectChangedPaths(ctx, state.base);
   const stored = state.paths ?? [];
   if (stored.length === 0) return classifyLens(live);
   return classifyLens([...new Set([...stored, ...live])]);
@@ -153,35 +190,6 @@ export function derivedLens(state: LoopState, ctx: Ctx): Lens {
 export function packBodyHash(pack: { [k: string]: string }): { body: string; hash: string } {
   const body = JSON.stringify(pack, null, 2) + "\n";
   return { body, hash: sha256Normalized(body) };
-}
-
-export function roundsLedgerPath(ctx: Ctx): string {
-  return join(reviewDir(ctx), "rounds.json");
-}
-
-export function readRoundsLedger(ctx: Ctx): { [fp: string]: number } {
-  const p = roundsLedgerPath(ctx);
-  if (!existsSync(p)) return {};
-  try {
-    const j = JSON.parse(readFileSync(p, "utf8")) as { [fp: string]: number };
-    return j && typeof j === "object" ? j : {};
-  } catch {
-    return {};
-  }
-}
-
-export function writeRoundsLedger(ctx: Ctx, rounds: { [fp: string]: number }): void {
-  mkdirSync(reviewDir(ctx), { recursive: true });
-  writeFileSync(roundsLedgerPath(ctx), JSON.stringify(rounds, null, 2) + "\n", "utf8");
-}
-
-export function mergeRounds(ctx: Ctx, state: LoopState): LoopState {
-  const led = readRoundsLedger(ctx);
-  const rounds_on = { ...state.rounds_on };
-  for (const [fp, n] of Object.entries(led)) {
-    rounds_on[fp] = Math.max(rounds_on[fp] ?? 0, n);
-  }
-  return { ...state, rounds_on };
 }
 
 export function checklistExists(ctx: Ctx): { attack: boolean; robustness: boolean; requirements: boolean } {
@@ -251,22 +259,134 @@ function fillIssueSection(text: string, heading: string, value: string): string 
   return text.replace(re, (_whole, prefix: string) => `${prefix}\n${value.trim()}\n\n`);
 }
 
+// ---------------------------------------------------------------- disposition.md
+
+const DISPOSITION_BODY =
+  "\n# 方案级评审处置表（REQ-027）\n\n" +
+  "机器状态在前言，由 `gate loop` 维护；下表按轮次追加，不覆盖历史（DEC-177 / ISS-036）。发现清单见 `findings.md`。\n\n" +
+  "| 轮 | 时间 | 事件 | 树哈希 | 详情 |\n|---|---|---|---|---|\n";
+
+function fmValue(v: string): string {
+  return v ? v : '""';
+}
+
+function formatState(state: LoopState): string {
+  return [
+    "---",
+    "schema: disposition-v1",
+    `status: ${state.status}`,
+    `plan: ${fmValue(state.plan)}`,
+    `round: ${state.round}`,
+    `base: ${fmValue(state.base)}`,
+    `tree_hash: ${fmValue(state.tree_hash)}`,
+    `pack_hash: ${fmValue(state.pack_hash)}`,
+    `lens: ${state.lens}`,
+    `implementer_harness: ${fmValue(state.implementer_harness)}`,
+    `reviewer_harness: ${fmValue(state.reviewer_harness)}`,
+    `fuse_threshold: ${state.fuse_threshold || FUSE_THRESHOLD}`,
+    `blocking_iss: ${JSON.stringify(state.blocking_iss ?? [])}`,
+    `advisory: ${JSON.stringify(state.advisory ?? [])}`,
+    `iss_fp: ${JSON.stringify(state.iss_fp ?? {})}`,
+    `rounds_on: ${JSON.stringify(state.rounds_on ?? {})}`,
+    `paths: ${JSON.stringify(state.paths ?? [])}`,
+    "---",
+  ].join("\n") + "\n";
+}
+
+export function readLoopState(ctx: Ctx): LoopState | null {
+  const p = dispositionPath(ctx);
+  if (!existsSync(p)) return null;
+  try {
+    const { attrs } = parseFrontmatter(readFileSync(p, "utf8"));
+    if (!attrs.status) return null;
+    const j = <T>(key: string, fallback: T): T => {
+      try {
+        const v = JSON.parse(attrs[key] ?? "") as T;
+        return v && typeof v === "object" ? v : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+    return {
+      status: attrs.status as LoopStatus,
+      plan: attrs.plan ?? "",
+      round: Number(attrs.round ?? 0) || 0,
+      base: attrs.base ?? "",
+      tree_hash: attrs.tree_hash ?? "",
+      pack_hash: attrs.pack_hash ?? "",
+      lens: (attrs.lens as Lens) || "requirements",
+      implementer_harness: attrs.implementer_harness ?? "",
+      reviewer_harness: attrs.reviewer_harness ?? "",
+      fuse_threshold: Number(attrs.fuse_threshold ?? FUSE_THRESHOLD) || FUSE_THRESHOLD,
+      blocking_iss: j<string[]>("blocking_iss", []),
+      advisory: j<string[]>("advisory", []),
+      iss_fp: j<{ [iss: string]: string }>("iss_fp", {}),
+      rounds_on: j<{ [fp: string]: number }>("rounds_on", {}),
+      paths: j<string[]>("paths", []),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Rewrites the front matter; the history body below it is never rewritten. */
+export function writeLoopState(ctx: Ctx, state: LoopState): void {
+  mkdirSync(reviewDir(ctx), { recursive: true });
+  const p = dispositionPath(ctx);
+  let body = DISPOSITION_BODY;
+  if (existsSync(p)) {
+    const raw = readFileSync(p, "utf8");
+    const fm = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    const rest = fm ? raw.slice(fm[0].length) : raw;
+    if (rest.trim()) body = rest;
+  }
+  writeFileSync(p, formatState(state) + body, "utf8");
+}
+
+function appendDisposition(ctx: Ctx, state: LoopState, event: string, detail: string): void {
+  const p = dispositionPath(ctx);
+  if (!existsSync(p)) writeLoopState(ctx, state);
+  const tree = (state.tree_hash ?? "").slice(0, 12) || "-";
+  const cell = detail.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+  appendFileSync(p, `| ${state.round} | ${new Date().toISOString()} | ${event} | ${tree} | ${cell} |\n`, "utf8");
+}
+
+export function appendFindings(ctx: Ctx, heading: string, lines: string[]): void {
+  const p = findingsPath(ctx);
+  mkdirSync(reviewDir(ctx), { recursive: true });
+  if (!existsSync(p)) {
+    writeFileSync(
+      p,
+      "# 方案级评审发现清单（REQ-027）\n\n每轮评审的原始发现与去向（ISS / 待核实 / advisory），按轮追加，不覆盖历史。\n",
+      "utf8",
+    );
+  }
+  appendFileSync(p, `\n## ${heading}\n\n${lines.length > 0 ? lines.join("\n") : "- （无发现）"}\n`, "utf8");
+}
+
+// ---------------------------------------------------------------- findings → ISS
+
 export function fileFindings(
   ctx: Ctx,
   findings: Finding[],
-  worklogRel: string,
-): { iss: string[]; deferred: string[]; advisory: string[]; fps: { [iss: string]: string } } {
+  worklogRel = "",
+): { iss: string[]; deferred: string[]; advisory: string[]; fps: { [iss: string]: string }; notes: string[] } {
   const iss: string[] = [];
   const deferred: string[] = [];
   const advisory: string[] = [];
   const fps: { [iss: string]: string } = {};
+  const notes: string[] = [];
+  const note = (line: string): void => {
+    notes.push(line);
+    if (worklogRel) appendWorklog(ctx, worklogRel, line);
+  };
   for (const f of findings) {
     if (f.blocking && !f.repro.trim()) {
       deferred.push(f.title);
-      appendWorklog(ctx, worklogRel, `- 待核实（无复现命令，未开 ISS）：${f.title}`);
+      note(`- 待核实（无复现命令，未开 ISS）：${f.title}`);
     } else if (f.blocking && !(f.impact ?? "").trim()) {
       deferred.push(f.title);
-      appendWorklog(ctx, worklogRel, `- 待核实（无影响说明，未开 ISS）：${f.title}`);
+      note(`- 待核实（无影响说明，未开 ISS）：${f.title}`);
     } else if (f.blocking) {
       // DEC-182: a blocking repro is an attack probe. It may open an ISS only
       // when it actually demonstrates the problem on the current, unfixed tree.
@@ -277,9 +397,7 @@ export function fileFindings(
       if (probe.exit_code !== 0) {
         deferred.push(f.title);
         const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
-        appendWorklog(
-          ctx,
-          worklogRel,
+        note(
           `- 待核实（攻击探针首次退出 ${probe.exit_code}，未开 ISS）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
         );
         continue;
@@ -289,6 +407,7 @@ export function fileFindings(
       if (existing) {
         iss.push(existing);
         fps[existing] = fp;
+        note(`- blocking → ${existing}（同指纹已开）：${f.title}; command=${command}`);
         continue;
       }
       const created = runNew(ctx, ["iss", f.title]);
@@ -321,14 +440,15 @@ export function fileFindings(
         const id = idMatch?.[1] ?? fname;
         iss.push(id);
         fps[id] = fp;
+        note(`- blocking → ${id}：${f.title}; command=${command}`);
       }
     } else {
       advisory.push(f.title);
       const extra = f.repro.trim() ? ` repro=${f.repro.trim()}` : "";
-      appendWorklog(ctx, worklogRel, `- 待办（advisory）：${f.title}${extra}`);
+      note(`- 待办（advisory）：${f.title}${extra}`);
     }
   }
-  return { iss, deferred, advisory, fps };
+  return { iss, deferred, advisory, fps, notes };
 }
 
 export function reviewClearGaps(rev: {
@@ -362,27 +482,70 @@ export function summaryFeatures(ctx: Ctx): string[] {
   return out.sort();
 }
 
+/** Every active feature (plan/, worklog.md or summary.md) has its summary.md. */
+export function planComplete(ctx: Ctx): boolean {
+  const feats = join(ctx.records, "features");
+  if (!existsSync(feats)) return false;
+  let any = false;
+  for (const name of readdirSync(feats)) {
+    const dir = join(feats, name);
+    const active =
+      existsSync(join(dir, "summary.md")) || existsSync(join(dir, "worklog.md")) || existsSync(join(dir, "plan"));
+    if (!active) continue;
+    any = true;
+    if (!existsSync(join(dir, "summary.md"))) return false;
+  }
+  return any;
+}
+
+/** The disposition counts only for the plan it names (or when either side is unknown). */
+export function loopForCurrentPlan(ctx: Ctx): LoopState | null {
+  const st = readLoopState(ctx);
+  if (!st) return null;
+  const cur = currentPlanFile(ctx);
+  if (st.plan && cur && st.plan !== cur) return null;
+  return st;
+}
+
+/** Hard gaps for G-done (REQ-027/AC-10): fused, plan done but never reviewed, or a passed loop that cannot be trusted. */
 export function completionReviewGaps(ctx: Ctx): string[] {
-  const loop = readLoopState(ctx);
-  if (!loop || loop.status !== "passed") return ["review loop not passed (REQ-027)"];
+  const loop = loopForCurrentPlan(ctx);
+  if (!loop) {
+    return planComplete(ctx)
+      ? ["plan implemented (every active feature has summary.md) but the plan-level review has not run (REQ-027)"]
+      : [];
+  }
+  if (loop.status === "fused") {
+    return [`review fused after ${loop.round} round(s); blocking ${loop.blocking_iss.join(",") || "-"} (REQ-027/AC-6)`];
+  }
+  if (loop.status !== "passed") return [];
   if (!loop.pack_hash) return ["review pack missing; empty ingest is not a review (ISS-023)"];
   const packFile = join(reviewDir(ctx), "pack.json");
   if (!existsSync(packFile)) return ["review pack.json missing (ISS-023)"];
   if (sha256Normalized(readFileSync(packFile, "utf8")) !== loop.pack_hash) {
     return ["review pack_hash mismatch (ISS-023)"];
   }
-  const tree = gitWriteTree(ctx);
-  if (tree && (!loop.tree_hash || loop.tree_hash !== tree)) {
-    return ["review stale tree_hash (ISS-023)"];
-  }
   const lens = derivedLens(loop, ctx);
   if (needsHeterogeneous(lens) && !heterogeneousOk(true, loop.implementer_harness, loop.reviewer_harness)) {
     return ["heterogeneous review required; will not silently use the implementer harness (DEC-159)"];
   }
-  const claimed = summaryFeatures(ctx);
-  if (loop.feature && claimed.length > 0) {
-    const uncovered = claimed.filter((f) => f !== loop.feature);
-    if (uncovered.length) return [`review of ${loop.feature} does not cover ${uncovered.join(",")}`];
+  return [];
+}
+
+/** Soft signals for G-done: a loop still in progress, or a passed loop whose tree moved (ISS-023, WARN not FAIL under CHG-011). */
+export function completionReviewWarnings(ctx: Ctx): string[] {
+  const loop = loopForCurrentPlan(ctx);
+  if (!loop) return [];
+  if (loop.status === "packed" || loop.status === "in_review" || loop.status === "repairing") {
+    return [`plan-level review ${loop.status} (round ${loop.round}; blocking ${loop.blocking_iss.join(",") || "-"})`];
+  }
+  if (loop.status === "passed") {
+    const tree = gitWriteTree(ctx);
+    if (tree && loop.tree_hash && loop.tree_hash !== tree) {
+      return [
+        `review passed at tree ${loop.tree_hash.slice(0, 12)}; tree is now ${tree.slice(0, 12)} — re-pack if code changed (ISS-023)`,
+      ];
+    }
   }
   return [];
 }
@@ -409,13 +572,13 @@ export function bumpRounds(state: LoopState, stillOpen: string[]): LoopState {
 
 export function fuseReport(state: LoopState): string {
   const lines = [
-    "# 评审回路熔断（REQ-027）",
+    "## 熔断（REQ-027/AC-6）",
     "",
     `- round: ${state.round}`,
     `- threshold: ${state.fuse_threshold || FUSE_THRESHOLD}`,
     `- blocking: ${state.blocking_iss.join(", ") || "(none)"}`,
     "",
-    "## rounds_on",
+    "rounds_on:",
     "",
   ];
   for (const [id, n] of Object.entries(state.rounds_on)) {
@@ -444,21 +607,6 @@ export function extractRepro(body: string): string {
   return (m?.[1] ?? "").trim();
 }
 
-export function readLoopState(ctx: Ctx): LoopState | null {
-  const p = loopStatePath(ctx);
-  if (!existsSync(p)) return null;
-  try {
-    return JSON.parse(readFileSync(p, "utf8")) as LoopState;
-  } catch {
-    return null;
-  }
-}
-
-export function writeLoopState(ctx: Ctx, state: LoopState): void {
-  mkdirSync(reviewDir(ctx), { recursive: true });
-  writeFileSync(loopStatePath(ctx), JSON.stringify(state, null, 2) + "\n", "utf8");
-}
-
 export function appendAttackSurface(ctx: Ctx, line: string): void {
   const p = join(reviewDir(ctx), "attack-surface.md");
   mkdirSync(reviewDir(ctx), { recursive: true });
@@ -480,9 +628,11 @@ export function attachReview(ev: Evidence, review: ReviewClear): Evidence {
 export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState {
   return {
     status: "in_review",
+    plan: "",
     round: 0,
-    feature: "",
+    base: "",
     tree_hash: "",
+    pack_hash: "",
     paths: [],
     lens,
     implementer_harness: impl,
@@ -492,7 +642,6 @@ export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState
     iss_fp: {},
     rounds_on: {},
     fuse_threshold: FUSE_THRESHOLD,
-    pack_hash: "",
   };
 }
 
@@ -504,28 +653,39 @@ function flag(args: string[], name: string): string | undefined {
   return next;
 }
 
-export function buildPack(ctx: Ctx, feature: string): { [k: string]: string } {
-  const diff = PACK_DIFF_ARGS.map((args) => git(ctx, [...args]).stdout).join("\n");
+/** The latest worklog section of every feature, newest text last, capped for the pack. */
+function worklogDigest(ctx: Ctx): string {
+  const feats = join(ctx.records, "features");
+  if (!existsSync(feats)) return "";
+  const parts: string[] = [];
+  for (const name of readdirSync(feats).sort()) {
+    const wl = join(feats, name, "worklog.md");
+    if (!existsSync(wl)) continue;
+    const sections = readFileSync(wl, "utf8").split(/^## /m);
+    if (sections.length < 2) continue;
+    const last = (sections[sections.length - 1] ?? "").trim().replace(/\s+/g, " ");
+    if (last) parts.push(`${name}: ${last.slice(0, 400)}`);
+  }
+  const text = parts.join("\n");
+  return text.length > 3500 ? text.slice(text.length - 3500) : text;
+}
+
+/** The five C-39 inputs: diff since base (or the working tree), the current overview, requirements, evidence, worklog digest. */
+export function buildPack(ctx: Ctx, base = ""): { [k: string]: string } {
+  const diff = base
+    ? git(ctx, ["diff", base]).stdout
+    : PACK_DIFF_ARGS.map((args) => git(ctx, [...args]).stdout).join("\n");
   let plan = "";
-  let worklog = "";
-  if (feature) {
-    const pdir = join(ctx.records, "features", feature);
-    const v2 = join(pdir, "plan", "v2.md");
-    const v1 = join(pdir, "plan", "v1.md");
-    if (existsSync(v2)) plan = readFileSync(v2, "utf8");
-    else if (existsSync(v1)) plan = readFileSync(v1, "utf8");
-    const wl = join(pdir, "worklog.md");
-    if (existsSync(wl)) {
-      const raw = readFileSync(wl, "utf8");
-      worklog = raw.length > 3500 ? raw.slice(raw.length - 3500) : raw;
-    }
+  const cur = currentPlanFile(ctx);
+  if (cur && existsSync(join(ctx.records, "plan", cur))) {
+    plan = readFileSync(join(ctx.records, "plan", cur), "utf8").slice(0, 70000);
   }
   let reqs = "";
   const reqIdx = join(ctx.records, "requirements", "INDEX.md");
   if (existsSync(reqIdx)) {
-    const cur = (readFileSync(reqIdx, "utf8").match(/^- current:\s+(\S+)/m) ?? [])[1];
-    if (cur && existsSync(join(ctx.records, "requirements", cur))) {
-      reqs = readFileSync(join(ctx.records, "requirements", cur), "utf8").slice(0, 70000);
+    const current = (readFileSync(reqIdx, "utf8").match(/^- current:\s+(\S+)/m) ?? [])[1];
+    if (current && existsSync(join(ctx.records, "requirements", current))) {
+      reqs = readFileSync(join(ctx.records, "requirements", current), "utf8").slice(0, 70000);
     }
   }
   let evidence = "";
@@ -536,7 +696,7 @@ export function buildPack(ctx: Ctx, feature: string): { [k: string]: string } {
     plan,
     reqs,
     evidence,
-    worklog_summary: worklog,
+    worklog_summary: worklogDigest(ctx),
   };
 }
 
@@ -563,23 +723,26 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     const lens = derivedLens(st, ctx);
     const het = needsHeterogeneous(lens);
     return ok(
-      `review loop: ${st.status} round=${st.round} feature=${st.feature || "-"} lens=${lens} het_required=${het} blocking=${st.blocking_iss.join(",") || "-"} advisory=${(st.advisory ?? []).length}\n`,
+      `review loop: ${st.status} plan=${st.plan || "-"} round=${st.round} lens=${lens} het_required=${het} blocking=${st.blocking_iss.join(",") || "-"} advisory=${(st.advisory ?? []).length}\n`,
     );
   }
   if (sub === "pack") {
-    const feature = flag(args, "feature") || "";
+    const base = flag(args, "base") || "";
     const impl = flag(args, "implementer") || process.env.KEEL_HARNESS || "unknown";
     const reviewer = flag(args, "reviewer") || "";
-    const paths = collectChangedPaths(ctx);
+    const paths = collectChangedPaths(ctx, base);
     const lens = classifyLens(paths);
-    const pack = buildPack(ctx, feature);
+    const pack = buildPack(ctx, base);
     const wr = writeGeneratedPack(ctx, pack);
     if (wr.result.code !== 0) return wr.result;
-    const prev = mergeRounds(ctx, readLoopState(ctx) ?? emptyLoop(lens, impl, reviewer));
+    const plan = currentPlanFile(ctx);
+    // A new plan starts a fresh loop; the history rows below the front matter stay.
+    const prev = loopForCurrentPlan(ctx);
     const st: LoopState = {
-      ...prev,
+      ...(prev ?? emptyLoop(lens, impl, reviewer)),
       status: "packed",
-      feature,
+      plan,
+      base,
       tree_hash: gitWriteTree(ctx),
       paths,
       lens,
@@ -588,13 +751,19 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       pack_hash: wr.hash,
     };
     writeLoopState(ctx, st);
+    appendDisposition(
+      ctx,
+      st,
+      "pack",
+      `plan=${plan || "-"} base=${base || "worktree"} lens=${lens} files=${paths.length} implementer=${impl} reviewer=${reviewer || "-"} pack=${wr.hash.slice(0, 12)}`,
+    );
     return ok(
       `${wr.result.stdout}lens=${lens} het_required=${needsHeterogeneous(lens)} files=${paths.length}\n`,
     );
   }
   if (sub === "ingest") {
     const file = args[1] ?? "";
-    if (!file || !existsSync(file)) return fail("usage: gate loop ingest <findings.json> [--worklog <rel>]\n");
+    if (!file || !existsSync(file)) return fail("usage: gate loop ingest <findings.json> [--reviewer <h>] [--worklog <rel>]\n");
     const st = readLoopState(ctx);
     if (!st || !st.pack_hash) {
       return fail("run gate loop pack before ingest; empty findings are not a review (ISS-023)\n");
@@ -606,11 +775,7 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     if (st.tree_hash && tree && st.tree_hash !== tree) {
       return fail("working tree moved since pack; re-run gate loop pack (ISS-023)\n");
     }
-    const worklogIdx = args.indexOf("--worklog");
-    const worklogRel =
-      worklogIdx >= 0
-        ? (args[worklogIdx + 1] ?? "keel/features/f07-review/worklog.md")
-        : "keel/features/f07-review/worklog.md";
+    const worklogRel = flag(args, "worklog") || "";
     let findings: Finding[] = [];
     try {
       findings = JSON.parse(readFileSync(file, "utf8")) as Finding[];
@@ -640,6 +805,17 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       status: out.iss.length > 0 ? "repairing" : "passed",
     };
     writeLoopState(ctx, next);
+    appendFindings(
+      ctx,
+      `第 ${st.round + 1} 轮 · ${new Date().toISOString().slice(0, 10)} · reviewer=${reviewer} · lens=${lens}`,
+      out.notes,
+    );
+    appendDisposition(
+      ctx,
+      next,
+      "ingest",
+      `reviewer=${reviewer} iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} advisory=${out.advisory.length} → ${next.status}`,
+    );
     return ok(
       `filed iss=${out.iss.join(",") || "-"} deferred=${out.deferred.length} advisory=${out.advisory.length} status=${next.status}\n`,
     );
@@ -656,7 +832,7 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     return ok("appended attack-surface.md\n");
   }
   return fail(
-    "usage: gate loop status|pack|ingest <findings.json>|clear|append-attack <line>\n",
+    "usage: gate loop status|pack [--base <rev>]|ingest <findings.json>|clear|append-attack <line>\n",
   );
 }
 
@@ -668,9 +844,8 @@ function issBody(ctx: Ctx, id: string): string {
 
 /** Execute each blocking ISS repro. Does not trust caller-supplied refused flags (ISS-025). */
 export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult {
-  const raw = readLoopState(ctx);
-  if (!raw || !raw.pack_hash) return fail("no packed review state; gate loop pack then ingest\n");
-  const st = mergeRounds(ctx, raw);
+  const st = readLoopState(ctx);
+  if (!st || !st.pack_hash) return fail("no packed review state; gate loop pack then ingest\n");
   const runRound = st.round + 1;
   const recordedAt = new Date().toISOString();
   const runTree = gitWriteTree(ctx);
@@ -713,7 +888,15 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
   const lens = derivedLens(next, ctx);
   const hetReq = needsHeterogeneous(lens);
   writeLoopState(ctx, next);
-  writeRoundsLedger(ctx, next.rounds_on);
+  for (const run of runs) {
+    appendDisposition(
+      ctx,
+      next,
+      "clear",
+      `${run.iss} \`${run.command || "(no repro command)"}\` exit=${run.exit_code} ${run.refused ? "refused" : "still succeeds"}`,
+    );
+  }
+  appendDisposition(ctx, next, "verdict", `reviewer=${reviewer || st.reviewer_harness || "-"} still_open=${still.join(",") || "-"} → ${next.status}`);
   const review: ReviewClear = {
     status: next.status === "passed" ? "passed" : next.status === "fused" ? "fused" : "pending",
     lens,
@@ -728,7 +911,7 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
   const prev = readEvidence(ctx);
   writeEvidence(ctx, attachReview(prev ?? stubEvidenceBeforeVerify(), review));
   if (next.status === "fused") {
-    writeFileSync(join(reviewDir(ctx), "fuse-report.md"), fuseReport(next), "utf8");
+    appendFileSync(dispositionPath(ctx), `\n${fuseReport(next)}`, "utf8");
     return fail(`fused after ${next.round} rounds\n${fuseReport(next)}`);
   }
   if (next.status === "passed") {

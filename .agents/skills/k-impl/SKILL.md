@@ -43,7 +43,7 @@ Read that feature’s `plan/vN.md` and `worklog.md`. Read the coupling table in 
 
 The plan's 内部步骤 are slices. Every slice: verifiable by one command (`verify:` in the plan), fits one fresh context, cuts through every layer it touches (schema → API → UI → tests) so it can be demonstrated alone.
 
-**One slice per session.** Implement → tests → one worklog line with the evidence → `gate check --quick` → k-handoff → stop. Continue only if the user says so. Long sessions are where "fix A, break B" chains form.
+**Keep going (DEC-183).** Implement → tests → one worklog line with the evidence → `gate check --quick` → next slice. When the feature's last slice passes: `gate verify`, compress the worklog into `summary.md` (four sections), refresh `keel/handoff.md` (≤10 lines), then start the next frontier feature from `gate status`. A new context reads only summary / plan / handoff, never the compressed worklog. Stop only for C-21, a fused review, or final acceptance.
 
 **Seams.** The plan's 测试义务 names the seam each black-box acceptance test attaches to (CLI, HTTP route, command, module API) — the highest one available, as few as possible. Write the black-box test at that seam. If the seam does not exist yet, the plan says so and the test carries `[proxy:<seam> lands in Fnn]` with exactly that release condition (DEC-168).
 
@@ -57,4 +57,4 @@ Internal small adjustments: log an implementation decision in the worklog (C-17/
 
 `gate verify` green on this tree; worklog current; no undocumented interface drift.
 
-**Claiming done starts the review loop (REQ-027).** Do not go to k-accept until `node tools/gate/gate.ts loop status` is `passed`. Pack the five C-39 inputs and run k-review in a **new** context (or spawn a subagent that has not seen this chat). You do not review your own implementation.
+**A finished feature does not trigger a review (CHG-011).** Write `summary.md` and move to the next frontier feature. The plan-level review loop (k-review) runs **once per plan**, after every feature of the plan is implemented; k-accept needs `node tools/gate/gate.ts loop status` = `passed`. You never review your own implementation.

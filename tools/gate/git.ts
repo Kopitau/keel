@@ -99,7 +99,7 @@ export function gitStagedContent(ctx: Ctx, rel: string): string {
   return r.status === 0 ? r.stdout : "";
 }
 
-/** Tree hash of the would-be commit, excluding keel/evidence (C-33). */
+/** Tree hash of the would-be commit, excluding evidence and review-loop products (C-33 / CHG-011). */
 export function gitWriteTree(ctx: Ctx): string {
   const dir = gitDir(ctx);
   if (!dir || !existsSync(dir)) return "";
@@ -109,17 +109,16 @@ export function gitWriteTree(ctx: Ctx): string {
     const headIdx = join(dir, "index");
     if (existsSync(headIdx)) copyFileSync(headIdx, tmp);
     git(ctx, ["add", "-A"], env);
+    // Evidence and the review loop's own products never move the tree they bind
+    // (C-33 / CHG-011): drop them from the temporary index whether tracked or not.
     const exclude = [
-      join("keel", "evidence"),
-      join("keel", "review", "pack.json"),
-      join("keel", "review", "state.json"),
-      join("keel", "review", "rounds.json"),
-      join("keel", "review", "fuse-report.md"),
+      "keel/evidence",
+      "keel/review/pack.json",
+      "keel/review/disposition.md",
+      "keel/review/findings.md",
     ];
     for (const rel of exclude) {
-      if (existsSync(join(ctx.root, rel))) {
-        git(ctx, ["reset", "-q", "--", rel], env);
-      }
+      git(ctx, ["rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", rel], env);
     }
     const r = git(ctx, ["write-tree"], env);
     return r.status === 0 ? r.stdout : "";

@@ -42,3 +42,10 @@
 
 - 进度：规划 v1 已落盘，本功能主波次 W4，W1 未实施切片以外的部分。
 - 内部分解：见 plan/v1.md
+
+## 2026-08-29（CHG-011 Q3 评审改方案级）
+
+- 进度：`reviewloop.ts` 改为一份规划一个回路：`loop pack [--base <rev>]` 打包 diff / 当前总览 / 需求 / 证据 / 各功能 worklog 最新一节；状态存 `keel/review/disposition.md` 前言，历史按轮追加成表；发现与去向写 `keel/review/findings.md`；`state.json` / `rounds.json` / `fuse-report.md` 删除（熔断报告追加进处置表）。ingest / clear 的 DEC-182 探针协议不变。
+- 进度：G-done 读处置表——passed → PASS（树已变 → WARN 不升级）、repairing → WARN、fused → FAIL；处置表缺失时活动功能全有 summary → FAIL「评审未跑」，否则 PASS（施工中）。单功能完成不再触发评审。`gitWriteTree` 把 disposition / findings 从绑定树里剔除，回路写自己的记录不再「移动」树。
+- 记录：ISS-023「回路 passed 后改树」由 FAIL 降为 WARN（证据新鲜度仍由 G-merge / CI 硬判）；ISS-026 的 rounds.json 守卫作废（备注写进 ISS-026）；旧 state.json 的一轮 passed 记录迁入 disposition.md（plan=overview-v3）。k-review 重写（≤ 80 行），k-impl「一切片一会话」改为自主回路。
+- 证据：`npx tsc --noEmit` 0 错；`node --test` 227 passed / 0 failed；`gate check --quick` PASS_WITH_WARN（仅 REQ-017/AC-4 proxy）；新黑盒 `tests/chg011-plan-review.test.ts` 7 条（REQ-027/AC-1、AC-6、AC-10 ×4、REQ-007/AC-6）。

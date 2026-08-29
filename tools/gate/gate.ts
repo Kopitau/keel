@@ -76,7 +76,7 @@ function help(): CmdResult {
       "  verify                  rerun tests, write evidence JSON bound to tree hash (C-33)",
       "  triggers [--write]      probe harness CLIs; skill trigger ledger (W5)",
       "  review [--quick] [--write]  C-105 gate checklist inventory",
-      "  loop status|pack|ingest|clear|append-attack   F7 auto review loop (REQ-027)",
+      "  loop status|pack [--base <rev>]|ingest|clear|append-attack   plan-level review loop (REQ-027, CHG-011)",
       "  hook prepare-commit-msg <file> | hook pre-push [refs-file]",
       "",
     ].join("\n") + "\n",

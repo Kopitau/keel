@@ -53,3 +53,7 @@ grep -rn "bumpRounds" tools/gate/    # 唯一调用方是不可达的 recordClea
 **契约测试**：断言「写入 review 段 → 跑 verify → review 段仍存在且内容一致」；熔断用稳定键的单元测试 + 三轮不清零必然触发的端到端测试。
 
 落地：`verify.ts` 重建 Evidence 时保留 `prev?.review`；`bumpRounds` 以 `iss_fp` 指纹为键；`keel/review/rounds.json` 在删掉 `state.json` 后仍累计。Guard：`tests/r4-rework.test.ts` ISS-026。
+
+## 2026-08-29 CHG-011 备注
+
+熔断计数改存 `keel/review/disposition.md` 前言（`rounds_on`），`rounds.json` 删除；该文件入库，删改可见于 git 历史。原「删 state.json 不清零」守卫随之删除；按指纹计数的守卫（`ISS-026 fuse counts by fingerprint across new ISS ids`）保留。

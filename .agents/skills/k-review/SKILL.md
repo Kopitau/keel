@@ -1,54 +1,40 @@
 ---
 name: k-review
-description: Use when starting k-review, independently reviewing a feature diff, or checking correctness against requirements and the feature plan. Do not use if you wrote the implementation in this context.
+description: Use when starting k-review — the whole confirmed plan is implemented and the plan-level review loop must run — or when re-reviewing after a repair round. Fresh context only. Do not use if you wrote the implementation in this context.
 ---
 
 # k-review
 
-F7 + REQ-027/028. Fresh context only. You report; you do not patch (C-39/C-41). Claiming done must trigger this loop; do not skip to k-accept.
+F7 + REQ-027/028 (CHG-011). One loop per plan, after every feature of the plan is implemented — a finished feature does not trigger a review. You report; you do not patch (C-39/C-41).
 
-## Input (give the reviewer only these)
+## Products (only these two; both append-only)
 
-- Diff
-- Feature `plan/vN.md` and its test obligations
-- REQ entries in scope
-- Evidence JSON from `gate verify`
-- Worklog **summary**, not the implementation chat (C-39)
+- `keel/review/findings.md` — what each round found and where it went (ISS / 待核实 / advisory).
+- `keel/review/disposition.md` — state in the front matter, one history row per event. G-done reads it: passed → PASS, repairing → WARN, fused → FAIL; absent while the plan is still being implemented → PASS.
 
-Pack with `gate loop pack --feature <slug> --implementer <h> --reviewer <h>`. Gate writes the five keys; extra fields, chat-shaped text, or oversized blobs are refused (C-39).
+`keel/review/pack.json` is the hashed reviewer input (gitignored). The checklists (`attack-surface.md`, `robustness.md`, `requirements.md`) and `headless.md` are long-lived knowledge, not review products.
 
-For cross-harness invocation, use the exact repository recipe for that harness in `keel/review/headless.md`. Its command, isolation preflight, output parser, and success predicate are one contract. A missing binary, auth/quota failure, timeout, nonzero exit, error event, empty output, or schema failure means **review not obtained**; same-harness fallback is forbidden.
+## Loop
 
-## Lens (DEC-160) — by changed paths, not by implementer claim
+1. `node tools/gate/gate.ts loop pack [--base <rev>] --implementer <h> --reviewer <other-h>` — five keys only: diff, plan (the current overview; the feature `plan/vN.md` obligations it maps are part of it), reqs (REQ entries in scope), evidence (JSON from `gate verify`), worklog_summary (digest, never the chat). Extra fields, chat-shaped text or oversized blobs are refused (C-39).
+2. Run the reviewer in a **new** context: a subagent that has not seen this chat, or a headless session per `keel/review/headless.md` (no native subagent → a fresh sequential session with only the pack, C-30). Give it the pack and the lens checklist; get back `Finding[]`.
+3. `node tools/gate/gate.ts loop ingest findings.json --reviewer <h>` — blocking **with** a probe command that exits 0 on the unfixed tree → ISS (`gate new iss`); blocking without a command, without impact, or whose probe already exits nonzero → 待核实 in findings.md, no ISS (C-58/DEC-182); advisory → findings.md.
+4. Implementer repairs; then `node tools/gate/gate.ts loop clear --implementer <h> --reviewer <h>` from a **new** reviewer context: every ISS probe is rerun and must now exit nonzero; runs are appended to disposition.md and to evidence (`review.repro_runs`). "Looks fixed" is not clearance (C-42).
+5. Same fingerprint still open after 3 rounds → fused: the loop stops, the report is appended to disposition.md, the user decides (C-60).
+6. `node tools/gate/gate.ts loop status` = passed → k-accept.
+
+## Lens (DEC-160) — by changed paths, never by the implementer's claim
 
 | Paths | Lens | Checklist |
 |---|---|---|
-| `tools/gate`, `tools/cli`, `.githooks`, `bin`, workflows, approvals, `tests/`, `keel/evidence/`, `keel/config.json`, `keel/test-baseline.json`, `keel/review/`, `package.json`, `.agents/skills/`, `.claude/skills/` | **attack** | `keel/review/attack-surface.md` — try bypasses in a temp copy; keep the repro command |
+| `tools/gate`, `tools/cli`, `.githooks`, `bin`, workflows, approvals, `tests/`, `keel/evidence/`, `keel/config.json`, `keel/review/`, `package.json`, `.agents/skills/`, `.claude/skills/` | **attack** | `keel/review/attack-surface.md` — try bypasses in a temp copy; keep the probe command |
 | `tools/` other, `samples/` | **robustness** | `keel/review/robustness.md` — actually run dirty/empty/fail-midway cases |
 | records, docs | **requirements** | `keel/review/requirements.md` — AC coverage + obvious error paths |
 
-Mixed paths → strictest lens. Attack-lens changes **require a different provider family** than the implementer. Renaming the same harness or choosing another model from the same provider is not heterogeneous. If you cannot invoke one, **stop and say so**; same-harness fallback is forbidden (DEC-159). No native subagent (e.g. Pi): start the recipe's independent sequential session with the hashed pack; do not improvise a platform-private API (C-30).
+Mixed paths → strictest lens. Attack lens **requires a different provider family** than the implementer; same-harness fallback is forbidden — if you cannot invoke one, stop and say so (DEC-159).
 
-## Axes (all lenses)
+## Finding
 
-1. **Spec** — every acceptance criterion has a real test (not a tautology). Flag skipped/deleted tests without ISS/DEC (C-34).
-2. **Engineering** — only issues that affect correctness or meeting the requirement. No nitpicking (C-41).
+`title`, `blocking`, `repro` (attack probe: exits 0 while the hole exists), `impact`, `fingerprint`; optional `body`, `pending_defense`. Two axes: spec (every AC has a real black-box test, not a tautology; deleted or skipped tests need an ISS/DEC) and engineering (only what affects correctness or the requirement, C-41). Label blocking vs advisory; never invent a repro or an impact.
 
-Label blocking vs advisory.
-
-Return `Finding[]`. Each finding has `title`, `blocking`, `repro`, `impact`, and `fingerprint`; `body` and `pending_defense` are optional. For blocking findings, `repro` is an attack probe and `impact` is mandatory. Do not invent either one.
-
-## Land findings
-
-`gate loop pack` first. Blocking **with** a repro command → `gate loop ingest findings.json --reviewer <h>` (opens ISS via `gate new iss`). Empty findings without a pack **must not** mark the loop passed (ISS-023).
-Blocking **without** a repro command or impact → deferred to the feature worklog as `待核实`; **must not** open an ISS (C-58).
-
-## Re-review (new clean context, C-42)
-
-After a fix, a **new** reviewer runs each ISS repro command via `gate loop clear`. The attack/failure must now be **refused** (nonzero exit). Record runs in evidence (`review.repro_runs`). "Looks fixed" is not clearance.
-
-Same fingerprint still open after **3** repair rounds → fuse; stop the loop and report (`keel/review/fuse-report.md`).
-
-New attack discovered → `gate loop append-attack <bullet>` so the next reviewer sees it.
-
-`gate loop status` must read `passed` before k-accept.
+New attack discovered → `node tools/gate/gate.ts loop append-attack <bullet>`.

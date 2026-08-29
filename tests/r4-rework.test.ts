@@ -6,7 +6,6 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
-  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -24,13 +23,13 @@ import {
   bumpRounds,
   classifyLens,
   completionReviewGaps,
+  completionReviewWarnings,
   emptyLoop,
   packBodyHash,
   readLoopState,
   runLoop,
   validatePack,
   writeLoopState,
-  writeRoundsLedger,
 } from "../tools/gate/reviewloop.ts";
 import { runCli } from "../tools/cli/main.js";
 import { runDoctor } from "../tools/cli/doctor.js";
@@ -119,22 +118,10 @@ test("ISS-023 passed loop binds tree_hash; later edits stale G-done", () => {
   assert.match(ing.stdout, /status=passed/);
   assert.deepEqual(completionReviewGaps(ctx), []);
   writeFileSync(join(dir, "notes.md"), "n2\n", "utf8");
-  const gaps = completionReviewGaps(ctx);
-  assert.ok(gaps.some((g) => /stale tree_hash/.test(g)), gaps.join("; "));
+  // CHG-011: a tree that moved after a passed review is a WARN, not a FAIL (REQ-027/AC-10).
+  const warnings = completionReviewWarnings(ctx);
+  assert.ok(warnings.some((g) => /tree is now/.test(g)), warnings.join("; "));
   rmSync(findings, { force: true });
-  rmSync(dir, { recursive: true, force: true });
-});
-
-test("ISS-023 one feature passed does not cover another feature's summary", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-r4-023-feat-"));
-  keelCfg(dir);
-  mkdirSync(join(dir, "keel", "features", "f01-x"), { recursive: true });
-  mkdirSync(join(dir, "keel", "features", "f02-y"), { recursive: true });
-  writeFileSync(join(dir, "keel", "features", "f01-x", "summary.md"), "# a\n", "utf8");
-  writeFileSync(join(dir, "keel", "features", "f02-y", "summary.md"), "# b\n", "utf8");
-  writePackState(dir, { feature: "f01-x", status: "passed" });
-  const gaps = completionReviewGaps(makeCtx(dir));
-  assert.ok(gaps.some((g) => /f02-y/.test(g)), gaps.join("; "));
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -305,36 +292,6 @@ test("ISS-026 fuse counts by fingerprint across new ISS ids", () => {
   assert.ok((st.rounds_on["stable-fp"] ?? 0) >= FUSE_THRESHOLD);
 });
 
-test("ISS-026 deleting state.json does not zero the fuse ledger", () => {
-  const dir = mkdtempSync(join(tmpdir(), "keel-r4-026-led-"));
-  keelCfg(dir);
-  writeFileSync(
-    join(dir, "keel", "issues", "ISS-001.md"),
-    "---\nid: ISS-001\nstatus: open\nfingerprint: abc\n---\n# t\n\n复现命令：\n\n```\nexit 0\n```\n",
-    "utf8",
-  );
-  writeRoundsLedger(makeCtx(dir), { abc: 2 });
-  writePackState(dir, {
-    status: "repairing",
-    blocking_iss: ["ISS-001"],
-    iss_fp: { "ISS-001": "abc" },
-    rounds_on: {},
-    paths: ["README.md"],
-  });
-  unlinkSync(join(dir, "keel", "review", "state.json"));
-  writePackState(dir, {
-    status: "repairing",
-    blocking_iss: ["ISS-001"],
-    iss_fp: { "ISS-001": "abc" },
-    rounds_on: {},
-    paths: ["README.md"],
-  });
-  const r = runLoop(makeCtx(dir), ["clear", "--implementer", "grok-build", "--reviewer", "claude-code"]);
-  assert.equal(r.code, 1, r.stdout + r.stderr);
-  assert.match(r.stdout + r.stderr, /fused/);
-  rmSync(dir, { recursive: true, force: true });
-});
-
 test("ISS-027 doctor fails when gate.ts is missing", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-r4-027-gate-"));
   mkdirSync(join(dir, "keel"), { recursive: true });
@@ -380,12 +337,11 @@ test("ISS-028 attack lens includes gate-input paths", () => {
   const attack = [
     "keel/evidence/verify.json",
     "keel/config.json",
-    "keel/test-baseline.json",
     "package.json",
     ".agents/skills/k-review/SKILL.md",
     ".claude/skills/k-review/SKILL.md",
     "keel/review/attack-surface.md",
-    "keel/review/state.json",
+    "keel/review/disposition.md",
   ];
   for (const p of attack) {
     assert.equal(classifyLens([p]), "attack", p);

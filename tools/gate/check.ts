@@ -11,7 +11,12 @@ import { commitLooksAgentMade } from "./harness.ts";
 import { collectBypassFindings } from "./bypass.ts";
 import { claimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
 import { computeFrontier } from "./frontier.ts";
-import { completionReviewGaps, reviewClearGaps } from "./reviewloop.ts";
+import {
+  completionReviewGaps,
+  completionReviewWarnings,
+  loopForCurrentPlan,
+  reviewClearGaps,
+} from "./reviewloop.ts";
 import { inspectRequirementChangeChain } from "./changechain.ts";
 
 /**
@@ -180,45 +185,64 @@ function summarizedFeatureDirs(ctx: Ctx): string[] {
   return out;
 }
 
-// G-done — a feature that claims completion has fresh evidence, black-box coverage
-// of its acceptance criteria, and the plan-level review has passed.
+// G-done — completion claims have fresh evidence and black-box coverage, and the
+// plan-level review (REQ-027/AC-10, CHG-011) allows acceptance: passed → PASS
+// (tree moved since → WARN), repairing → WARN, fused → FAIL; no disposition →
+// PASS while features are still in progress, FAIL once every active feature has
+// its summary and the review still has not run.
 function gDone(ctx: Ctx): CheckItem {
   const summaries = summarizedFeatureDirs(ctx);
-  if (summaries.length === 0) {
-    return skip("G-done", "no completion claims (C-33)");
+  const loop = loopForCurrentPlan(ctx);
+  if (summaries.length === 0 && !loop) {
+    if (!hasImplementationActivity(ctx)) return skip("G-done", "no completion claims (C-33)");
+    return pass("G-done", "in progress: no completion claim yet; plan-level review not due (REQ-027)");
   }
-  const ev = readEvidence(ctx);
-  if (!ev) {
-    return fail(
-      "G-done",
-      `summary.md present (${summaries.join(", ")}) but verify.json missing`,
-      "run: gate verify (C-33). Missing evidence is fail, not skip (ISS-002)",
-    );
-  }
-  const gaps = evidenceGaps(ctx, ev);
-  if (gaps.length > 0) {
-    return fail("G-done", gaps.join("; "), "run: gate verify (C-33 对账)");
-  }
-  const missing = uncoveredClaimed(ctx);
-  if (missing.length > 0) {
-    return fail("G-done", `claimed ACs uncovered: ${missing.join(", ")}`, "C-33/C-32 mark black-box tests REQ-nnn/AC-i");
+  let ev: ReturnType<typeof readEvidence> = null;
+  if (summaries.length > 0) {
+    ev = readEvidence(ctx);
+    if (!ev) {
+      return fail(
+        "G-done",
+        `summary.md present (${summaries.join(", ")}) but verify.json missing`,
+        "run: gate verify (C-33). Missing evidence is fail, not skip (ISS-002)",
+      );
+    }
+    const gaps = evidenceGaps(ctx, ev);
+    if (gaps.length > 0) {
+      return fail("G-done", gaps.join("; "), "run: gate verify (C-33 对账)");
+    }
+    const missing = uncoveredClaimed(ctx);
+    if (missing.length > 0) {
+      return fail("G-done", `claimed ACs uncovered: ${missing.join(", ")}`, "C-33/C-32 mark black-box tests REQ-nnn/AC-i");
+    }
   }
   const revGaps = completionReviewGaps(ctx);
   if (revGaps.length > 0) {
-    return fail("G-done", revGaps.join("; "), "plan-level review (k-review); do not accept until status=passed (REQ-027)");
+    return fail("G-done", revGaps.join("; "), "plan-level review (k-review): pack → ingest → clear until passed (REQ-027)");
   }
-  if (ev.review) {
+  if (ev?.review) {
     const rg = reviewClearGaps(ev.review);
     if (rg.length > 0) {
       return fail("G-done", rg.join("; "), "re-run ISS repro commands; refused=true required");
     }
   }
-  return pass("G-done", "evidence 对账 + claimed AC trace + plan-level review passed");
+  const revWarn = completionReviewWarnings(ctx);
+  if (revWarn.length > 0) {
+    // In progress, or the tree moved after a pass: visible, not red (CHG-011).
+    // G-done cannot be waived, so the WARN is marked acknowledged instead.
+    return {
+      ...warn("G-done", revWarn.join("; "), "finish the loop (gate loop clear) or re-pack after code changes (REQ-027/AC-10)"),
+      acknowledged: true,
+    };
+  }
+  return pass(
+    "G-done",
+    loop
+      ? "evidence 对账 + claimed AC trace + plan-level review passed"
+      : "in progress: features without summary remain; plan-level review not yet due (REQ-027)",
+  );
 }
 
-// X-evidence — verify.json is bound to the tree. Stale evidence is a WARN during
-// daily work (CHG-011: a dirty tree must not paint the gate red); it becomes a
-// FAIL only where completion or merge is judged (G-done / G-merge).
 // X-evidence — full check only (CHG-011): judged when done or merge is claimed,
 // never in --quick, so a dirty daily tree does not redden the hook.
 function xEvidence(ctx: Ctx): CheckItem {
