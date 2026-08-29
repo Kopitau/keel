@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -16,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { runCli } from "../tools/cli/main.js";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
+const skill = (): string => readFileSync(join(repo, ".agents", "skills", "k-migrate", "SKILL.md"), "utf8");
 
 function sourceSnapshot(root: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -32,17 +34,20 @@ function sourceSnapshot(root: string): Record<string, string> {
   return out;
 }
 
-test("REQ-022/AC-1 REQ-022/AC-2 migration protocol maps known sources to unconfirmed drafts without inventing rationale", () => {
-  const skill = readFileSync(join(repo, ".agents", "skills", "k-migrate", "SKILL.md"), "utf8");
-  const trellis = readFileSync(join(repo, "keel", "templates", "migrate", "trellis.md"), "utf8");
-  const superpowers = readFileSync(join(repo, "keel", "templates", "migrate", "superpowers.md"), "utf8");
-  assert.match(skill, /迁移初稿（未确认）/);
-  assert.match(skill, /provisional/);
-  assert.match(skill, /暂定·需补理由/);
-  assert.match(trellis, /requirements\/vN\.md/);
-  assert.match(trellis, /research\/RES-###/);
-  assert.match(superpowers, /requirements|需求素材/);
-  assert.match(superpowers, /DEC 初稿/);
+test("REQ-022/AC-1 REQ-022/AC-2 the mapping rules live in k-migrate and map known sources to unconfirmed drafts without inventing rationale", () => {
+  const text = skill();
+  assert.match(text, /迁移初稿（未确认）/);
+  assert.match(text, /provisional/);
+  assert.match(text, /暂定·需补理由/);
+  // Trellis rows
+  assert.match(text, /`tasks\/\*\/prd\.md`[^\n]*REQ rows in `requirements\/vN\.md`/);
+  assert.match(text, /`tasks\/\*\/design\.md`[^\n]*RES \+ DEC/);
+  // Superpowers rows
+  assert.match(text, /`specs\/\*-design\.md`[^\n]*REQ material \+ DEC/);
+  assert.match(text, /`plans\/\*\.md`[^\n]*`plan\/vN\.md` or `summary\.md`/);
+  // CHG-011: no mapping templates on disk
+  assert.equal(existsSync(join(repo, "keel", "templates", "migrate")), false);
+  assert.doesNotMatch(text, /templates\/migrate/);
 });
 
 test("REQ-022/AC-3 installer activation detects Trellis but leaves every source byte unchanged", () => {
@@ -62,14 +67,10 @@ test("REQ-022/AC-3 installer activation detects Trellis but leaves every source 
   }
 });
 
-test("REQ-022/AC-4 REQ-022/AC-5 migration report template preserves mapped unmapped conflicts doubts and awaiting confirmation", () => {
-  const path = join(repo, "keel", "templates", "migrate", "report.md");
-  const report = readFileSync(path, "utf8");
-  for (const heading of ["已映射", "未映射", "冲突", "存疑", "无法归类", "待确认"]) {
-    assert.match(report, new RegExp(`^## ${heading}`, "m"));
-  }
-  assert.match(report, /需求|规划决策|规则/);
-  const skill = readFileSync(join(repo, ".agents", "skills", "k-migrate", "SKILL.md"), "utf8");
-  assert.match(skill, /templates\/migrate\/report\.md/);
-  assert.match(skill, /mapped \/ not mapped \/ conflicts \/ doubts \/ unclassified \/ awaiting confirmation/i);
+test("REQ-022/AC-4 REQ-022/AC-5 the migration report keeps mapped unmapped conflicts doubts unclassified and awaiting confirmation", () => {
+  const text = skill();
+  assert.match(text, /keel\/migration-report\.md/);
+  for (const heading of ["已映射", "未映射", "冲突", "存疑", "无法归类", "待确认"]) assert.ok(text.includes(heading), heading);
+  assert.match(text, /Never fabricate a reason for an unmapped item/);
+  assert.match(text, /stale or contradictory → doubt list/);
 });

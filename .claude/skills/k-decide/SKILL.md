@@ -14,7 +14,7 @@ Machine header: id, title, status, date, features, research, adr flag.
 Chinese body: question → options → recommendation → **user’s words verbatim** → impact.
 
 Status: `proposed` → `confirmed` / `provisional` (reason + review trigger) / `deferred`. Overturn → `superseded` pointing at the new DEC (C-14).
-The gate rejects terminal-state rollback such as `confirmed` → `proposed` and any change away from `superseded`.
+Never roll a terminal state back (`confirmed` → `proposed`, anything away from `superseded`); status moves are a skill rule, not a gate check (CHG-011).
 
 Write in the same round as the user’s answer (C-15). Do not batch confirmations to the session end.
 Same-round manual evidence names the DEC id and date, preserves the user’s words verbatim, and leaves a worklog/record pointer to that DEC.
@@ -23,4 +23,4 @@ Same-round manual evidence names the DEC id and date, preserves the user’s wor
 
 If all three hold — hard to reverse, surprising without context, a real trade-off — set `adr: true` and add consequences + review terms. No second ADR directory (C-16).
 
-Low-level reversible implementation choices: worklog, not a DEC (C-17). Touching a confirmed boundary: stop (C-21).
+Only the three-threshold case gets a DEC; every other implementation choice is one worklog line (C-17, CHG-011). Touching a confirmed boundary: stop (C-21).

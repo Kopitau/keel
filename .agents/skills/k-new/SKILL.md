@@ -14,10 +14,10 @@ Dispatcher for F1→F2→F3→F4. Implementation is k-impl after the user confir
 ## Sequence
 
 1. **k-grill** — requirements interview. No design until REQ entries have acceptance criteria and open branches sit in `未决问题` (C-05). Baseline = one user nod; large work gets a fresh-context pass first (C-06).
-2. **k-research** — pick a depth, write RES files, link OSS when choosing a library (C-08/C-11).
+2. **k-research** — pick a depth, write RES files, register a chosen library in the RES `oss:` field (C-08/C-11).
 3. **k-decide** — one DEC per choice, user quote in the file, same round (C-13/C-15).
 4. **Unified plan** — `keel/plan/overview-vN.md` (~100 lines: feature list, coupling table, order) + `keel/features/<slug>/plan/vN.md` (30–60 lines). Each feature plan's front matter names its requirements — `req: [REQ-nnn, …]` — replacing the scaffold's `REQ-000`; X-trace binds the completion claim through that line (ISS-044). Freeze on confirm. Iterate = new version + reindex (C-24).
-5. Confirm **plan + technical baseline together once**. Record APR (human identity, C-107). Then k-impl.
+5. Confirm **plan + technical baseline together once**. Record APR (human identity, C-107). Then k-impl runs the autonomous loop; humans return only for C-21, a fused review, or acceptance (DEC-183).
 
 ## Stop
 

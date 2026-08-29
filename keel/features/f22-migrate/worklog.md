@@ -17,3 +17,7 @@
 - 边界：迁移产物仍是 `迁移初稿（未确认）`；缺理由 DEC 仍为 provisional，旧 Trellis/Superpowers 树不得删除或改写。
 - 证据：真实 `keel init` Trellis fixture 的迁移前后逐文件 bytes 相同；报告与 updater legacy RES 不改写测试通过。
 - C-34: ref=DEC-181 updater 的显式确认测试改名后同时承担 REQ-022/AC-6；旧测试名移除有本决策引用，行为没有删减。
+
+## 2026-08-29（CHG-011 Q4 映射表并入技能）
+
+- 进度：`keel/templates/migrate/`（trellis / superpowers / unstructured / report）删除，映射规则与报告结构并入 `k-migrate` 正文（55 行）；报告落点改为 `keel/migration-report.md`。`tests/chg010-migrate.test.ts` REQ-022/AC-1/2/4/5 改验技能正文。

@@ -10,9 +10,16 @@ import { runStatus } from "../tools/gate/status.ts";
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel: string): string => readFileSync(join(repo, rel), "utf8");
 
-test("REQ-012/AC-1 handoff template carries what why current phase next steps open questions and files to read", () => {
-  const template = read("keel/templates/handoff.md");
-  for (const heading of ["做了什么 / 为什么", "当前功能与阶段", "下一步", "未决问题", "该读文件"]) assert.match(template, new RegExp(heading));
+test("REQ-012/AC-1 the handoff is at most ten lines of next step and files to read, and this repo's handoff obeys it", () => {
+  const skill = read(".agents/skills/k-handoff/SKILL.md");
+  assert.match(skill, /at most 10 lines/i);
+  assert.match(skill, /Next step/);
+  assert.match(skill, /Files to read/);
+  assert.doesNotMatch(skill, /keel\/journal/);
+  const handoff = read("keel/handoff.md");
+  const lines = handoff.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  assert.ok(lines.length <= 10, `handoff has ${lines.length} non-empty lines`);
+  assert.match(handoff, /keel\//, "files to read are repository paths");
 });
 
 test("REQ-012/AC-2 status exposes three-jump paths overview unresolved and provisional counts", () => {
@@ -27,12 +34,16 @@ test("REQ-012/AC-2 status exposes three-jump paths overview unresolved and provi
   for (const marker of ["handoff:", "overview:", "plan_current: overview-v1.md", "provisional_decisions: 1", "needs_clarification: 1"]) assert.match(out, new RegExp(marker));
 });
 
-test("REQ-012/AC-3 [proxy:independent harness recovery transcript not recorded] journal contract binds harness version date paths recovered next step and transcript", () => {
-  const template = read("keel/templates/journal.md");
-  for (const marker of ["harness", "version", "date", "paths", "next_step", "transcript"]) assert.match(template, new RegExp(marker, "i"));
+test("REQ-012/AC-3 [proxy:independent harness recovery transcript not recorded] the recovery drill is recorded in the worklog with harness version date paths next step and tree hash", () => {
+  const skill = read(".agents/skills/k-handoff/SKILL.md");
+  assert.match(skill, /worklog/);
+  for (const marker of ["harness name and version", "date", "three paths read", "next step recovered", "tree hash"]) {
+    assert.match(skill, new RegExp(marker, "i"));
+  }
+  assert.match(skill, /never a platform session file/);
 });
 
 test("REQ-012/AC-4 append-only worklog is sufficient to rebuild a skipped handoff", () => {
   assert.match(read("keel/templates/worklog.md"), /追加式，不重写历史/);
-  assert.match(read(".agents/skills/k-handoff/SKILL.md"), /later agent rebuilds from worklogs/i);
+  assert.match(read(".agents/skills/k-handoff/SKILL.md"), /next agent rebuilds from the worklogs/i);
 });

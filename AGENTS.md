@@ -10,7 +10,7 @@ keel is a repo-local process layer: numbered Chinese records, English skills, on
 
 Then follow its navigation. Read more if you need it. Do **not** bulk-load the records directory.
 
-Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gate check` is the local six-gate command; CI reruns it (W3).
+Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gate check --quick` (4 checks, seconds) runs in the pre-commit hook; `gate check` (8 checks) before claiming done, review and merge; CI reruns it (C-100).
 
 ## Map
 
@@ -20,7 +20,7 @@ Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gat
 | Config | records dir `/config.json` |
 | Skills (W4) | `.agents/skills/k-*/SKILL.md` — catalog below; bodies on demand |
 | Design norms | `DESIGN.md` §5 (confirmed). §8–9 are advisory. |
-| Gate | `tools/gate/gate.ts` (`status` `check` `new` `index` `trace` `sync` `worktree` `approve` `hash` `verify` `triggers` `review`) |
+| Gate | `tools/gate/gate.ts` (`status` `check` `new` `index` `trace` `sync` `worktree` `approve` `hash` `verify` `loop` `triggers` `review`) |
 | Platform limits | `tools/gate/platform-limits.md` |
 | Claude Code bridge | `CLAUDE.md` is exactly `@AGENTS.md` |
 
@@ -35,6 +35,8 @@ Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gat
 - Touching a confirmed interface, requirement boundary, unplanned dependency, or test obligation: stop and ask (C-21).
 - Done = evidence (command, exit, tree hash), not a claim (C-33). W3 lands verify.
 - One feature, one branch, one worktree (C-112). Overlapping files → serialize (C-114).
+- After the plan is confirmed the loop is autonomous (DEC-183): implement → test → record → compress the worklog into `summary.md` → next frontier feature. One plan-level review at the end. Stop only for C-21, a fused review, or acceptance.
+- Freezing binds semantics (CHG-011): approvals hash the body; metadata edits are free, a typo fix cites the APR in the worklog, a meaning change is a new version + re-approval.
 
 ## Skill catalog (bodies in `.agents/skills/k-*/SKILL.md`; Claude mirror via `gate sync`)
 
@@ -48,7 +50,7 @@ Load the matching skill before that work. Do not invent platform-private process
 
 L0 this file (advisory) → L1 platform hooks → L2 `.githooks/` → **L3 CI rerun of gate (authority)** → L4 human APR.
 
-This repo is **local tier** until remotes exist. OS matrix: Windows + macOS (dev) + Linux (CI) (DEC-143). Label: deters mistakes, not malice (C-48/C-111).
+Tier is `enforcement_tier` in the config (this repo: `github`, CODEOWNERS on). OS matrix: Windows + macOS (dev) + Linux (CI) (DEC-143). Label: deters mistakes, not malice (C-48/C-111).
 
 ## Do not
 

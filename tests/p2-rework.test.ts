@@ -144,19 +144,12 @@ test("REQ-010 ISS template has a defense_pointer field", () => {
   assert.match(t, /闭环选择与理由/);
 });
 
-test("REQ-013 LES template has phenomenon lesson bounds counterexample", () => {
-  const t = readFileSync(join(repo, "keel", "templates", "LES.md"), "utf8");
-  for (const h of ["现象", "教训", "适用边界", "反例", "去向"]) {
-    assert.ok(t.includes(`## ${h}`), h);
-  }
-});
-
 test("REQ-014 knowledge library is not stored in the repo", () => {
   assert.equal(existsSync(join(repo, "keel", "knowledge")), false);
 });
 
-test("REQ-022 migrate mapping templates exist", () => {
-  for (const n of ["trellis.md", "superpowers.md", "unstructured.md"]) {
-    assert.equal(existsSync(join(repo, "keel", "templates", "migrate", n)), true, n);
-  }
+test("REQ-022 the mapping tables live in k-migrate; no migrate templates on disk (CHG-011)", () => {
+  assert.equal(existsSync(join(repo, "keel", "templates", "migrate")), false);
+  const skill = readFileSync(join(repo, ".agents", "skills", "k-migrate", "SKILL.md"), "utf8");
+  for (const h of ["## Trellis", "## Superpowers", "## Unstructured docs"]) assert.ok(skill.includes(h), h);
 });

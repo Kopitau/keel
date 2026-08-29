@@ -20,7 +20,7 @@ Scaffold a consumer project so keel records, gate, and the AGENTS map exist. Pre
 - `tools/gate/` `.githooks/` `.gitattributes`
 - `.agents/skills/` then `gate sync`
 
-It also writes `keel/test-baseline.json` and sets hook exec bits. Gate is Node ≥22.18.0, run `.ts` directly (DEC-149/150).
+It sets hook exec bits. Gate is Node ≥22.18.0, run `.ts` directly (DEC-149/150).
 
 ## Questions (one round; test profile is **not** asked here)
 

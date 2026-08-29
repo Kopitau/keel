@@ -17,8 +17,12 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | ISS | issue record with a defense pointer (C-58) | chat-only bug notes |
 | CHG | change request; current requirements file is frozen (C-64) | editing `vN.md` in place |
 | APR | approval with content hash; human git identity (C-106/107) | agent-authored “approved” commits |
-| OSS | direct-dependency reuse registry (C-88) | undocumented copies of upstream code |
-| LES / KLES | project lesson / user-level lesson (`~/.keel/knowledge/`) | pasting secrets into KLES |
+| oss field | direct-dependency reuse registered in the `oss:` field of the RES that chose it (C-88, CHG-011) | separate OSS files; undocumented copies of upstream code |
+| lesson | one verified line appended to the `#经验候选` worklog line (`→ 经验：…`) or a DEC line (CHG-011); user-level notes in `~/.keel/knowledge/` | LES/KLES files; pasting secrets into user-level notes |
+| quick check | `gate check --quick` = G-req, G-plan, X-trace, X-bypass; what the pre-commit hook runs (CHG-011) | running the test suite in a hook |
+| body hash | approval hash over normalized text minus the front matter; metadata edits never void an APR (CHG-011) | re-approving for a status flip |
+| disposition / findings | the two plan-level review products in `keel/review/` (REQ-027, CHG-011) | state.json / per-feature review files |
+| autonomous loop | implement → test → record → compress worklog into summary → next frontier feature; humans at C-21, fuse, acceptance (DEC-183) | stopping after every slice to ask |
 | worklog | append-only feature implementation log (C-20) | rewriting history in place |
 | OVERVIEW | living project picture (C-54) | versioning OVERVIEW as a frozen artifact |
 | GWT | Given/When/Then; checklists allowed for simple items (C-07) | vague “should work” acceptance |

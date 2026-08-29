@@ -4,7 +4,7 @@ import type { Ctx } from "./ctx.ts";
 import { asciiSlug, nextNumber, pad2, pad3, type Kind } from "./ids.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
 
-const KINDS = new Set<Kind>(["dec", "res", "iss", "chg", "oss", "les", "apr", "feature"]);
+const KINDS = new Set<Kind>(["dec", "res", "iss", "chg", "apr", "feature"]);
 
 function today(): string {
   const d = new Date();
@@ -40,7 +40,7 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
   const kindRaw = (args[0] ?? "").toLowerCase();
   if (!KINDS.has(kindRaw as Kind)) {
     return usage(
-      "usage: gate new <dec|res|iss|chg|oss|les|apr|feature> <title>\n",
+      "usage: gate new <dec|res|iss|chg|apr|feature> <title>\n",
     );
   }
   const kind = kindRaw as Kind;
@@ -70,8 +70,6 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
     res: "research",
     iss: "issues",
     chg: "changes",
-    oss: "oss",
-    les: "lessons",
     apr: "approvals",
   };
   const dir = join(ctx.records, dirMap[kind] ?? kind);
@@ -84,8 +82,6 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
     res: "RES.md",
     iss: "ISS.md",
     chg: "CHG.md",
-    oss: "OSS.md",
-    les: "LES.md",
     apr: "APR.md",
   };
   const body = stamp(template(ctx, tplName[kind] ?? "") || `# ${idFull} ${title}\n`, idFull, idFull, title, date);

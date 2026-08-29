@@ -36,18 +36,14 @@ Self-check before sending a batch: **count the `?`**. Fewer question marks than 
 
 `gate new` is not used for REQ rows; they live in `keel/requirements/vN.md`:
 
-id, status, source, description, acceptance (GWT primary; short checklists allowed), verification, bounds and counterexamples, non-goals.
+id, status, source, feature (owner F), must (必需 / 想要 / 建议), description, acceptance (GWT primary; short checklists allowed), verification, bounds and counterexamples, non-goals.
 
 Fuzzy → `[NEEDS-CLARIFICATION: concrete question]`. Unresolved forks go in the `未决问题` section, not only in chat (C-05).
 
 ## Order: requirements before research (C-04/C-05)
 
-REQ entries land **before** any RES record is written. Research aimed at requirements that exist only in the chat log is aimed at your own reading of them. `G-req` fails when `keel/research/` holds records and the current requirements has zero REQ entries.
+REQ entries land **before** any RES record is written. Research aimed at requirements that exist only in the chat log is aimed at your own reading of them.
 
 ## Baseline
 
-One nod on the whole requirements file (C-06). Large/new work: a **different** fresh-context agent — one that did not run this interview — hunts gaps first, and the hunt is a file, not a promise:
-
-`keel/requirements/gap-hunt-vN.md`, with `- **hunter**:` naming that context and a `## 发现` section listing each finding and its disposition (write `无` explicitly if there were none).
-
-`G-req` fails on `status: confirmed` rows with no such record. Then APR (human).
+One nod on the whole requirements file (C-06). Large/new work: a **different** fresh-context agent — one that did not run this interview — hunts gaps first (missing items, contradictions, ambiguities, verification arrays). Its findings and their disposition are written into the requirements file itself, in a section right after `未决问题`; no separate file, nothing machine-checked (CHG-011). Then the user's one nod → APR (human identity).

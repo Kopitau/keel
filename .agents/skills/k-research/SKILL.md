@@ -19,7 +19,7 @@ Offline is not a skip: use dated, sourced offline material or stop (C-12).
 
 question → search scope → candidate comparison → evidence (citation + access date; mark `[未核实]`) → conclusion (decision / why / alternatives) → remaining uncertainty.
 
-Cite; do not paste whole pages (C-69).
+Cite; do not paste whole pages (C-69). The substance is your responsibility — nothing machine-checks it (CHG-011); a filename is not research.
 
 ## Parallel research (RES-904 §4)
 
@@ -29,8 +29,6 @@ Two or more questions that do not depend on each other → one fresh-context sub
 
 Facts come from primary sources: official docs, source code, specs, the vendor's own pages. Secondary write-ups (blog posts, summaries, forum answers) only for dates and outside opinion — and say so next to the citation. Quote short; paraphrase in your own structure (C-69).
 
-## Gates
+## Open source (C-11)
 
-Major DECs must point at a RES **or** a written exemption (C-10). Choosing an open-source component → k-log / OSS entry (C-11); `gate new oss`.
-
-G-research opens every RES: tier declared (`depth:`), 调研问题/检索范围/证据/结论 sections present, and ≥ 1 citation for 标准/深度 (C-08/C-09). A filename is not research.
+Chose a library or copied code → fill the RES `oss:` field: name, exact version or commit, license, reuse point. No separate OSS file (CHG-011). Major DECs must point at a RES **or** a written exemption (C-10).

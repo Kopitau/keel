@@ -34,3 +34,9 @@
 - 进度：六家 headless 配方增加人类可读的 harness 全名，config primary/compatible 与配方由 machine-doc 测试逐一对账。
 - 边界：本轮没有付费模型调用；`REQ-016/AC-8` 明确保留 `[proxy:real six-harness trigger evidence not recorded]`，本地配方和命令面不能替代 live 触发证据。
 - 证据：`tests/chg010-gates.test.ts` 对应代理测试通过；RES-905/906/907 分别保留鉴权、配额、终态与隔离的未核实边界。
+
+## 2026-08-29（CHG-011 Q4 技能减量）
+
+- 进度：16 个技能全部保留，正文最长 60 行（≤ 80）；删掉对已删门禁与记录的引用（G-research / G-retro / X-oss / X-decisions / C-34 基线 / LES / KLES / OSS 文件 / journal / GAPHUNT 模板）。k-review 重写为方案级回路；k-impl 改自主回路（切完就继续，功能完成压缩 worklog）；k-retro 触发改为功能完成；k-handoff ≤ 10 行；k-log / k-research 的开源登记改为 RES `oss:` 字段；k-migrate 把三张映射表与报告结构并入正文；k-grill 缺口猎取写进需求书、REQ 行补 feature / must 字段（上一轮评审 advisory 闭环）；k-decide / k-evidence 去掉门禁措辞。`gate sync` 后 openai.yaml ×16 重新生成。
+- 进度：AGENTS.md（61 行）补自主回路与「冻结只管语义」两条规则、quick/全量说明、`loop` 命令、执法档改按 config；CONTEXT.md 加 quick check / body hash / disposition / autonomous loop 词条，OSS / LES 词条改写。
+- 证据：`node --test` 全绿（见提交）；`grep` 全库技能/模板/根文件无已删门禁名。
