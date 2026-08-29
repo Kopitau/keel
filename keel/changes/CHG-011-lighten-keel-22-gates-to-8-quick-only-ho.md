@@ -1,6 +1,6 @@
 ---
 id: CHG-011
-status: proposed
+status: approved
 date: 2026-08-29
 requirements_from: v4.md
 requirements_to: v5.md

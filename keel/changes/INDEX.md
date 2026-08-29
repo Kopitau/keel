@@ -15,4 +15,4 @@
 | CHG-008 | CHG-008 F7 自动评审回路 + 评审视角按代码性质分类 | approved | `CHG-008-auto-review-loop.md` |
 | CHG-009 | CHG-009 首次真实使用后的框架加固 | approved | `CHG-009-field-hardening.md` |
 | CHG-010 | CHG-010 requirements v4 稳定化与 0.8.0 收口 | approved | `CHG-010-requirements-v4-stabilization.md` |
-| CHG-011 | CHG-011 keel 减重：门禁 22 → 8、预提交只跑秒级检查、冻结只管语义、记录三合一、方案级评审、测试按功能 | proposed | `CHG-011-lighten-keel-22-gates-to-8-quick-only-ho.md` |
+| CHG-011 | CHG-011 keel 减重：门禁 22 → 8、预提交只跑秒级检查、冻结只管语义、记录三合一、方案级评审、测试按功能 | approved | `CHG-011-lighten-keel-22-gates-to-8-quick-only-ho.md` |

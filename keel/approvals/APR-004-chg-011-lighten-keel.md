@@ -8,7 +8,7 @@ scope: "变更单"
 artifacts:
   - path: "keel/changes/CHG-011-lighten-keel-22-gates-to-8-quick-only-ho.md"
     version: "v1"
-    content_sha256: 39274e87ca3a197a6c20d0da357c496ea99a10ec55bf7800bd6649703b47d3d7
+    content_sha256: 28e1591c39febccaefca4a3330e1f2e022eab31060f28c5593b7c7d0bd334b96
   - path: "keel/decisions/DEC-183-lighten-keel-keep-8-gates-quick-only-hoo.md"
     version: "v1"
     content_sha256: 2f28d44ac65f292baeb132f9a62f3b27c93d3f022b3b674e473a29ee28634055
