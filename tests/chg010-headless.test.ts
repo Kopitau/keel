@@ -34,7 +34,7 @@ test("REQ-016/AC-7 machine-doc has a sourced, executable, fail-closed recipe for
     assert.match(block, /^- on_failure: stop$/m, `${id}: failure must stop`);
     assert.match(block, /^- same_harness_fallback: forbidden$/m, `${id}: same-harness fallback must be forbidden`);
     assert.match(block, /^- source: https:\/\//m, `${id}: official source URL missing`);
-    assert.match(block, /^- retrieved: 2026-08-28$/m, `${id}: retrieval date missing`);
+    assert.match(block, /^- retrieved: d{4}-d{2}-d{2}$/m, `${id}: retrieval date missing`); // dated per harness, not one pinned day (CHG-012)
   }
   for (const key of ["diff", "plan", "reqs", "evidence", "worklog_summary"]) {
     assert.match(page, new RegExp(`\\b${key}\\b`), `pack key ${key} missing`);

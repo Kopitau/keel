@@ -46,3 +46,4 @@
 - 用户原话：「能不能让cursor也兼容」→ 三案后「A 不是cursor cli是cursor客户端」。调研 RES-908：Cursor 客户端原生读根 AGENTS.md 与 `.agents/skills`（`name` + `description` 即可），技能零改动；方案 B（给 User skills 加 `disable-model-invocation`）被否——Claude 文档明说该字段是「Only you can invoke」，会打断自主回路。
 - 进度：`platforms.compatible` 加 `cursor`（本仓 / 模板 / init）；`triggers.ts` 探测（`cursor --version` → 本机 3.17.21）与发现表；`platform-limits.md` 一行；`headless.md` 的 `## cursor`（客户端为准，CLI `agent` 与 Grok 同名、未纳入）；计划 v3（规划补充）；CHG-012 + 需求 v6（proposed）+ APR-006 草稿（待用户委托原话）；0.9.1 + `RELEASE-0.9.1.md`。黑盒 `tests/chg012-cursor.test.ts`（REQ-016/AC-1）；`w5-smoke` / `chg010-gates` 平台计数 6 → 7。
 - 待人工：REQ-016/AC-8 的 Cursor 客户端真实触发冒烟（在装有 Cursor 的机器上打开本仓，`/k-status` 能出现即可，记本节）。
+- 修正：AC-7 测试原把 retrieved 日期钉死在 2026-08-28，改为任意日期；Cursor 配方按文档补齐 input / output / success（CLI 未安装，标未核实）。

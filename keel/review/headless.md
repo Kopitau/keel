@@ -111,13 +111,17 @@ rc.2 命令面已核；原生 Windows 完整模型/沙箱链与余额未核实�
 
 ## cursor
 
-- mode: ide-client（CHG-012：Cursor 桌面客户端读根 `AGENTS.md` 与 `.agents/skills`，零适配；本机以客户端为准）
-- command: 无 headless 配方。Cursor 的 CLI 名为 `agent`，与 Grok Build 的 `agent` 同名：本机 PATH 上的 `agent` 是 Grok 的，Cursor CLI 未安装、未实测。若日后接入：`agent -p --output-format json --mode=ask --sandbox enabled --trust --workspace <isolated-dir> --model <model> <fixed-review-rubric>`，探测须用绝对路径或 `--version` 鉴别
-- identity_family: 由 `--model` 决定（Cursor 是 harness 不是模型供应方），旁车证据必须记模型
+- mode: headless（Cursor 的 CLI `agent`；CHG-012 的契约以桌面客户端为准——客户端原生读根 `AGENTS.md` 与 `.agents/skills`，零适配；本机 CLI 未安装、命令面据文档、真实调用未核实）
+- command: `agent -p --output-format json --mode=ask --sandbox enabled --trust --workspace <isolated-dir> --model <model> <fixed-review-rubric>`
+- input: 一次性目录只放 `keel/review/pack.json` 副本，rubric 只允许读该文件五键；探测须用绝对路径或 `--version` 鉴别——PATH 上的 `agent` 可能是 Grok Build 的同名二进制（本机即如此）
+- output: stdout JSON（`--output-format json`）；取最终文本按 `Finding[]` 本地复验，stderr 单独留证
+- success: exit=0、stdout 可解析并通过 schema、pack/tree 未漂移、旁车证据记录 `--model`（家族由模型决定）、CLI 版本、日期；调用成功不等于评审通过
 - on_failure: stop
 - same_harness_fallback: forbidden
-- source: https://cursor.com/docs/cli/reference/parameters ；https://cursor.com/docs/context/skills
+- source: https://cursor.com/docs/cli/reference/parameters
 - retrieved: 2026-08-29
+- identity_family: 由 `--model` 决定（Cursor 是 harness 不是模型供应方；攻击视角复审的异构性按模型家族判）
+- isolation: `--sandbox enabled` + `--mode=ask`（只读）；`--trust` 只对一次性目录；未核实 stdin 与退出码约定
 
 ## pi
 
