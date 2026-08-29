@@ -60,3 +60,7 @@
 
 - 进度：版本 0.8.0 → 0.9.0（package.json / package-lock.json）；`RELEASE-0.9.0.md` 列出 CHG-011 破坏点与消费项目要做的事（C-140）；黑盒 `tests/chg011-release.test.ts` REQ-023/AC-6。`tools/cli/update.js` 去掉 legacy 清单预览/写入，`migration.js` 只剩 semver。
 - zhaoxi：`printf 'y\n' | node /e/program/en/bin/keel.js update` 打出完整预览（tools/gate 24 项 OVERWRITE/ADD/DELETE 等）后按 DEC-173 取消——确认只认 TTY 上的单字母 y，管道不算（`tools/cli/main.js` confirmUpdate）。这是设计行为，不绕：升级留给用户在交互终端跑 `node /e/program/en/bin/keel.js update`。zhaoxi 当前 quick 仍是旧 22 条门禁全绿，`keel_version` 0.7.0。
+
+## 2026-08-29（zhaoxi 升级 0.7.0 → 0.9.0，记录在案的委托）
+
+- 用户「升级由你去跑」：按 DEC-173 的确认由用户在对话里给出，agent 经 `runCli(["update"], { confirmUpdate: () => "y" })` 执行，预览 107 项（tools/gate / .githooks / 模板 / k-* 技能与镜像），`keel_version` 0.9.0；按 RELEASE-0.9.0 删 `keel/test-baseline.json`（无 migrations / state.json）。zhaoxi 自己的 `gate check --quick`：PASS fail=0 warn=0 checks=4。以 keel-agent 身份提交（另一会话的 worktree claim 未动）。

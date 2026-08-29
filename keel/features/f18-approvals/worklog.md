@@ -27,3 +27,7 @@
 
 - 进度：`approve.ts` 写入 `sha256Body`（前言之外的规范化正文）；`changechain.ts` 同时接受正文哈希与旧全文哈希；正文不符降为 G-req WARN（worklog `gate-warn: G-req ref=APR-nnn` 放行），元数据改动不再作废审批。X-apr 拒绝 `pending` 哈希的 approved APR（ISS-053 遗留项闭环）。
 - 证据：`tests/chg011-quick-gate.test.ts` REQ-011/AC-4、REQ-018/AC-1；`tests/r6-field-guards.test.ts` ISS-053 X-apr pending 用例。
+
+## 2026-08-29（APR-005：需求 v5 + 规划 overview-v4 整体确认）
+
+- 用户原话「1 同意 以我的身份提交 2 升级由你去跑」记入 `delegated:`；v5 / overview-v4 状态行改 confirmed 后 `gate approve APR-005`（正文哈希 c10a61c6… / 83f36a34…），以 kopit 身份提交 55e73c2，pre-commit-apr ok，提交后 git 身份恢复 keel-agent。这是正文哈希审批的首次实际使用。
