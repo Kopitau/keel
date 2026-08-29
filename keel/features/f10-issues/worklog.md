@@ -39,3 +39,8 @@
 ## 2026-08-29（CHG-011 Q5）
 
 - 进度：ISS-021 防线由测试名基线改为 X-trace（宣称完成时缺测即红）+ 方案级评审 spec 轴，备注已追加；ISS-036 2026-08-28 已关闭，方案级 findings / disposition 沿用追加语义；ISS-026 备注 rounds.json 作废。G-issues 删除后 ISS 字段由 k-log 技能约束。
+
+## 2026-08-29（ISS-054，CHG-011 Q7 首轮）
+
+- 现象：Codex 异构评审的 4 条 blocking 探针在 Windows 经 cmd.exe 全部 SyntaxError 退出 1，被记「待核实」，回路误判 passed。
+- 修复：`runReproCommand` 统一 `sh -c`（`probeShell()` 在 Windows 用 `where sh`）；ingest 有待核实 blocking → `in_review`，clear 拒绝直到新一轮。红灯：无补丁时 `tests/iss054-probe-shell.test.ts` 不能加载（probeShell 不存在），行为红灯见 findings.md 第 1 轮输出；修复后 2/2 绿。ISS-054 关闭。

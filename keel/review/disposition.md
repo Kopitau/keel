@@ -1,20 +1,20 @@
 ---
 schema: disposition-v1
 status: passed
-plan: overview-v3.md
-round: 1
-base: ""
-tree_hash: 23d1c2ee8396a3e10479b560f91266258dcef120
-pack_hash: 0537631909ff8a1e902a5a386aacd18afbf2c9cdb8063640b8f56b7afc17fdd6
+plan: overview-v4.md
+round: 0
+base: 8f77b84
+tree_hash: a6399b86d79d95e035dc1f0f77d180b9949da115
+pack_hash: d230b41c87c2ab295364c117398582da9fd5ea86e42e969d77556042b6f193d2
 lens: attack
-implementer_harness: openai-codex
-reviewer_harness: deepseek-via-opencode
+implementer_harness: claude-code
+reviewer_harness: openai-codex
 fuse_threshold: 3
 blocking_iss: []
-advisory: ["k-grill REQ row schema diverges from the authoritative requirement shape: it mandates 'verification' but omits the mandatory 'feature'/'must' fields, and REQ-001 acceptance C-04 was not updated to include 'verification'"]
+advisory: []
 iss_fp: {}
 rounds_on: {}
-paths: []
+paths: [".agents/skills/k-decide/SKILL.md",".agents/skills/k-evidence/SKILL.md",".agents/skills/k-grill/SKILL.md",".agents/skills/k-handoff/SKILL.md",".agents/skills/k-handoff/agents/openai.yaml",".agents/skills/k-impl/SKILL.md",".agents/skills/k-init/SKILL.md",".agents/skills/k-log/SKILL.md",".agents/skills/k-log/agents/openai.yaml",".agents/skills/k-migrate/SKILL.md",".agents/skills/k-new/SKILL.md",".agents/skills/k-research/SKILL.md",".agents/skills/k-retro/SKILL.md",".agents/skills/k-retro/agents/openai.yaml",".agents/skills/k-review/SKILL.md",".agents/skills/k-review/agents/openai.yaml",".claude/skills/k-decide/SKILL.md",".claude/skills/k-evidence/SKILL.md",".claude/skills/k-grill/SKILL.md",".claude/skills/k-handoff/SKILL.md",".claude/skills/k-handoff/agents/openai.yaml",".claude/skills/k-impl/SKILL.md",".claude/skills/k-init/SKILL.md",".claude/skills/k-log/SKILL.md",".claude/skills/k-log/agents/openai.yaml",".claude/skills/k-migrate/SKILL.md",".claude/skills/k-new/SKILL.md",".claude/skills/k-research/SKILL.md",".claude/skills/k-retro/SKILL.md",".claude/skills/k-retro/agents/openai.yaml",".claude/skills/k-review/SKILL.md",".claude/skills/k-review/agents/openai.yaml",".githooks/pre-commit",".gitignore","AGENTS.md","CONTEXT.md","RELEASE-0.9.0.md","keel/config.json","keel/decisions/DEC-161-field-hardening-four-defenses.md","keel/decisions/DEC-162-precommit-full-suite-on-framework-paths.md","keel/decisions/DEC-163-res-substance-floor.md","keel/decisions/DEC-164-lesson-candidate-reader.md","keel/decisions/DEC-165-defer-empty-compliant-audit.md","keel/decisions/DEC-174-feature-scoped-acceptance-verification-m.md","keel/decisions/DEC-176-legacy-res-citation-gap-warning-policy.md","keel/decisions/DEC-178-approve-chg008-direction-correct-in-v4.md","keel/decisions/DEC-181-legacy-res-external-migration-manifest.md","keel/decisions/DEC-182-review-repro-exit-code-contract.md","keel/decisions/INDEX.md","keel/features/f03-decisions/worklog.md","keel/features/f06-evidence/worklog.md","keel/features/f07-review/worklog.md","keel/features/f09-retro/worklog.md","keel/features/f10-issues/worklog.md","keel/features/f12-handoff/worklog.md","keel/features/f16-platforms/worklog.md","keel/features/f17-gate/worklog.md","keel/features/f18-approvals/worklog.md","keel/features/f21-config/worklog.md","keel/features/f22-migrate/worklog.md","keel/features/f23-bootstrap/worklog.md","keel/handoff.md","keel/issues/ISS-021-z-546eabd4.md","keel/issues/ISS-026-review-verify.md","keel/migrations/res-citation-legacy.json","keel/plan/INDEX.md","keel/plan/overview-v4.md","keel/requirements/INDEX.md","keel/requirements/v5.md","keel/review/headless.md","keel/templates/GAPHUNT.md","keel/templates/KLES.md","keel/templates/LES.md","keel/templates/OSS.md","keel/templates/RES.md","keel/templates/config.json","keel/templates/evidence.json","keel/templates/feature-plan.md","keel/templates/handoff.md","keel/templates/journal.md","keel/templates/migrate/report.md","keel/templates/migrate/superpowers.md","keel/templates/migrate/trellis.md","keel/templates/migrate/unstructured.md","keel/templates/requirements-entry.md","keel/templates/summary.md","keel/templates/worklog.md","keel/test-baseline.json","package-lock.json","package.json","tests/chg007-installer.test.ts","tests/chg010-approvals.test.ts","tests/chg010-budget.test.ts","tests/chg010-config.test.ts","tests/chg010-handoff.test.ts","tests/chg010-issues.test.ts","tests/chg010-knowledge.test.ts","tests/chg010-legacy-res.test.ts","tests/chg010-lessons.test.ts","tests/chg010-migrate.test.ts","tests/chg010-oss.test.ts","tests/chg010-overhead.test.ts","tests/chg010-record-protocols.test.ts","tests/chg010-retro.test.ts","tests/chg010-review-loop.test.ts","tests/chg010-update.test.ts","tests/chg010-verification.test.ts","tests/chg011-plan-review.test.ts","tests/chg011-quick-gate.test.ts","tests/chg011-release.test.ts","tests/dec170-openai-yaml.test.ts","tests/iss045-hook-git-env.test.ts","tests/p0-rework.test.ts","tests/p1-rework.test.ts","tests/p2-rework.test.ts","tests/r2-rework.test.ts","tests/r3-rework.test.ts","tests/r4-rework.test.ts","tests/r5-rework.test.ts","tests/r6-field-guards.test.ts","tests/w1-skeleton.test.ts","tests/w2-gate.test.ts","tests/w4-skills.test.ts","tests/w6-pilot.test.ts","tools/cli/doctor.js","tools/cli/init.js","tools/cli/migration.js","tools/cli/update.js","tools/gate/approve.ts","tools/gate/autoload.ts","tools/gate/candidates.ts","tools/gate/changechain.ts","tools/gate/check.ts","tools/gate/decisions.ts","tools/gate/gaphunt.ts","tools/gate/gate.ts","tools/gate/gen-test-baseline.ts","tools/gate/git.ts","tools/gate/hash.ts","tools/gate/issues.ts","tools/gate/knowledge.ts","tools/gate/lessons.ts","tools/gate/new.ts","tools/gate/osscheck.ts","tools/gate/rescheck.ts","tools/gate/result.ts","tools/gate/review.ts","tools/gate/reviewloop.ts","tools/gate/skills.ts","tools/gate/status.ts","tools/gate/testbase.ts","tools/gate/trace.ts"]
 ---
 
 # 方案级评审处置表（REQ-027）
@@ -24,3 +24,5 @@ paths: []
 | 轮 | 时间 | 事件 | 树哈希 | 详情 |
 |---|---|---|---|---|
 | 1 | 2026-08-28T00:00:00.000Z | passed（迁移自 state.json） | 23d1c2ee8396 | CHG-010 / overview-v3 一轮评审：openai-codex 实现，deepseek-via-opencode 异构复审，blocking=0 advisory=1；CHG-011 起改为方案级回路，state.json / rounds.json 删除 |
+| 0 | 2026-08-29T05:07:53.890Z | pack | a6399b86d79d | plan=overview-v4.md base=8f77b84 lens=attack files=152 implementer=claude-code reviewer=openai-codex pack=d230b41c87c2 |
+| 0 | 2026-08-29T05:23:25.967Z | ingest | a6399b86d79d | reviewer=openai-codex iss=- deferred=4 advisory=0 → passed |

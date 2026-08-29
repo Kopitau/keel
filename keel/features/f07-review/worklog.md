@@ -49,3 +49,9 @@
 - 进度：G-done 读处置表——passed → PASS（树已变 → WARN 不升级）、repairing → WARN、fused → FAIL；处置表缺失时活动功能全有 summary → FAIL「评审未跑」，否则 PASS（施工中）。单功能完成不再触发评审。`gitWriteTree` 把 disposition / findings 从绑定树里剔除，回路写自己的记录不再「移动」树。
 - 记录：ISS-023「回路 passed 后改树」由 FAIL 降为 WARN（证据新鲜度仍由 G-merge / CI 硬判）；ISS-026 的 rounds.json 守卫作废（备注写进 ISS-026）；旧 state.json 的一轮 passed 记录迁入 disposition.md（plan=overview-v3）。k-review 重写（≤ 80 行），k-impl「一切片一会话」改为自主回路。
 - 证据：`npx tsc --noEmit` 0 错；`node --test` 227 passed / 0 failed；`gate check --quick` PASS_WITH_WARN（仅 REQ-017/AC-4 proxy）；新黑盒 `tests/chg011-plan-review.test.ts` 7 条（REQ-027/AC-1、AC-6、AC-10 ×4、REQ-007/AC-6）。
+
+## 2026-08-29（CHG-011 Q7 首轮：Codex 异构评审）
+
+- 旁车证据：implementer=claude-code（本会话）；reviewer=openai-codex，`codex-cli 0.144.1`，`codex exec --ephemeral --ignore-user-config --ignore-rules --sandbox read-only --skip-git-repo-check -C <iso> -m gpt-5.6-sol -c model_reasoning_effort="high" -c web_search="disabled" --json --output-schema schema.json --output-last-message result.json <rubric>`；隔离目录只放 pack.json 副本 + schema + rubric；started 2026-08-29T05:09:48Z，finished 05:20:52Z，exit 0，events 97，恰 1 个 turn.completed、0 个 turn.failed/error；usage input 3,520,430（cached 3,341,824）/ output 22,699；pack d230b41c87c2（--base 8f77b84，152 文件，lens=attack），tree a6399b86d79d。
+- 结果：4 条 blocking、0 advisory：① 回路可用空 pack / 同源 harness 通过且不绑定规划范围；② 手改 disposition 前言即可伪造 passed；③ `gate-warn: G-req ref=APR-nnn` 一行放行全部哈希不符且不校验 APR 归属；④ 切片义务表点名的 8 个测试标记缺失（REQ-018/AC-6、REQ-009/AC-4、REQ-016/AC-3、AC-9、REQ-004/AC-10、REQ-009/AC-1、REQ-002/AC-4、REQ-003/AC-5）。
+- 首轮 ingest 在 Windows 全部探针被 cmd.exe 截断 → 误判 passed → ISS-054（运行器改 sh；待核实 blocking → in_review）。修复后重新 pack / ingest，四条探针退出 0 开 ISS，进入修复。

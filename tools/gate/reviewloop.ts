@@ -67,6 +67,8 @@ export type LoopState = {
   reviewer_harness: string;
   blocking_iss: string[];
   advisory: string[];
+  /** Blocking findings the gate could not verify (no probe, no impact, or probe not exit 0): they hold the loop in_review. */
+  deferred: string[];
   iss_fp: { [iss: string]: string };
   rounds_on: { [fp: string]: number };
   fuse_threshold: number;
@@ -288,6 +290,7 @@ function formatState(state: LoopState): string {
     `fuse_threshold: ${state.fuse_threshold || FUSE_THRESHOLD}`,
     `blocking_iss: ${JSON.stringify(state.blocking_iss ?? [])}`,
     `advisory: ${JSON.stringify(state.advisory ?? [])}`,
+    `deferred: ${JSON.stringify(state.deferred ?? [])}`,
     `iss_fp: ${JSON.stringify(state.iss_fp ?? {})}`,
     `rounds_on: ${JSON.stringify(state.rounds_on ?? {})}`,
     `paths: ${JSON.stringify(state.paths ?? [])}`,
@@ -322,6 +325,7 @@ export function readLoopState(ctx: Ctx): LoopState | null {
       fuse_threshold: Number(attrs.fuse_threshold ?? FUSE_THRESHOLD) || FUSE_THRESHOLD,
       blocking_iss: j<string[]>("blocking_iss", []),
       advisory: j<string[]>("advisory", []),
+      deferred: j<string[]>("deferred", []),
       iss_fp: j<{ [iss: string]: string }>("iss_fp", {}),
       rounds_on: j<{ [fp: string]: number }>("rounds_on", {}),
       paths: j<string[]>("paths", []),
@@ -590,14 +594,38 @@ export function fuseReport(state: LoopState): string {
   return lines.join("\n");
 }
 
+let shPath: string | null | undefined;
+
+/** ISS-054: the POSIX shell every supported OS already needs for the hooks (DEC-146). */
+export function probeShell(): string | null {
+  if (shPath !== undefined) return shPath;
+  if (process.platform !== "win32") {
+    shPath = "sh";
+    return shPath;
+  }
+  const where = spawnSync("where", ["sh"], { encoding: "utf8" });
+  const hit = (where.stdout || "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .find((l) => /sh\.exe$/i.test(l));
+  shPath = hit ?? null;
+  return shPath;
+}
+
+/**
+ * Attack probes are POSIX one-liners on every OS. cmd.exe mangles the quoting a
+ * `node -e "…"` probe needs, so on Windows a real hole read as "not reproduced"
+ * (ISS-054, first live plan-level review). Run through sh wherever it exists;
+ * cmd.exe is the last resort only.
+ */
 export function runReproCommand(
   cwd: string,
   command: string,
 ): { exit_code: number; refused: boolean; stdout: string } {
-  const r =
-    process.platform === "win32"
-      ? spawnSync("cmd.exe", ["/c", command], { encoding: "utf8", cwd, timeout: 60000 })
-      : spawnSync("sh", ["-c", command], { encoding: "utf8", cwd, timeout: 60000 });
+  const sh = probeShell();
+  const r = sh
+    ? spawnSync(sh, ["-c", command], { encoding: "utf8", cwd, timeout: 60000 })
+    : spawnSync("cmd.exe", ["/c", command], { encoding: "utf8", cwd, timeout: 60000 });
   const exit_code = r.status ?? 1;
   return { exit_code, refused: exit_code !== 0, stdout: (r.stdout || "") + (r.stderr || "") };
 }
@@ -641,6 +669,7 @@ export function emptyLoop(lens: Lens, impl: string, reviewer: string): LoopState
     reviewer_harness: reviewer,
     blocking_iss: [],
     advisory: [],
+    deferred: [],
     iss_fp: {},
     rounds_on: {},
     fuse_threshold: FUSE_THRESHOLD,
@@ -810,21 +839,26 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       return fail("attack-lens changes require a different reviewer harness (DEC-159/ISS-024)\n");
     }
     const out = fileFindings(ctx, findings, worklogRel);
+    // A blocking finding the gate could not verify is not refuted: it holds the
+    // loop in_review until a fresh review round drops it or supplies a probe that
+    // runs (C-42). Only "no ISS and nothing deferred" is a pass.
+    const status: LoopStatus = out.iss.length > 0 ? "repairing" : out.deferred.length > 0 ? "in_review" : "passed";
     const next: LoopState = {
       ...st,
       implementer_harness: impl,
       reviewer_harness: reviewer,
       blocking_iss: out.iss,
       advisory: [...new Set([...(st.advisory ?? []), ...out.advisory])],
+      deferred: out.deferred,
       iss_fp: { ...st.iss_fp, ...out.fps },
       lens,
       tree_hash: gitWriteTree(ctx),
-      status: out.iss.length > 0 ? "repairing" : "passed",
+      status,
     };
     writeLoopState(ctx, next);
     appendFindings(
       ctx,
-      `第 ${st.round + 1} 轮 · ${new Date().toISOString().slice(0, 10)} · reviewer=${reviewer} · lens=${lens}`,
+      `第 ${st.round + 1} 轮 · ${new Date().toISOString().slice(0, 10)} · pack=${st.pack_hash.slice(0, 12)} · reviewer=${reviewer} · lens=${lens}`,
       out.notes,
     );
     appendDisposition(
@@ -863,6 +897,11 @@ function issBody(ctx: Ctx, id: string): string {
 export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult {
   const st = readLoopState(ctx);
   if (!st || !st.pack_hash) return fail("no packed review state; gate loop pack then ingest\n");
+  if (st.blocking_iss.length === 0 && (st.deferred ?? []).length > 0 && st.status !== "passed") {
+    return fail(
+      `nothing to clear: ${st.deferred.length} blocking finding(s) are unverified (待核实); a fresh review round must drop them or supply a probe that runs — re-pack, re-review, re-ingest (C-42)\n`,
+    );
+  }
   const runRound = st.round + 1;
   const recordedAt = new Date().toISOString();
   const runTree = gitWriteTree(ctx);

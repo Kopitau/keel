@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 53
+- count: 54
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -58,3 +58,4 @@
 | ISS-051 | ISS-051 plan-index-current-version-hardcode | closed | `ISS-051-plan-index-current-version-hardcode.md` |
 | ISS-052 | ISS-052 loop-pack-重复暂存差异导致误报超限 | closed | `ISS-052-loop-pack.md` |
 | ISS-053 | ISS-053 `gate approve` 在工件 `path:` 带引号时把哈希留成 pending | closed | `ISS-053-gate-approve-leaves-content-sha256-pendi.md` |
+| ISS-054 | ISS-054 攻击探针在 Windows 经 cmd.exe 运行时引号被破坏，真实漏洞被记成「未复现」 | closed | `ISS-054-probe-runner-cmdexe-breaks-quoted-node-o.md` |
