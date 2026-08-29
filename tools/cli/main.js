@@ -1,4 +1,4 @@
-import { existsSync, readSync } from "node:fs";
+import { existsSync, readFileSync, readSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
@@ -9,6 +9,16 @@ import { runUpdate } from "./update.js";
 import { runUninstall } from "./uninstall.js";
 import { runDoctor } from "./doctor.js";
 
+/** The version consumers compare against their config keel_version (DEC-173). */
+export function installerVersion(source) {
+  try {
+    const pkg = JSON.parse(readFileSync(join(source, "package.json"), "utf8"));
+    return typeof pkg.version === "string" && pkg.version ? pkg.version : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 function help() {
   return ok(
     [
@@ -18,6 +28,7 @@ function help() {
       "  update [--force]",
       "  uninstall",
       "  doctor",
+      "  --version   print the installer version (package.json)",
       "other commands run the project copy at tools/gate/gate.ts",
       "",
     ].join("\n") + "\n",
@@ -44,6 +55,8 @@ export function runCli(args, opts) {
   const cmd = args[0] || "";
   const rest = args.slice(1);
   if (!cmd || cmd === "-h" || cmd === "--help" || cmd === "help") return help();
+  if (cmd === "--version" || cmd === "-v" || cmd === "version") return ok(`${installerVersion(source)}
+`);
   if (cmd === "init") return initFromArgs(cwd, source, rest);
   if (cmd === "update") return runUpdate(cwd, source, rest, opts);
   if (cmd === "uninstall") return runUninstall(cwd);

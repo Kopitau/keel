@@ -64,3 +64,8 @@
 ## 2026-08-29（zhaoxi 升级 0.7.0 → 0.9.0，记录在案的委托）
 
 - 用户「升级由你去跑」：按 DEC-173 的确认由用户在对话里给出，agent 经 `runCli(["update"], { confirmUpdate: () => "y" })` 执行，预览 107 项（tools/gate / .githooks / 模板 / k-* 技能与镜像），`keel_version` 0.9.0；按 RELEASE-0.9.0 删 `keel/test-baseline.json`（无 migrations / state.json）。zhaoxi 自己的 `gate check --quick`：PASS fail=0 warn=0 checks=4。以 keel-agent 身份提交（另一会话的 worktree claim 未动）。
+
+## 2026-08-29（版本号约定 + `keel --version`）
+
+- 用户原话：「以后版本先0.9.1这样 因为都还不算正式版本」——在正式版之前只走 0.9.x 补丁号递增（下一个 0.9.1），不升次版本；正式版本另议。worklog 级约定，不出 DEC。
+- 进度：`keel --version` / `-v` / `version` 打印安装器 package.json 版本（全局 CLI 是软链 → 与仓库一致）；黑盒 `tests/chg011-release.test.ts`。
