@@ -14,6 +14,9 @@ export const PRIMARY_CLIS: { id: string; bin: string; role: "primary" | "compati
   { id: "grok-build", bin: "grok", role: "primary" },
   { id: "deepseek-harness", bin: "dsh", role: "primary" },
   { id: "pi", bin: "pi", role: "compatible" },
+  // CHG-012: the Cursor desktop client; `cursor --version` is the IDE version. Its CLI is
+  // named `agent` (collides with Grok Build's) and is not part of the contract.
+  { id: "cursor", bin: "cursor", role: "compatible" },
 ];
 
 /** Skill / instruction roots each harness reads (R2). Structural, not a live invoke. */
@@ -24,6 +27,7 @@ export const HARNESS_DISCOVERY: { id: string; instructions: string; skills: stri
   { id: "grok-build", instructions: "AGENTS.md", skills: ".agents/skills" },
   { id: "deepseek-harness", instructions: "AGENTS.md", skills: ".agents/skills" },
   { id: "pi", instructions: "AGENTS.md", skills: ".agents/skills" },
+  { id: "cursor", instructions: "AGENTS.md", skills: ".agents/skills" },
 ];
 
 export function whichBin(bin: string): string | null {

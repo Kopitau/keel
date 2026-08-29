@@ -40,3 +40,9 @@
 - 进度：16 个技能全部保留，正文最长 60 行（≤ 80）；删掉对已删门禁与记录的引用（G-research / G-retro / X-oss / X-decisions / C-34 基线 / LES / KLES / OSS 文件 / journal / GAPHUNT 模板）。k-review 重写为方案级回路；k-impl 改自主回路（切完就继续，功能完成压缩 worklog）；k-retro 触发改为功能完成；k-handoff ≤ 10 行；k-log / k-research 的开源登记改为 RES `oss:` 字段；k-migrate 把三张映射表与报告结构并入正文；k-grill 缺口猎取写进需求书、REQ 行补 feature / must 字段（上一轮评审 advisory 闭环）；k-decide / k-evidence 去掉门禁措辞。`gate sync` 后 openai.yaml ×16 重新生成。
 - 进度：AGENTS.md（61 行）补自主回路与「冻结只管语义」两条规则、quick/全量说明、`loop` 命令、执法档改按 config；CONTEXT.md 加 quick check / body hash / disposition / autonomous loop 词条，OSS / LES 词条改写。
 - 证据：`node --test` 全绿（见提交）；`grep` 全库技能/模板/根文件无已删门禁名。
+
+## 2026-08-29（CHG-012：Cursor 客户端登记为兼容档）
+
+- 用户原话：「能不能让cursor也兼容」→ 三案后「A 不是cursor cli是cursor客户端」。调研 RES-908：Cursor 客户端原生读根 AGENTS.md 与 `.agents/skills`（`name` + `description` 即可），技能零改动；方案 B（给 User skills 加 `disable-model-invocation`）被否——Claude 文档明说该字段是「Only you can invoke」，会打断自主回路。
+- 进度：`platforms.compatible` 加 `cursor`（本仓 / 模板 / init）；`triggers.ts` 探测（`cursor --version` → 本机 3.17.21）与发现表；`platform-limits.md` 一行；`headless.md` 的 `## cursor`（客户端为准，CLI `agent` 与 Grok 同名、未纳入）；计划 v3（规划补充）；CHG-012 + 需求 v6（proposed）+ APR-006 草稿（待用户委托原话）；0.9.1 + `RELEASE-0.9.1.md`。黑盒 `tests/chg012-cursor.test.ts`（REQ-016/AC-1）；`w5-smoke` / `chg010-gates` 平台计数 6 → 7。
+- 待人工：REQ-016/AC-8 的 Cursor 客户端真实触发冒烟（在装有 Cursor 的机器上打开本仓，`/k-status` 能出现即可，记本节）。

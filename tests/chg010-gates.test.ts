@@ -50,9 +50,9 @@ test("REQ-016/AC-8 [proxy:real six-harness trigger evidence not recorded] local 
     platforms?: { primary?: unknown[]; compatible?: unknown[] };
   };
   assert.equal(config.platforms?.primary?.length, 5);
-  assert.equal(config.platforms?.compatible?.length, 1);
+  assert.equal(config.platforms?.compatible?.length, 2); // pi + cursor client (CHG-012)
   const recipe = readFileSync(join(repo, "keel", "review", "headless.md"), "utf8");
-  for (const harness of ["Claude Code", "Codex", "OpenCode", "Grok", "DeepSeek", "Pi"]) {
+  for (const harness of ["Claude Code", "Codex", "OpenCode", "Grok", "DeepSeek", "Pi", "Cursor"]) {
     assert.match(recipe, new RegExp(harness, "i"));
   }
   assert.match(recipe, /未核实|not verified/i);

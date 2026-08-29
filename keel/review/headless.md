@@ -109,6 +109,16 @@
 
 rc.2 命令面已核；原生 Windows 完整模型/沙箱链与余额未核实。
 
+## cursor
+
+- mode: ide-client（CHG-012：Cursor 桌面客户端读根 `AGENTS.md` 与 `.agents/skills`，零适配；本机以客户端为准）
+- command: 无 headless 配方。Cursor 的 CLI 名为 `agent`，与 Grok Build 的 `agent` 同名：本机 PATH 上的 `agent` 是 Grok 的，Cursor CLI 未安装、未实测。若日后接入：`agent -p --output-format json --mode=ask --sandbox enabled --trust --workspace <isolated-dir> --model <model> <fixed-review-rubric>`，探测须用绝对路径或 `--version` 鉴别
+- identity_family: 由 `--model` 决定（Cursor 是 harness 不是模型供应方），旁车证据必须记模型
+- on_failure: stop
+- same_harness_fallback: forbidden
+- source: https://cursor.com/docs/cli/reference/parameters ；https://cursor.com/docs/context/skills
+- retrieved: 2026-08-29
+
 ## pi
 
 - mode: sequential-session

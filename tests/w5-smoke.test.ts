@@ -164,10 +164,12 @@ test("REQ-024 DEC-148 fixture hashes the same LF corpus", () => {
 test("REQ-016 W5 trigger tokens, discovery roots, harness probe", () => {
   assert.deepEqual(skillTriggerGaps(repo), []);
   const rows = probeHarnesses();
-  assert.equal(rows.length, 6);
+  assert.equal(rows.length, 7);
   assert.ok(rows.some((r) => r.id === "grok-build" && r.role === "primary"));
   assert.ok(rows.some((r) => r.id === "pi" && r.role === "compatible"));
-  assert.equal(HARNESS_DISCOVERY.length, 6);
+  assert.ok(rows.some((r) => r.id === "cursor" && r.role === "compatible"));
+  assert.equal(HARNESS_DISCOVERY.length, 7);
+  assert.equal(HARNESS_DISCOVERY.find((d) => d.id === "cursor")?.skills, ".agents/skills");
   assert.equal(HARNESS_DISCOVERY.find((d) => d.id === "claude-code")?.skills, ".claude/skills");
   assert.equal(HARNESS_DISCOVERY.find((d) => d.id === "pi")?.skills, ".agents/skills");
   assert.ok(existsSync(join(repo, "AGENTS.md")));

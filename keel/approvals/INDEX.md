@@ -1,7 +1,7 @@
 # approvals index (generated)
 
 - generator: gate index
-- count: 5
+- count: 6
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -10,3 +10,4 @@
 | APR-003 | APR-003 CHG-008、CHG-010 与 requirements v4 合并批准 | approved | `APR-003-combined-chg008-chg010-requirements-v4.md` |
 | APR-004 | APR-004 CHG-011 keel 减重 | approved | `APR-004-chg-011-lighten-keel.md` |
 | APR-005 | APR-005 需求 v5 与统一规划 overview-v4 整体确认 | approved | `APR-005-requirements-v5-overview-v4.md` |
+| APR-006 | APR-006 CHG-012 Cursor 客户端登记为兼容档 + 需求 v6 | draft | `APR-006-chg-012-cursor-requirements-v6.md` |

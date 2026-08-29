@@ -12,6 +12,7 @@ Numbers have sources. Update when a vendor changes them. Soft budget over = warn
 | Skill `description` | 1024 characters | C-95 / C-118 (Agent Skills standard field) |
 | Autoload (root + catalog) | 10 KiB soft (W6 KEEP; measured 6427 bytes on 2026-08-21) | C-26 / C-118; Trellis SessionStart ~29 KB truncation lesson (R3a) |
 | Skill count | ~16 cap | C-121; DESIGN §9 working list is 16 |
+| Cursor client `AGENTS.md` | no documented cap (checked 2026-08-29) | RES-908; https://cursor.com/docs/context/rules |
 | Node (gate runtime) | **≥22.18.0** hard | DEC-150; type stripping unflagged in 22.18.0 (2025-07-31). CI matrix: Node 22 LTS + 24 LTS × three OS |
 
 Harness notes (not byte caps):

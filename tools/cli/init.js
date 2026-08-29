@@ -61,7 +61,7 @@ export function buildCleanConfig(opts) {
     },
     platforms: {
       primary: primary,
-      compatible: ["pi"],
+      compatible: ["pi", "cursor"],
       os_matrix: ["windows", "macos", "linux"],
       development: ["windows", "macos"],
       ci: ["linux"],
