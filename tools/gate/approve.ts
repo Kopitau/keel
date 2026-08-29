@@ -91,10 +91,13 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
     if (!existsSync(abs)) return fail(`artifact missing: ${rel}\n`);
     const digest = sha256Normalized(readFileSync(abs));
     const pathEsc = rel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const block = new RegExp(`(path:\\s+${pathEsc}[\\s\\S]*?content_sha256:\\s+)\\S+`);
-    if (block.test(next)) {
-      next = next.replace(block, `$1${digest}`);
+    // ISS-053: the path may be quoted (`path: "keel/x.md"`); a block that cannot be
+    // found must refuse, not silently leave content_sha256 at "pending".
+    const block = new RegExp(`(path:\\s+"?${pathEsc}"?[\\s\\S]*?content_sha256:\\s+)\\S+`);
+    if (!block.test(next)) {
+      return fail(`artifact block for ${rel} has no content_sha256 line to fill (ISS-053)\n`);
     }
+    next = next.replace(block, `$1${digest}`);
   }
   const today = new Date().toISOString().slice(0, 10);
   next = next.replace(/status:\s+\S+/, "status: approved");

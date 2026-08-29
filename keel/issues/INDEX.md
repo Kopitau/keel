@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 52
+- count: 53
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -57,3 +57,4 @@
 | ISS-050 | ISS-050 v4-req017-ac-numbering-stale-test-labels | closed | `ISS-050-v4-req017-ac-numbering-stale-test-labels.md` |
 | ISS-051 | ISS-051 plan-index-current-version-hardcode | closed | `ISS-051-plan-index-current-version-hardcode.md` |
 | ISS-052 | ISS-052 loop-pack-重复暂存差异导致误报超限 | closed | `ISS-052-loop-pack.md` |
+| ISS-053 | ISS-053 `gate approve` 在工件 `path:` 带引号时把哈希留成 pending | closed | `ISS-053-gate-approve-leaves-content-sha256-pendi.md` |
