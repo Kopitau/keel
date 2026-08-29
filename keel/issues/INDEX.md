@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 54
+- count: 57
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -59,3 +59,6 @@
 | ISS-052 | ISS-052 loop-pack-重复暂存差异导致误报超限 | closed | `ISS-052-loop-pack.md` |
 | ISS-053 | ISS-053 `gate approve` 在工件 `path:` 带引号时把哈希留成 pending | closed | `ISS-053-gate-approve-leaves-content-sha256-pendi.md` |
 | ISS-054 | ISS-054 攻击探针在 Windows 经 cmd.exe 运行时引号被破坏，真实漏洞被记成「未复现」 | closed | `ISS-054-probe-runner-cmdexe-breaks-quoted-node-o.md` |
+| ISS-055 | ISS-055 The review loop can pass an incomplete plan using an empty, same-harness pack | closed | `ISS-055-the-review-loop-can-pass-an-incomplete-p.md` |
+| ISS-056 | ISS-056 Hand-editing disposition front matter is sufficient to manufacture a passed review | closed | `ISS-056-hand-editing-disposition-front-matter-is.md` |
+| ISS-057 | ISS-057 The plan's named acceptance-test obligations are substantially missing | closed | `ISS-057-the-plans-named-acceptance-test-obligati.md` |

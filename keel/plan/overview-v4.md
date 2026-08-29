@@ -1,7 +1,7 @@
 # 统一实施规划总览 v4
 
 - date: 2026-08-29
-- status: 工作规划（CHG-011 与 APR-004 已批准；requirements v5 与本文件待 APR-005 整体点头）
+- status: 工作规划（CHG-011 / APR-004 已批准；本文件与 requirements v5 经 APR-005 整体确认）
 - replaces: overview-v3.md
 - change: CHG-011
 - requirements: v5.md
