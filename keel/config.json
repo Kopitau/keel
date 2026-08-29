@@ -5,7 +5,7 @@
   "records_dir": "keel",
   "enforcement_tier": "github",
   "wave": "R5-rework",
-  "keel_version": "0.8.0",
+  "keel_version": "0.9.0",
   "_comment_tier": "github | gitee | local. 2026-08-25 配置远端 github.com/Kopitau/keel（私有）后升到 github 档：分支保护 + required check + 审批目录 CODEOWNERS。权威执法在 CI 复算（C-45/C-104）。",
   "profiles": {
     "_comment": "Test profiles (C-126/C-128). Gate verify (W3) selects by touched paths.",
@@ -85,22 +85,9 @@
     ],
     "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001)."
   },
-  "budget": {
-    "_comment": "C-118 values. W6 2026-08-21 measured autoload 6427/10240 and KEPT all numbers. Soft over = warn; platform hard over = fail (C-119).",
-    "agents_md_max_lines": 150,
-    "agents_md_chain_max_bytes": 32768,
-    "skill_max_lines": 500,
-    "skill_description_max_chars": 1024,
-    "autoload_max_bytes": 10240,
-    "skill_count_cap": 16
-  },
   "optional": {
     "no_mistakes": false,
     "heterogeneous_review": false,
     "recorder_medium_for_longform": true
-  },
-  "oss_review_days": 28,
-  "knowledge_cap": 100,
-  "rules_area_cap": null,
-  "_comment_caps": "W6 2026-08-21 KEEP: oss_review_days=28, knowledge_cap=100, rules_area_cap=null (no rules dir). See keel/features/f20-context-budget/calibration-w6.md."
+  }
 }

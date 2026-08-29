@@ -54,3 +54,7 @@
 - 实现决定：每条新 `repro_run` 写 `round`、`recorded_at`、`tree_hash`；`attachReview` 追加旧历史；passed 判据按每个 ISS 的最后一次运行判断，早期退出 0 的漏洞态不删除、也不让后来确已拒绝的结果永久失败。
 - C-34: ref=DEC-177 —— 新增 `tests/chg010-review-loop.test.ts` 两条跨模块黑盒；兼容已有无新增元数据的旧 review 证据，不伪造其历史时间/hash。
 - 绿灯：新测试 2/2；连同 W3、CHG-008、R4/R5 为 44/44。ISS-036 按既定回归测试防线关闭；tree change 使旧 evidence stale，重跑 verify 后 fresh 且 review 历史字节级保持。
+
+## 2026-08-29（CHG-011 Q6 全量证据）
+
+- 进度：X-evidence 只在全量 check 判（quick 不含）；`gitWriteTree` 剔除评审回路产物；`gate verify` 在提交后的干净树上重跑，证据见提交信息。

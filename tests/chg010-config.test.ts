@@ -54,5 +54,5 @@ test("REQ-021/AC-5 config parser ignores underscore comments and rejects an inva
   assert.equal(isProfileUnset({ profiles: { active: ["missing"] } }), true);
   assert.equal(isProfileUnset({ profiles: { active: ["a", "b"], a: {}, b: {} } }), true);
   const template = JSON.parse(read("keel/templates/config.json")) as Record<string, unknown>;
-  for (const key of ["profiles", "identities", "platforms", "budget", "optional"]) assert.ok(key in template);
+  for (const key of ["profiles", "identities", "platforms", "optional"]) assert.ok(key in template);
 });

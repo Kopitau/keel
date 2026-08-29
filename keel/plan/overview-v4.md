@@ -85,7 +85,7 @@
 3. **Q3 评审改方案级（F7/F10/F6，触碰 `reviewloop.ts`、`evidence.ts`）**：findings.md + disposition.md；G-done 读处置表；ISS ingest/clear 协议保留；ISS-036 闭环。verify: 正反向黑盒。
 4. **Q4 记录、模板与技能减量（F1/F2/F9/F12/F13/F15/F16/F22）**：模板 18 → 8；journal/LES/KLES/OSS 目录不再新建；16 个技能正文 ≤ 80 行并删除已删门禁的引用；k-impl 写自主回路（切完就继续）；CONTEXT.md / AGENTS.md 同步。verify: `gate sync` + 一次性核对命令数技能与 AGENTS 行数（不进 `tests/`，N5）。
 5. **Q5 决策与问题复核（F3/F10）**：DEC-162/164/176/181 superseded；DEC-174/178/182/161/165 复核记录；ISS-021 防线改由 X-trace 承担并关闭；CHG-011 影响评估对账。verify: `gate index` + 记录一致。
-6. **Q6 全量验证与消费项目（F23/F24）**：`node --test`、`npx tsc --noEmit`、`gate verify`、`gate check`；`CHANGELOG.md` 列出 CHG-011 破坏点（删除的门禁/文件/模板、消费项目要做的事，C-140）；zhaoxi `keel update` 并跑 quick；本仓 handoff ≤ 10 行。
+6. **Q6 全量验证与消费项目（F23/F24）**：`node --test`、`npx tsc --noEmit`、`gate verify`、`gate check`；`RELEASE-0.9.0.md` 列出 CHG-011 破坏点（删除的门禁/文件/模板、消费项目要做的事，C-140；版本 0.8.0 → 0.9.0）；zhaoxi `keel update` 并跑 quick；本仓 handoff ≤ 10 行。
 7. **Q7 方案级评审（F7）**：Q1–Q6 各在所属功能 worklog 记进度、`gate check --all` 全绿、`gate verify` 证据落盘后派一轮空白上下文评审（门禁改动 → 异构 headless）；这是 REQ-027/AC-1 对本版的具体化——本版工作单元是切片，不以每个 F 的 summary 为触发。处置后进入验收。
 
 ## 切片 → 测试义务
@@ -97,7 +97,7 @@
 | Q3 | F7/F10/F6 | REQ-027/AC-1, AC-4, AC-5, AC-9, AC-10；REQ-010/AC-2；REQ-009/AC-4；REQ-007/AC-6 |
 | Q4 | F1/F2/F4/F9/F12/F13/F15/F16/F22 | REQ-016/AC-3, AC-9；REQ-012/AC-1；REQ-004/AC-10；REQ-009/AC-1；REQ-002/AC-4；REQ-022/AC-1（machine-doc 均以协议检查命名） |
 | Q5 | F3/F10 | 记录复核，无新测试（REQ-003/AC-5 现有测试仍绿） |
-| Q6 | F23/F24 | REQ-025/AC-7（现有）；REQ-023/AC-6（CHANGELOG 协议检查） |
+| Q6 | F23/F24 | REQ-025/AC-7（现有）；REQ-023/AC-6（RELEASE 说明协议检查） |
 | Q7 | F7 | 评审产物两份（REQ-027/AC-10） |
 
 ## 完成边界

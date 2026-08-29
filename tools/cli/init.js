@@ -68,18 +68,7 @@ export function buildCleanConfig(opts) {
       deepseek_harness_windows:
         "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001).",
     },
-    budget: {
-      agents_md_max_lines: 150,
-      agents_md_chain_max_bytes: 32768,
-      skill_max_lines: 500,
-      skill_description_max_chars: 1024,
-      autoload_max_bytes: 10240,
-      skill_count_cap: 16,
-    },
     optional: { no_mistakes: false, heterogeneous_review: false, recorder_medium_for_longform: true },
-    oss_review_days: 28,
-    knowledge_cap: 100,
-    rules_area_cap: null,
   };
   return JSON.stringify(body, null, 2) + "\n";
 }

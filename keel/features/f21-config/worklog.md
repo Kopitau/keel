@@ -10,3 +10,7 @@
 ## 2026-08-28（P5）
 
 - 进度：补语言/术语/node:test+tsc/消费画像/notebook 边界/config 五条逐 AC 黑盒。profile selector 对字符串、缺失目标和当前尚不支持的多 active 值 fail closed，不再静默用默认 `node --test`；`_comment` 继续忽略。定向 P5：52 passed / 0 failed。
+
+## 2026-08-29（CHG-011 Q6 config 去掉死开关）
+
+- 进度：`keel/config.json`、`keel/templates/config.json`、`keel init` 写出的干净 config 去掉 `budget` / `oss_review_days` / `knowledge_cap` / `rules_area_cap`（对应检查已删，parser 从不读取）；`keel_version` 0.9.0。`tests/w1-skeleton` / `chg010-config` 的必需键清单同步去掉 `budget`。

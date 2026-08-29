@@ -55,3 +55,8 @@
 
 - 进度：从 commit `eb4e232` 真正执行 npm pack→隔离 prefix install→`keel init`→交互式 `keel update`，消费项目由 0.7.0 升 0.8.0；预览后输入单字母 y，legacy RES 前后规范化 hash 一致，doctor ok，quick fail=0。详见 `consumer-update-p6.md`。
 - 边界：未发布公共 npm、未触发 GitHub Actions；真实六格仍为 proxy。
+
+## 2026-08-29（CHG-011 Q6 发布与消费项目）
+
+- 进度：版本 0.8.0 → 0.9.0（package.json / package-lock.json）；`RELEASE-0.9.0.md` 列出 CHG-011 破坏点与消费项目要做的事（C-140）；黑盒 `tests/chg011-release.test.ts` REQ-023/AC-6。`tools/cli/update.js` 去掉 legacy 清单预览/写入，`migration.js` 只剩 semver。
+- zhaoxi：`printf 'y\n' | node /e/program/en/bin/keel.js update` 打出完整预览（tools/gate 24 项 OVERWRITE/ADD/DELETE 等）后按 DEC-173 取消——确认只认 TTY 上的单字母 y，管道不算（`tools/cli/main.js` confirmUpdate）。这是设计行为，不绕：升级留给用户在交互终端跑 `node /e/program/en/bin/keel.js update`。zhaoxi 当前 quick 仍是旧 22 条门禁全绿，`keel_version` 0.7.0。

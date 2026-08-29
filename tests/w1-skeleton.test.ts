@@ -36,7 +36,6 @@ test("I-17 REQ-021 config.json has required keys and profiles.keel-gate is the g
     "profiles",
     "identities",
     "platforms",
-    "budget",
     "optional",
   ]) {
     assert.ok(key in data, key);
