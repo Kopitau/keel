@@ -25,7 +25,7 @@ function help() {
       "usage: keel <command>",
       "project commands (current directory):",
       "  init [--name n] [--tier local|github|gitee] [--human 'Name <email>']",
-      "  update [--force]",
+      "  update [--force] [--yes]",
       "  uninstall",
       "  doctor",
       "  --version   print the installer version (package.json)",

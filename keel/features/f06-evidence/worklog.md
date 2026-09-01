@@ -77,3 +77,9 @@
 
 - 用户："273条测试通过，门禁这些感觉没有什么意义。应该有类似测试或者门禁分类的说明，通过什么测试了XX功能通过了。" `trace.ts` 新增 `featureCoverageLines`：每个带计划的功能一行——编号与目录、已 summary / 施工中、认领的每条 REQ 标题、验收条目数、黑盒 / 替身（哪几条）/ 缺失（哪几条）、测试文件；`gate trace` 开头打印「按功能（人话）」节，`gate verify` 在 counts 后打印 `coverage by feature:`。AGENTS.md「Turn end」要求汇报证据时按功能引用这份摘要而不是测试总数。
 - 证据：`tests/chg014-evidence-summary.test.ts` ×3（夹具两功能的精确文案、verify 输出、本仓 F17 行）。
+
+## 2026-09-01（ISS-068：junit 多 suite 计数；0.9.3）
+
+- 试点清理时 zhaoxi 主干 `gate verify` 报 `passed=5`，node:test 自己汇总 193 条。根因：`parseJunit` 取全文第一个 `tests=` 属性；node:test 每个 describe 一个 `<testsuite>`，根元素无总数。修复：只认根元素属性，否则逐个数 `<testcase>` 减去带 `<failure>`/`<error>`/`<skipped>` 子元素的。
+- 探针（DEC-182）：修复前树 61cdb1e8b7eb… 上 `passed=5 failed=0`、退出 0；修复后同一探针退出 1。
+- 证据：`tests/iss068-junit-suites.test.ts` ×2（node:test 嵌套 suite + 文件级失败；pytest 单 suite 与 vitest 根总数不变）。

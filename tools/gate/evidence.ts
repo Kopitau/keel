@@ -126,16 +126,25 @@ export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
 }
 
 export function parseJunit(xml: string): { passed: number; failed: number; skipped: number } {
-  const attrTests = Number((xml.match(/\btests="(\d+)"/) ?? [])[1] ?? NaN);
+  // ISS-068: only the ROOT element's totals are authoritative (vitest writes them on
+  // <testsuites>). node:test emits one <testsuite tests="n"> per describe() block and
+  // bare <testcase> entries for files that failed to load, so the first tests="n" found
+  // anywhere in the document is one suite's count, not the run's (zhaoxi: 5 of 193).
+  const root = xml.match(/<testsuites\b([^>]*)>/);
+  const rootAttrs = root?.[1] ?? "";
+  const attrTests = Number((rootAttrs.match(/\btests="(\d+)"/) ?? [])[1] ?? NaN);
   if (!Number.isNaN(attrTests)) {
-    const failures = Number((xml.match(/\bfailures="(\d+)"/) ?? [])[1] ?? 0);
-    const skipped = Number((xml.match(/\bskipped="(\d+)"/) ?? [])[1] ?? 0);
-    const errors = Number((xml.match(/\berrors="(\d+)"/) ?? [])[1] ?? 0);
+    const failures = Number((rootAttrs.match(/\bfailures="(\d+)"/) ?? [])[1] ?? 0);
+    const skipped = Number((rootAttrs.match(/\bskipped="(\d+)"/) ?? [])[1] ?? 0);
+    const errors = Number((rootAttrs.match(/\berrors="(\d+)"/) ?? [])[1] ?? 0);
     const failed = failures + errors;
     return { passed: Math.max(0, attrTests - failed - skipped), failed, skipped };
   }
+  // Otherwise count the elements themselves: every <testcase>, minus the ones carrying a
+  // <failure>/<error>/<skipped> child. Correct for node:test (nested suites, file-level
+  // failures), pytest (one suite) and vitest (per-file suites).
   const cases = (xml.match(/<testcase\b/g) ?? []).length;
-  const failed = (xml.match(/<failure\b/g) ?? []).length;
+  const failed = (xml.match(/<failure\b/g) ?? []).length + (xml.match(/<error\b/g) ?? []).length;
   const skipped = (xml.match(/<skipped\b/g) ?? []).length;
   const passC = xml.match(/<!-- pass (\d+) -->/);
   if (passC) {

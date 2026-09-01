@@ -24,7 +24,7 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-版本 0.9.2（2026-09-01）。requirements **current = v6.md**（APR-006，2026-09-01 用户原话一次批准，绑定 CHG-012 Cursor 兼容档、CHG-013 评审去攻击面 / 不强制异构、CHG-014 zhaoxi / fmea-v3 审计回流：DEC-185～190、ISS-058～067 已闭环）；v5 冻结不改。规划 current = overview-v4.md（APR-005）。
+版本 0.9.3（2026-09-01；0.9.2 同日，补丁见 `RELEASE-0.9.3.md`）。requirements **current = v6.md**（APR-006，2026-09-01 用户原话一次批准，绑定 CHG-012 Cursor 兼容档、CHG-013 评审去攻击面 / 不强制异构、CHG-014 zhaoxi / fmea-v3 审计回流：DEC-185～190、ISS-058～067 已闭环）；v5 冻结不改。规划 current = overview-v4.md（APR-005）。
 
 CHG-014 八个切片已全部落地并提交（S0 记录 → S1 钩子/探测 → S3 冻结件与基线复核 → S4 证据快照 → S5 白名单 → S6 评审回路 → S2 status → S7 文档技能 → S8 发布）；每个切片有红绿测试与 worklog 节，证据见 `RELEASE-0.9.2.md` 与各功能 worklog 2026-09-01 节。
 

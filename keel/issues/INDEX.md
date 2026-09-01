@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 67
+- count: 69
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -72,3 +72,5 @@
 | ISS-065 | ISS-065 gate status next: says 'no feature planned yet — add feature plans' when the remaining features are claimed (claim.json) and not done | closed | `ISS-065-gate-status-next-says-no-feature-planned.md` |
 | ISS-066 | ISS-066 Interactive git commit still folds the keel trailers into the subject: the hook writes them at the top of an empty message with no blank line left for the subject | closed | `ISS-066-interactive-git-commit-still-folds-the-k.md` |
 | ISS-067 | ISS-067 A committed keel/review/raw archive (rejected reviewer output) is diffed into the next review pack | closed | `ISS-067-a-committed-keelreviewraw-archive-reject.md` |
+| ISS-068 | ISS-068 verify 把 junit 里第一个 `<testsuite>` 的 `tests=` 当成整场计数（zhaoxi 193 条只数到 5） | closed | `ISS-068-verify-counts-one-junit-suite-as-the-run.md` |
+| ISS-069 | ISS-069 `keel update` 只在交互终端里接受确认，agent 会话无法替人更新 | closed | `ISS-069-keel-update-needs-a-tty-to-say-yes.md` |

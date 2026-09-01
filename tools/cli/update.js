@@ -306,8 +306,11 @@ export function runUpdate(cwd, source, args, io) {
     const operations = makeOperations(desired, current);
     const preview = formatPreview(sourceVersion, targetVersion, operations);
     if (typeof io?.emitUpdatePreview === "function") io.emitUpdatePreview(preview);
-    let answer = null;
-    if (typeof io?.confirmUpdate === "function") {
+    // ISS-069: an agent session has no terminal to type y into; --yes is the audited way
+    // to say it. A piped "y" still does not count (REQ-025/AC-7 keeps stray input out).
+    const yes = hasFlag(args, "yes");
+    let answer = yes ? "y" : null;
+    if (!yes && typeof io?.confirmUpdate === "function") {
       try {
         answer = io.confirmUpdate();
       } catch {
@@ -316,7 +319,8 @@ export function runUpdate(cwd, source, args, io) {
     }
     const returnedPreview = typeof io?.emitUpdatePreview === "function" ? "" : preview;
     if (!/^y$/i.test(typeof answer === "string" ? answer.trim() : "")) {
-      return ok(returnedPreview + "keel update cancelled; no files changed\n");
+      const hint = answer === null ? " (no terminal to confirm in? pass --yes)" : "";
+      return ok(returnedPreview + `keel update cancelled; no files changed${hint}\n`);
     }
     const applied = applyOperations(cwd, operations, current);
     if (applied.error) {
@@ -328,6 +332,7 @@ export function runUpdate(cwd, source, args, io) {
         "keel update applied " +
         targetVersion +
         (hasFlag(args, "force") ? " (--force)" : "") +
+        (yes ? " (--yes)" : "") +
         "\n",
     );
   } catch (error) {

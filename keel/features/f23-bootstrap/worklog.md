@@ -79,3 +79,10 @@
 
 - 进度：`package.json` / `keel/config.json` 0.9.1 → 0.9.2；`RELEASE-0.9.2.md`（破坏点：门禁对漂移与无 APR 基线变红、树哈希排除 approvals / review/raw、ingest 形状校验与复发熔断、白名单形状、尾注成段、harness 探测；消费项目要做的事 5 条）；OVERVIEW 在途节改写为 v6 / APR-006 待点头与 CHG-014 八切片已落地；handoff 6 行。
 - 证据（提交前脏树）：`npx tsc --noEmit` exit 0；`node --test` **263 / 263 / 0 fail**；`gate verify` PASS（tree `7588ebc3…`，passed=263）；`gate check` 8 条中 G-done / G-merge / X-evidence 仅因工作树脏（S8 文件未提交）FAIL，X-apr WARN（已 waiver），其余 PASS；`gate status` 打印 `keel: 0.9.2 (installer 0.9.2)`。提交后在干净树重跑 verify + check 的结果记在下一行。
+
+## 2026-09-01（ISS-069：`keel update --yes`；0.9.3）
+
+- 试点清理时 `echo y | keel update` 在两个仓库都被当成取消：`confirmUpdate` 只认 TTY。加 `--yes`（预览照常、结果行标 `(--yes)`），非 TTY 又无 `--yes` 的取消提示点名该开关；管道里的 y 仍不算（REQ-025/AC-7 防误触不变）。
+- 探针（DEC-182）：修复前树 8878174e8b47… 上注入非 TTY 确认、无开关 → cancelled、退出 0；修复后同一探针加 `--yes` 应用、退出 1。
+- 证据：`tests/chg010-update.test.ts` ISS-069 ×2；真实使用：zhaoxi / fmea-v3 用 `keel update --yes` 升到 0.9.3。
+- 版本 0.9.3：`package.json`、`keel/config.json`、`RELEASE-0.9.3.md`。

@@ -280,3 +280,34 @@ test("REQ-025/AC-7 real noninteractive bin prints preview and y/N then cancels o
     cleanup(root);
   }
 });
+
+test("ISS-069 keel update --yes applies the previewed operations when no terminal can confirm", () => {
+  const source = sourceFixture();
+  const root = projectFixture();
+  try {
+    // confirmUpdate returning null is exactly what an agent session (no TTY) gets.
+    const result = runCli(["update", "--yes"], { cwd: root, source, confirmUpdate: () => null });
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /keel update preview 0\.7\.0 -> 0\.8\.0/);
+    assert.match(result.stdout, /keel update applied 0\.8\.0 \(--yes\)/);
+    assert.equal(readFileSync(join(root, "tools", "gate", "new.txt"), "utf8"), "brand new\n");
+    assert.equal(existsSync(join(root, "tools", "gate", "stale.txt")), false);
+    const cfg = JSON.parse(readFileSync(join(root, "keel", "config.json"), "utf8")) as { keel_version?: string };
+    assert.equal(cfg.keel_version, "0.8.0");
+  } finally {
+    cleanup(root, source);
+  }
+});
+
+test("ISS-069 without --yes a non-terminal session is told about the flag and nothing is written", () => {
+  const source = sourceFixture();
+  const root = projectFixture();
+  try {
+    const result = runCli(["update"], { cwd: root, source, confirmUpdate: () => null });
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /cancelled; no files changed \(no terminal to confirm in\? pass --yes\)/);
+    assert.equal(existsSync(join(root, "tools", "gate", "new.txt")), false);
+  } finally {
+    cleanup(root, source);
+  }
+});
