@@ -64,4 +64,4 @@
 | ISS-057 | ISS-057 The plan's named acceptance-test obligations are substantially missing | closed | `ISS-057-the-plans-named-acceptance-test-obligati.md` |
 | ISS-058 | ISS-058 提交尾注紧贴主题行追加，被 git 折进主题 | closed | `ISS-058-commit-trailers-are-appended-without-a-b.md` |
 | ISS-059 | ISS-059 harness 探测只认 Claude Code，DEC-166 的提交守卫在其他 agent 环境从不触发 | closed | `ISS-059-harness-detection-knows-only-claude-code.md` |
-| ISS-060 | ISS-060 空项目上 `gate status` 的 `next:` 行误导为"计划完成待评审" | open | `ISS-060-gate-status-next-line-misleads-on-an-emp.md` |
+| ISS-060 | ISS-060 空项目上 `gate status` 的 `next:` 行误导为"计划完成待评审" | closed | `ISS-060-gate-status-next-line-misleads-on-an-emp.md` |

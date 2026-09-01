@@ -18,3 +18,8 @@
 ## 2026-08-29（CHG-011 Q4 handoff ≤ 10 行）
 
 - 进度：handoff 模板与 journal 模板删除；`keel/handoff.md` 改为 3 行指针（下一步 / 该读 / 阻塞）；跨 harness 恢复演练的人工证据改记在功能 worklog。黑盒 `tests/chg010-handoff.test.ts` REQ-012/AC-1 改验「≤ 10 行且含仓库路径」，AC-3 保持 proxy。
+
+## 2026-09-01（CHG-014 S2：ISS-060 / REQ-012/AC-5 `gate status` 的 next 行）
+
+- 进度：`status.ts` 的 `next:` 改为按项目状态四选一（无基线 → run k-new；有基线无规划 → finish k-new step 4；有前沿 → start Fnn；全部 summary → k-review 再 k-accept；只剩被阻塞 → 列 blocker）。fmea-v3 在 Cursor 里被"no unblocked feature left — plan-level review"误导的那一幕不会再发生。
+- 证据：`tests/chg014-status.test.ts` `ISS-060 …`、`REQ-012/AC-5 …`；`node --test` **260/260**；`npx tsc --noEmit` 干净；本仓 `gate status` 第四行现为 `next: start F1 (frontier); then read …`。

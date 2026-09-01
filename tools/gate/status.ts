@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
@@ -8,11 +9,38 @@ import { ok, type CmdResult } from "./result.ts";
 import { liveClarifications } from "./check.ts";
 import { readCurrent } from "./indexgen.ts";
 import { runCheck } from "./check.ts";
-import { computeFrontier } from "./frontier.ts";
+import { computeFrontier, type Frontier } from "./frontier.ts";
 import { buildTrace } from "./trace.ts";
+import { isAtLeast } from "./node-version.ts";
+import { planComplete } from "./reviewloop.ts";
+
+export type StatusShape = {
+  hasBaseline: boolean;
+  hasPlan: boolean;
+  frontier: string[];
+  blocked: Frontier["blocked"];
+  planDone: boolean;
+};
+
+/**
+ * ISS-060 / REQ-012 AC-5: the `next:` line is the one sentence a fresh session acts
+ * on. An empty project used to read "no unblocked feature left — plan-level review",
+ * which a pilot's model took as "the plan is finished" before any baseline existed.
+ */
+export function nextLine(shape: StatusShape, handoff: string): string {
+  if (!shape.hasBaseline) return "no baseline yet — run k-new (interview → research → decisions → unified plan)";
+  if (!shape.hasPlan) return "requirements baselined, plan missing — finish k-new step 4 (unified plan + APR), then k-impl";
+  if (shape.frontier.length > 0) return `start ${shape.frontier[0]} (frontier); then read ${handoff}`;
+  if (shape.planDone) return `all features have summary.md — plan-level review (k-review), then acceptance (k-accept); read ${handoff}`;
+  if (shape.blocked.length > 0) {
+    const waiting = shape.blocked.map((b) => `${b.id} (by ${b.by.join(", ")})`).join("; ");
+    return `no unblocked feature — waiting on blockers: ${waiting}; read ${handoff}`;
+  }
+  return `no feature planned yet — add feature plans (k-new step 4); read ${handoff}`;
+}
 
 /** CHG-011: the first three lines answer the only three questions a session has. */
-function humanLines(ctx: Ctx, frontier: string[], handoff: string): string[] {
+function humanLines(ctx: Ctx, shape: StatusShape, handoff: string): string[] {
   const quick = runCheck(ctx, ["--quick"]);
   const fails = quick.stdout.split("\n").filter((l) => l.startsWith("FAIL "));
   const warns = quick.stdout.split("\n").filter((l) => l.startsWith("WARN "));
@@ -24,11 +52,51 @@ function humanLines(ctx: Ctx, frontier: string[], handoff: string): string[] {
     fails.length === 0 && warns.length === 0
       ? "nothing"
       : [...fails, ...warns].map((l) => l.replace(/^(FAIL|WARN) /, "")).join("; ");
-  const next =
-    frontier.length > 0
-      ? `start ${frontier[0]} (frontier); then read ${handoff}`
-      : `no unblocked feature left — plan-level review (k-review), then acceptance; read ${handoff}`;
-  return [`commit: ${commit}`, `missing: ${missing}`, `next: ${next}`];
+  return [`commit: ${commit}`, `missing: ${missing}`, `next: ${nextLine(shape, handoff)}`];
+}
+
+function readPackageVersion(dir: string): string {
+  const pkg = join(dir, "package.json");
+  if (!existsSync(pkg)) return "";
+  try {
+    const j = JSON.parse(readFileSync(pkg, "utf8")) as { version?: unknown };
+    return typeof j.version === "string" ? j.version : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * REQ-025 AC-10: the globally installed keel, if it can be found cheaply.
+ * `KEEL_INSTALLER_ROOT` names it (or `none` to skip); otherwise `npm root -g`.
+ * A pilot spent two days hardening a mechanism upstream had deleted the same
+ * afternoon because nothing ever said "a newer keel is installed".
+ */
+export function installerVersion(env: { [k: string]: string | undefined } = process.env): string {
+  const explicit = (env.KEEL_INSTALLER_ROOT ?? "").trim();
+  if (explicit) {
+    if (/^(none|0|off)$/i.test(explicit)) return "";
+    return readPackageVersion(explicit);
+  }
+  try {
+    const r = spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", ["root", "-g"], {
+      encoding: "utf8",
+      timeout: 4000,
+      shell: process.platform === "win32",
+    });
+    const root = (r.stdout || "").trim().split(/\r?\n/).pop() ?? "";
+    if (r.status !== 0 || !root) return "";
+    return readPackageVersion(join(root, "keel"));
+  } catch {
+    return "";
+  }
+}
+
+export function versionLine(projectVersion: string, installer: string): string {
+  const project = projectVersion || "unknown";
+  if (!installer) return `keel: ${project}`;
+  if (projectVersion && isAtLeast(projectVersion, installer)) return `keel: ${project} (installer ${installer})`;
+  return `keel: ${project} (installer ${installer} — run keel update)`;
 }
 
 export function runStatus(ctx: Ctx): CmdResult {
@@ -63,9 +131,17 @@ export function runStatus(ctx: Ctx): CmdResult {
   }
   const fr = computeFrontier(ctx);
   const proxyAcs = buildTrace(ctx).rows.reduce((n, r) => n + r.proxyAc.length, 0);
+  const shape: StatusShape = {
+    hasBaseline: Boolean(reqCurrent.file) && existsSync(join(ctx.records, "requirements", reqCurrent.file ?? "")),
+    hasPlan: Boolean(planCurrent.file) && existsSync(join(ctx.records, "plan", planCurrent.file ?? "")),
+    frontier: fr.frontier,
+    blocked: fr.blocked,
+    planDone: planComplete(ctx),
+  };
   const lines = [
     "keel status",
-    ...humanLines(ctx, fr.frontier, handoff),
+    ...humanLines(ctx, shape, handoff),
+    versionLine(typeof cfg.keel_version === "string" ? cfg.keel_version : "", installerVersion()),
     `wave: ${typeof cfg.wave === "string" && cfg.wave ? cfg.wave : "unknown"}`,
     `runtime: node+ts ${process.versions.node}`,
     `root: ${ctx.root}`,

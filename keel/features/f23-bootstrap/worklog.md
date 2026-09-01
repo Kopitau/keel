@@ -69,3 +69,8 @@
 
 - 用户原话：「以后版本先0.9.1这样 因为都还不算正式版本」——在正式版之前只走 0.9.x 补丁号递增（下一个 0.9.1），不升次版本；正式版本另议。worklog 级约定，不出 DEC。
 - 进度：`keel --version` / `-v` / `version` 打印安装器 package.json 版本（全局 CLI 是软链 → 与仓库一致）；黑盒 `tests/chg011-release.test.ts`。
+
+## 2026-09-01（CHG-014 S2：REQ-025/AC-10 安装器版本提示）
+
+- 进度：`gate status` 第五行 `keel: <项目 keel_version> (installer <版本>)`，安装器较新时追加 `— run keel update`。安装器位置：`KEEL_INSTALLER_ROOT`（`none` 跳过）或 `npm root -g` 下的 `keel/package.json`（4 s 超时，失败只打印项目版本）。zhaoxi 在 0.9.0 上给上游当天已删除的机制加固两天，这行字就是为它加的。
+- 证据：`tests/chg014-status.test.ts` `REQ-025/AC-10 …`（较新 / 相等 / 更旧 / 找不到四种）；本仓打印 `keel: 0.9.1 (installer 0.9.1)`。

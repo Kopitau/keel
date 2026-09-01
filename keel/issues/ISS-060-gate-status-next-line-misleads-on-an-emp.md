@@ -1,9 +1,9 @@
 ---
 id: ISS-060
 schema: iss-v2
-status: open
-defense_kind: ""
-defense_pointer: ""
+status: closed
+defense_kind: "regression-test + status wording"
+defense_pointer: "tools/gate/status.ts (nextLine); tests/chg014-status.test.ts"
 feature: "F12"
 fingerprint: "status-next-line-empty-project-review-wording"
 source: "audit 2026-09-01 (fmea-v3 Cursor 08-29 15:36)"
@@ -33,16 +33,21 @@ cd "$(mktemp -d)" && git init -q . && mkdir -p keel && echo '{"records_dir":"kee
 
 ## 待诊断防线
 
-打开态只写"待诊断"，未知根因和修复不得编造。
+（已诊断，见下）
 
 ## 根因
 
+`humanLines` 只看 frontier 是否为空来选 `next:` 的两句话之一；空项目、有基线无规划、全部功能已完成三种状态的 frontier 都是空的，于是都落到"no unblocked feature left — plan-level review"。
+
 ## 修复
+
+`status.ts` 新增 `nextLine(shape)`：无需求基线 → run k-new；有基线无当前规划 → finish k-new step 4；有前沿 → start Fnn；全部功能有 summary → k-review 再 k-accept；只剩被阻塞功能 → 列出 blocker；有规划无功能 → 补功能计划。同一切片顺手加了 `keel: <项目版本> (installer <版本>)` 行（REQ-025/AC-10）。
 
 ## 为何未被更早发现
 
+本仓自己的 frontier 从未为空过（24 个功能都没有 summary），`gate status` 的 next 行在本仓只走过"start Fnn"这一支；REQ-012/AC-2 的测试只断言前三行的前缀，不断言内容。
+
 ## 闭环选择与理由
 
-选了哪一级、为什么不用更高级：回归测试 / lint / 门禁或 hook / 项目规则 / 决策修订 / 显式不修。
+回归测试 + 措辞：`tests/chg014-status.test.ts` `ISS-060 …`（空项目不出现 review/acceptance 字样）与 `REQ-012/AC-5 …`（四种状态各自的句子）。这是输出措辞缺陷，不涉及规则。
 
-可能复发的不许只留档。
