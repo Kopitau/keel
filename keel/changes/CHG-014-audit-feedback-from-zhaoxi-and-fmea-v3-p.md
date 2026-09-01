@@ -32,7 +32,7 @@ issues: [ISS-058, ISS-059, ISS-060]
 - REQ-001：增 AC-7（当前需求版本声明已确认须能追到 approved 且哈希匹配的 APR，否则 G-req FAIL，DEC-186）。
 - REQ-004：增 AC-11（当前规划总览同理 → G-plan FAIL，DEC-186）。
 - REQ-006：增 AC-9（local 档无 `verify.json` 时可回读 approved APR 的 evidence 快照，树一致才算，DEC-187）。
-- REQ-012：增 AC-5（`gate status` 的 `next:` 三种形态：无基线 → run k-new；有基线无规划 → finish k-new step 4；全部功能有 summary → k-review 再 k-accept，ISS-060）；增 AC-6（每轮回复以「下一步：」收尾——用户 2026-09-01 补充：「每次一轮对话结束，但是没有推荐下一步的动作。应该修改」；AGENTS.md 加 Turn end 节，k-handoff 补一句）。
+- REQ-012：增 AC-5（`gate status` 的 `next:` 三种形态：无基线 → run k-new；有基线无规划 → finish k-new step 4；全部功能有 summary → k-review 再 k-accept，ISS-060）；增 AC-6（每轮工作收尾用通俗中文说清做了什么 / 现在状态 / 还剩什么，再以「下一步：」结束；编号与门禁名只作括号补充——用户 2026-09-01 补充：「每次一轮对话结束，但是没有推荐下一步的动作。应该修改」「对于工作和下一步经常很简短，应该要让人可以更清晰的知道情况，不能只有代码缩写介绍」；AGENTS.md 加 Turn end 节，k-handoff 补一句）。
 - REQ-016：增 AC-11（`platform-limits.md` 含 Codex Desktop / Cursor / Windows 的已知坑与对策；machine-doc）。
 - REQ-018：增 AC-7（已批准工件正文漂移 → X-apr FAIL，waiver 逐 APR 引用，DEC-185）、AC-8（`gate approve` 写入 evidence 快照，DEC-187）。
 - REQ-019：增 AC-5（尾注前空行，`git log --format=%s` 只含主题，ISS-058）、AC-6（`Agent:` 由环境标记或父进程名识别 Codex / Cursor / Claude Code，识别不到写 unknown 且可 `KEEL_AGENT` 覆盖；DEC-166 守卫在识别出的任一 agent 环境都触发，ISS-059）。

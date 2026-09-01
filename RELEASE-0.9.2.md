@@ -19,7 +19,7 @@
 - `gate approve` 在盘上有与当前树一致、退出码 0 的 `verify.json` 时把 `evidence_*` 八个字段写进 APR 前言；local 档合并、工作树删除后 G-done / G-merge / X-evidence 回读它（树必须仍一致）。
 - `gate status` 的 `next:` 按项目状态四选一（run k-new / finish k-new step 4 / start Fnn / k-review 再 k-accept），并新增 `keel: <项目版本> (installer <版本>)` 行，安装器较新时提示 `run keel update`（`KEEL_INSTALLER_ROOT` 可指定或 `none` 跳过）。
 - `gate loop pack`：lockfile（pnpm-lock.yaml / package-lock.json / yarn.lock / uv.lock / poetry.lock / Cargo.lock / go.sum / Gemfile.lock / composer.lock）只留"文件名 + sha256 + 行数"摘要；pack 字段超过 reviewer 预算（默认 120000 字符，config `review.pack_budget`）打印 `warn:` 并指出最大来源文件。
-- **每轮回复以「下一步」收尾**（REQ-012/AC-6）：AGENTS.md 规定 agent 的每一轮回复最后一段是 `下一步：<一条推荐动作>`，并点明只有用户能定的事；`gate status` 的 `next:` 行是它的机器来源。
+- **每轮工作收尾要让人看懂**（REQ-012/AC-6）：AGENTS.md 规定 agent 完成一轮工作的回复用通俗话说清做了什么、现在什么状态、还剩什么，最后一段是 `下一步：<一条推荐动作>` 并点明只有用户能定的事；编号与门禁名只能作括号补充；`gate status` 的 `next:` 行是它的机器来源。
 - `platform-limits.md` 记录 Codex Desktop / Cursor / Windows 的已知坑与对策；k-migrate（推平也是迁移：报告 + 独立删除提交 + 停用旧框架注入）、k-accept（验收与合并两个 APR、保留 verify.json 供快照）、k-impl（0 ISS / 0 经验候选收口前回看 worklog）、k-handoff、k-review、k-log、k-evidence 各补一句。
 
 ## 消费项目要做的事

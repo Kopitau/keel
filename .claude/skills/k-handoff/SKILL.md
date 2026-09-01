@@ -13,7 +13,7 @@ F12. Records are the only handoff medium (C-73). The worklog is the process reco
 - Files to read, repository paths only: current overview, the feature plan + worklog (or its summary), open ISS if any.
 - One line of blocking questions, if any.
 
-Nothing else: no narrative, no history — that lives in `worklog.md` / `summary.md`. Rewrite the file in place each time; it is a pointer, not a record. The reply that ends the session ends, like every reply, with `下一步：` — the same action the handoff names (REQ-012/AC-6).
+Nothing else: no narrative, no history — that lives in `worklog.md` / `summary.md`. Rewrite the file in place each time; it is a pointer, not a record. The reply that ends the session ends, like every round, with a plain-language wrap-up (what was done, where things stand, what is left) and a `下一步：` paragraph naming the same action the handoff names; ids only in parentheses after the sentence (REQ-012/AC-6).
 
 ## When
 

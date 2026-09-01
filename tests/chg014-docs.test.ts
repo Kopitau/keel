@@ -21,12 +21,16 @@ test("REQ-016/AC-11 platform-limits.md names the Codex Desktop, Cursor and Windo
 test("REQ-012/AC-6 the root instructions require every reply to end with a 下一步 paragraph, and k-handoff repeats it for the session's last reply", () => {
   const agents = readFileSync(join(repo, "AGENTS.md"), "utf8");
   assert.match(agents, /^## Turn end$/m);
-  assert.match(agents, /End \*\*every\*\* reply with a final paragraph that starts with `下一步：`/);
+  assert.match(agents, /what was done and why it matters, in plain sentences/);
+  assert.match(agents, /where things stand now/);
+  assert.match(agents, /a final paragraph that starts with `下一步：`/);
   assert.match(agents, /the single decision only the user can make/);
+  assert.match(agents, /they never replace it/);
   assert.match(agents, /Never end on a status dump/);
   assert.ok(agents.split("\n").length <= 150, "AGENTS.md line budget (C-118)");
   const handoff = readFileSync(join(repo, ".agents", "skills", "k-handoff", "SKILL.md"), "utf8");
-  assert.match(handoff, /ends, like every reply, with `下一步：`/);
+  assert.match(handoff, /plain-language wrap-up/);
+  assert.match(handoff, /`下一步：` paragraph/);
 });
 
 test("REQ-022/AC-6 k-migrate treats flattening as a migration: report, one deletion commit, old framework disabled in it", () => {

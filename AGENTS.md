@@ -12,7 +12,7 @@ Then follow its navigation. Read more if you need it. Do **not** bulk-load the r
 
 ## Turn end
 
-End **every** reply with a final paragraph that starts with `下一步：` — the one action you recommend next (a command, a skill, or a question), and, if anything, the single decision only the user can make. Never end on a status dump, a table, or an open list of options (REQ-012/AC-6, CHG-014).
+A reply that closes a round of work ends with a wrap-up a person can follow without reading code: (1) what was done and why it matters, in plain sentences; (2) where things stand now — what is green, what is red, what that means; (3) what is left or risky; (4) a final paragraph that starts with `下一步：` — the one action you recommend next and, if anything, the single decision only the user can make. Ids and gate names (REQ-nnn, DEC-nnn, ISS-nnn, X-apr, tree hashes) may follow a plain sentence in parentheses; they never replace it. Short is not the goal, clear is. Never end on a status dump, a table, or an open list of options (REQ-012/AC-6, CHG-014).
 
 Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gate check --quick` (4 checks, seconds) runs in the pre-commit hook; `gate check` (8 checks) before claiming done, review and merge; CI reruns it (C-100).
 
