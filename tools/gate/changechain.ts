@@ -19,6 +19,95 @@ export type ChangeChainInspection = {
   warnings: ChainWarning[];
 };
 
+/** DEC-185: one approved artifact, re-hashed today against what its APR recorded. */
+export type ArtifactDrift = { apr: string; path: string; state: "ok" | "missing" | "mismatch" };
+
+function approvalId(attrs: { [k: string]: string | undefined }, path: string): string {
+  return (attrs.id ?? "").match(/^APR-\d+/)?.[0] ?? basename(path).match(/^APR-\d+/)?.[0] ?? basename(path);
+}
+
+function approvedApprovals(ctx: Ctx): { id: string; artifacts: ApprovalArtifact[] }[] {
+  const out: { id: string; artifacts: ApprovalArtifact[] }[] = [];
+  for (const path of mdFiles(join(ctx.records, "approvals"), "APR-")) {
+    const text = readFileSync(path, "utf8");
+    const { attrs } = parseFrontmatter(text);
+    if ((attrs.status ?? "").toLowerCase() !== "approved") continue;
+    out.push({ id: approvalId(attrs, path), artifacts: approvalArtifacts(text) });
+  }
+  return out;
+}
+
+function hashMatches(recorded: string, raw: Parameters<typeof sha256Body>[0]): boolean {
+  // CHG-011 / REQ-018 AC-1: the body hash binds; an older whole-file hash still counts while the file is untouched.
+  return recorded === sha256Body(raw) || recorded === sha256Normalized(raw);
+}
+
+/**
+ * DEC-185: every artifact named by an approved APR, re-hashed now. `pending` and
+ * empty hashes are X-apr's own failure and are not reported here.
+ */
+export function inspectApprovedArtifacts(ctx: Ctx): ArtifactDrift[] {
+  const out: ArtifactDrift[] = [];
+  for (const apr of approvedApprovals(ctx)) {
+    for (const artifact of apr.artifacts) {
+      const recorded = artifact.contentSha256;
+      if (!recorded || recorded === "pending") continue;
+      const rel = artifact.path.replace(/^\.\//, "");
+      const abs = join(ctx.root, rel);
+      if (!existsSync(abs)) {
+        out.push({ apr: apr.id, path: rel, state: "missing" });
+        continue;
+      }
+      out.push({ apr: apr.id, path: rel, state: hashMatches(recorded, readFileSync(abs)) ? "ok" : "mismatch" });
+    }
+  }
+  return out;
+}
+
+/** Plan-class artifacts are judged in G-plan (quick) as well as in X-apr (DEC-185). */
+export function isPlanArtifact(rel: string): boolean {
+  const p = rel.replace(/\\/g, "/");
+  return /(^|\/)plan\/overview-v\d+\.md$/.test(p) || /(^|\/)features\/[^/]+\/plan\/v\d+\.md$/.test(p);
+}
+
+/**
+ * The status a requirements / plan version declares for itself: YAML front matter
+ * `status:` (consumer projects) or the header list `- status:` / `- **status**:`
+ * (keel's own files), read before the first REQ entry.
+ */
+export function declaredStatusOf(text: string): string {
+  const fm = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (fm) {
+    const m = (fm[1] ?? "").match(/^status:\s*(.+)$/m);
+    if (m) return unquote(m[1] ?? "");
+  }
+  const header = text.split(/^##\s+REQ-\d+/m, 1)[0] ?? text;
+  const m = header.match(/^\s*-\s*(?:\*\*)?status(?:\*\*)?:\s*(.+?)\s*$/mi);
+  return m ? unquote(m[1] ?? "") : "";
+}
+
+/** DEC-186: a file that says it was confirmed / approved has to be able to prove it. */
+export function declaresConfirmed(status: string): boolean {
+  return /confirmed|approved|已确认|已批准/i.test(status);
+}
+
+/** Which approved APRs name `rel`, and whether any of them still matches its body today. */
+export function approvalBinding(ctx: Ctx, rel: string): { boundBy: string[]; matched: boolean } {
+  const target = rel.replace(/\\/g, "/").replace(/^\.\//, "");
+  const abs = join(ctx.root, target);
+  const raw = existsSync(abs) ? readFileSync(abs) : null;
+  const boundBy: string[] = [];
+  let matched = false;
+  for (const apr of approvedApprovals(ctx)) {
+    for (const artifact of apr.artifacts) {
+      if (artifact.path.replace(/^\.\//, "") !== target) continue;
+      if (!boundBy.includes(apr.id)) boundBy.push(apr.id);
+      if (raw && hashMatches(artifact.contentSha256, raw)) matched = true;
+    }
+  }
+  return { boundBy, matched };
+}
+
 function unquote(value: string): string {
   return value.trim().replace(/^['"]|['"]$/g, "");
 }

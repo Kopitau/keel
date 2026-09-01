@@ -22,7 +22,7 @@ fmea-v3 的 `requirements/v1.md`、`v2.md` 与 `plan/overview-v1.md` 前言写�
 | 选项 | 优点 | 缺点 |
 |---|---|---|
 | A 不查，靠技能提醒 | 无改动 | 试点已证明提醒无效（用户沉默两次，agent 继续） |
-| **B 当前需求版本与当前规划总览：前言 `status` 含 confirmed / 已确认 时，必须有一份 approved APR 引用该文件且哈希匹配（或按 APR 逐条 waiver）；否则 G-req / G-plan FAIL，提示"跑 `gate approve`（人类身份或记录委托）或把状态改回 proposed"** | 只查当前版本，历史版本不追溯，不会让老项目全红；quick 就能看到 | 消费项目 fmea-v3 更新后会立刻红（预期） |
+| **B 当前需求版本与当前规划总览：前言 `status` 含 confirmed / 已确认 时，必须能追到 approved APR——直接引用该文件且哈希匹配（漂移则按 APR 逐条 waiver），或（需求）引用产生该版本的已批准 CHG（G-req 既有链条口径）；两者皆无 → G-req / G-plan FAIL，提示"跑 `gate approve`（人类身份或记录委托）或把状态改回 proposed"** | 只查当前版本，历史版本不追溯，不会让老项目全红；quick 就能看到；与 G-req 既有的 CHG 链条判定一致 | 消费项目 fmea-v3 的 v1 那种"无 CHG、APR 仍 draft"会立刻红（预期）；只经 CHG 绑定的需求版本本身的漂移不在本决策内（由新版本 + CHG 覆盖） |
 | C 查所有历史版本 | 更完整 | 早期版本常无 APR（本仓 v1–v3 的 APR 形态不同），会制造无意义的红 |
 
 ## 推荐理由
@@ -35,7 +35,7 @@ fmea-v3 的 `requirements/v1.md`、`v2.md` 与 `plan/overview-v1.md` 前言写�
 
 ## 影响
 
-- `check.ts`：G-req 读当前需求文件的 `status`（YAML 前言或 `- status:` 列表两种写法），含 confirmed/已确认 且无 approved 匹配 APR → FAIL；G-plan 对当前 overview 同理。
+- `check.ts`：G-req 读当前需求文件的 `status`（YAML 前言或 `- status:` 列表两种写法），含 confirmed/已确认 时：直接绑定且匹配 → 通过；直接绑定但漂移 → WARN（按 APR waiver）；未直接绑定但产生它的 CHG 已批准并绑 APR → 通过；两者皆无 → FAIL。G-plan 对当前 overview 只看直接绑定（规划没有 CHG 链条）。
 - REQ-001 增 AC-7、REQ-004 增 AC-11（需求 v6 / CHG-014）。
 - 消费项目：fmea-v3 更新后需补签 APR-001/002（其 v3 已由 APR-003 绑定，因此当前版本不红；v1/v2 为历史，不追溯）。
 

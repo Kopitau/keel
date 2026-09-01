@@ -17,7 +17,15 @@ import {
   loopForCurrentPlan,
   reviewClearGaps,
 } from "./reviewloop.ts";
-import { inspectRequirementChangeChain } from "./changechain.ts";
+import {
+  approvalBinding,
+  declaredStatusOf,
+  declaresConfirmed,
+  inspectApprovedArtifacts,
+  inspectRequirementChangeChain,
+  isPlanArtifact,
+} from "./changechain.ts";
+import { posixRel } from "./walk.ts";
 
 /**
  * The gate after CHG-011 (DEC-183): eight checks, and every one of them judges
@@ -113,6 +121,7 @@ function gReq(ctx: Ctx): CheckItem {
     );
   }
   let approvedChanges = 0;
+  let chainBound = false;
   if (confirmedReqCount(r.text) > 0) {
     const chain = inspectRequirementChangeChain(ctx, r.path, r.text);
     if (chain.gaps.length > 0) {
@@ -137,6 +146,30 @@ function gReq(ctx: Ctx): CheckItem {
       };
     }
     approvedChanges = chain.checked.length;
+    chainBound = approvedChanges > 0;
+  }
+  // DEC-186: a current version that calls itself confirmed must be able to prove it —
+  // an approved APR binds the file itself, or binds the approved CHG that produced it.
+  const declared = declaredStatusOf(r.text);
+  if (declaresConfirmed(declared)) {
+    const binding = approvalBinding(ctx, posixRel(ctx.root, r.path));
+    if (!binding.matched) {
+      if (binding.boundBy.length === 0 && !chainBound) {
+        return fail(
+          "G-req",
+          `${basename(r.path)} declares "${declared.slice(0, 40)}" but no approved APR binds it`,
+          "gate approve APR-nnn as a human (or with a recorded delegation), or set the status back to proposed (DEC-186)",
+        );
+      }
+      if (binding.boundBy.length > 0) return {
+        ...warn(
+          "G-req",
+          `${basename(r.path)} body changed after its approval ${binding.boundBy.join("/")} (artifact hash mismatch)`,
+          `typo fix: worklog line(s) ${binding.boundBy.map((a) => `'gate-warn: G-req ref=${a}'`).join(" and ")}; semantic change: new version + re-approve (DEC-185 / REQ-011/AC-4)`,
+        ),
+        waivers: binding.boundBy,
+      };
+    }
   }
   if (!r.text.includes("未决问题")) {
     return warn("G-req", "no 未决问题 section", "add the section even if empty (C-05)");
@@ -168,6 +201,50 @@ function gPlan(ctx: Ctx): CheckItem {
   const body = readFileSync(planFile, "utf8");
   if (!body.includes("接口与耦合") && !body.includes("| I-")) {
     return fail("G-plan", "current overview has no coupling table", "add 接口与耦合 (C-24/C-38)");
+  }
+  // DEC-186: the current overview that calls itself confirmed must be bound by an approved APR.
+  const declared = declaredStatusOf(body);
+  if (declaresConfirmed(declared)) {
+    const binding = approvalBinding(ctx, posixRel(ctx.root, planFile));
+    if (!binding.matched) {
+      if (binding.boundBy.length === 0) {
+        return fail(
+          "G-plan",
+          `${p.file} declares "${declared.slice(0, 40)}" but no approved APR binds it`,
+          "gate approve APR-nnn as a human (or with a recorded delegation), or set the status back to 工作规划/proposed (DEC-186)",
+        );
+      }
+      return {
+        ...warn(
+          "G-plan",
+          `${p.file} body changed after its approval ${binding.boundBy.join("/")} (artifact hash mismatch)`,
+          `typo fix: worklog line(s) ${binding.boundBy.map((a) => `'gate-warn: G-plan ref=${a}'`).join(" and ")}; semantic change: new version + re-approve (DEC-185)`,
+        ),
+        waivers: binding.boundBy,
+      };
+    }
+  }
+  // DEC-185: plan-class artifacts of every approved APR are re-hashed here, in --quick,
+  // so an in-place edit of a frozen plan reddens the very next pre-commit.
+  const planDrift = inspectApprovedArtifacts(ctx).filter((d) => isPlanArtifact(d.path) && d.state !== "ok");
+  const planMissing = planDrift.filter((d) => d.state === "missing");
+  if (planMissing.length > 0) {
+    return fail(
+      "G-plan",
+      `approved plan artifact missing: ${planMissing.map((d) => `${d.path} (${d.apr})`).join(", ")}`,
+      "restore the file or supersede it with a new version + new APR (C-24 / DEC-185)",
+    );
+  }
+  if (planDrift.length > 0) {
+    const aprs = [...new Set(planDrift.map((d) => d.apr))];
+    return {
+      ...warn(
+        "G-plan",
+        `approved plan artifact(s) edited in place: ${planDrift.map((d) => `${d.path} (${d.apr})`).join(", ")}`,
+        `typo fix: worklog line(s) ${aprs.map((a) => `'gate-warn: G-plan ref=${a}'`).join(" and ")}; semantic change: new plan version + re-approve (C-24 / DEC-185)`,
+      ),
+      waivers: aprs,
+    };
   }
   const fr = computeFrontier(ctx);
   if (fr.problems.length > 0) {
@@ -365,7 +442,29 @@ function xApr(ctx: Ctx): CheckItem {
     }
   }
   if (approved.length === 0) return pass("X-apr", "no approved APR commits to check");
-  return pass("X-apr", `${approved.length} approved APR(s): human author or recorded delegation; hashes bound`);
+  // DEC-185: every bound artifact is re-hashed; drift after approval is a FAIL that
+  // stands down only with a worklog line citing the APR that bound it (typo-level edits).
+  const drift = inspectApprovedArtifacts(ctx).filter((d) => d.state !== "ok");
+  const missing = drift.filter((d) => d.state === "missing");
+  if (missing.length > 0) {
+    return fail(
+      "X-apr",
+      `approved artifact missing: ${missing.map((d) => `${d.path} (${d.apr})`).join(", ")}`,
+      "restore the file or supersede it with a new version + new APR (C-24 / DEC-185)",
+    );
+  }
+  if (drift.length > 0) {
+    const aprs = [...new Set(drift.map((d) => d.apr))];
+    return {
+      ...warn(
+        "X-apr",
+        `approved artifact(s) edited after approval: ${drift.map((d) => `${d.path} (${d.apr})`).join(", ")}`,
+        `typo fix: worklog line(s) ${aprs.map((a) => `'gate-warn: X-apr ref=${a}'`).join(" and ")}; semantic change: new version + new APR (C-24 / DEC-185)`,
+      ),
+      waivers: aprs,
+    };
+  }
+  return pass("X-apr", `${approved.length} approved APR(s): human author or recorded delegation; hashes bound and unchanged`);
 }
 
 // X-bypass — hooks skipped, hooksPath moved, tests dir gone, CI workflow weakened (C-105).

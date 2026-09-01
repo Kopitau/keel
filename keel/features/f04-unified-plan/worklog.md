@@ -18,3 +18,8 @@
 - 实现决定：本轮 `blocked_by` 统一只表达“必须等整个功能已有 summary.md”的硬阻塞；CHG-010 各 owner 是既有系统上的增量，大多数只有接口/文件重叠而非完整功能阻塞，因此不把 overview 耦合机械复制成瀑布依赖，串行点留在 I-nn 与实施顺序中（DEC-169/C-114）。
 - 边界：本切片只写规划，不实现 0.8.0 行为；用户在途 `keel/handoff.md` 保持不覆盖。
 - #经验候选 defense failed `current:` 升版第二次撞到硬编码测试（ISS-050→ISS-051）；点修未覆盖同文件 sibling，应优先断言版本无关不变量。
+
+## 2026-09-01（CHG-014 S3：REQ-004/AC-11 计划类冻结件进 G-plan）
+
+- 进度：G-plan（quick）对当前 overview 的前言 `status`（含 confirmed / approved / 已确认 / 已批准）要求 approved APR 直接绑定且哈希匹配：无 APR → FAIL（DEC-186）；漂移 → WARN 带 `waivers`（`gate-warn: G-plan ref=APR-nnn`）。所有 approved APR 引用的 `plan/overview-vN.md` 与 `features/*/plan/vN.md` 也在 G-plan 里重算：缺失 FAIL、漂移 WARN→FAIL（DEC-185）。zhaoxi 那种"9 份计划原地改一周无告警"下次 pre-commit 就会红。
+- 证据：`tests/chg014-frozen-artifacts.test.ts` `REQ-004/AC-11`（功能计划原地改 → quick FAIL → waiver 后 WARN；overview 声明已确认而 APR 仍 draft → FAIL 并给出 DEC-186 指引）。

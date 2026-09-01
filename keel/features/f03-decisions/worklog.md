@@ -17,3 +17,9 @@
 ## 2026-08-29（DEC-184）
 
 - DEC-184 confirmed（用户原话逐字）：评审不设攻击面视角、不强制异构，空白上下文子代理即可。DEC-159 / DEC-160 superseded → DEC-184；DEC-178 追加复核节。
+
+## 2026-09-01（CHG-014 S3：DEC-185 落地时的 waiver）
+
+- 说明：X-apr 现在重算每份 approved APR 引用工件的正文哈希。CHG-011 Q5 复核时曾往已批准的 DEC 正文追加"复核记录 / superseded"节：APR-002 绑定的 DEC-161 / 162 / 163 / 164 / 165，APR-003 绑定的 DEC-174 / 176 / 178 / 181 / 182。决策语义未变（状态流转是 C-14 的正常生命周期），按 DEC-185 的错字级修订通道放行：
+- gate-warn: X-apr ref=APR-002
+- gate-warn: X-apr ref=APR-003

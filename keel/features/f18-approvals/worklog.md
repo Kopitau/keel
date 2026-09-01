@@ -31,3 +31,9 @@
 ## 2026-08-29（APR-005：需求 v5 + 规划 overview-v4 整体确认）
 
 - 用户原话「1 同意 以我的身份提交 2 升级由你去跑」记入 `delegated:`；v5 / overview-v4 状态行改 confirmed 后 `gate approve APR-005`（正文哈希 c10a61c6… / 83f36a34…），以 kopit 身份提交 55e73c2，pre-commit-apr ok，提交后 git 身份恢复 keel-agent。这是正文哈希审批的首次实际使用。
+
+## 2026-09-01（CHG-014 S3：DEC-185 冻结件漂移进 X-apr）
+
+- 进度：`changechain.ts` 新增 `inspectApprovedArtifacts`（对每份 approved APR 引用的工件重算正文哈希；旧全文哈希在文件未动时仍接受；`pending`/空哈希留给原有检查）、`approvalBinding`、`declaredStatusOf` / `declaresConfirmed`、`isPlanArtifact`。X-apr：工件缺失 → FAIL（不可 waiver）；正文漂移 → WARN 带 `waivers`，按 APR 逐条 `gate-warn: X-apr ref=APR-nnn` 放行，否则升 FAIL（C-103 既有机制）。
+- 本仓落地：CHG-011 Q5 追加复核记录的 10 个 DEC（APR-002 ×5、APR-003 ×5）首次被报出；F3 worklog 写两行 waiver，X-apr 现为 WARN（已认可）。
+- 证据：`tests/chg014-frozen-artifacts.test.ts` `REQ-018/AC-7`（漂移 FAIL → waiver 后 WARN → 缺失 FAIL）；`node --test` **249/249**；`npx tsc --noEmit` 干净；本仓 `gate check --all`：G-req PASS、G-plan PASS、X-apr WARN（waived）。
