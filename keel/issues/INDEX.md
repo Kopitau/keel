@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 69
+- count: 70
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -74,3 +74,4 @@
 | ISS-067 | ISS-067 A committed keel/review/raw archive (rejected reviewer output) is diffed into the next review pack | closed | `ISS-067-a-committed-keelreviewraw-archive-reject.md` |
 | ISS-068 | ISS-068 verify 把 junit 里第一个 `<testsuite>` 的 `tests=` 当成整场计数（zhaoxi 193 条只数到 5） | closed | `ISS-068-verify-counts-one-junit-suite-as-the-run.md` |
 | ISS-069 | ISS-069 `keel update` 只在交互终端里接受确认，agent 会话无法替人更新 | closed | `ISS-069-keel-update-needs-a-tty-to-say-yes.md` |
+| ISS-070 | ISS-070 只要有功能被认领，主干就永远"脏"：`claim.json` 被当成未提交改动 | closed | `ISS-070-a-claimed-feature-keeps-the-trunk-dirty.md` |

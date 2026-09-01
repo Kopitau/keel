@@ -38,8 +38,19 @@ export function gitHead(ctx: Ctx): string {
   return git(ctx, ["rev-parse", "HEAD"]).stdout;
 }
 
+/** Records dir relative to the repo root, slash-separated (`keel` by default). */
+function recordsRel(ctx: Ctx): string {
+  return relative(ctx.root, ctx.records).split("\\").join("/") || "keel";
+}
+
+/** Paths that never count as a change to the code (ISS-070): the claim marker
+ *  `gate worktree` leaves on the trunk while a feature is being built. */
+function claimPathspec(ctx: Ctx): string {
+  return `:(exclude)${recordsRel(ctx)}/features/*/claim.json`;
+}
+
 export function gitDirty(ctx: Ctx): boolean {
-  return git(ctx, ["status", "--porcelain"]).stdout !== "";
+  return git(ctx, ["status", "--porcelain", "--", ".", claimPathspec(ctx)]).stdout !== "";
 }
 
 /** Real git directory (worktree-safe). `.git` may be a file. */
@@ -113,7 +124,7 @@ export function gitWriteTree(ctx: Ctx): string {
     // tree they bind (C-33 / CHG-011 / DEC-187): an APR attests a tree — its own
     // hashes live in its body — so approving must not invalidate the verify it
     // freezes. Drop them from the temporary index whether tracked or not.
-    const records = relative(ctx.root, ctx.records).split("\\").join("/") || "keel";
+    const records = recordsRel(ctx);
     const exclude = [
       `${records}/evidence`,
       `${records}/review/pack.json`,
@@ -121,6 +132,8 @@ export function gitWriteTree(ctx: Ctx): string {
       `${records}/review/findings.md`,
       `${records}/review/raw`,
       `${records}/approvals`,
+      // ISS-070: a claim marker is not code; releasing it must not stale the evidence.
+      `${records}/features/*/claim.json`,
     ];
     for (const rel of exclude) {
       git(ctx, ["rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", rel], env);

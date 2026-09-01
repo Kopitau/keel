@@ -24,3 +24,9 @@
 ## 2026-09-01（CHG-014 S1：REQ-019/AC-5、AC-6 落地）
 
 - 进度：C-115 尾注改为独立 trailer 段（`git log --format=%s` 只含主题，`%(trailers:key=Feature)` 可解析）；`Agent:` 在 Codex / Claude Code 环境由环境标记或父进程名识别，Cursor / VS Code 记 `Host:`。实现与证据见 F17 worklog 2026-09-01 节；黑盒 `REQ-019/AC-5`、`REQ-019/AC-6` 在 `tests/chg014-hook-harness.test.ts`。
+
+## 2026-09-01（ISS-070：认领标记不算脏；0.9.3）
+
+- zhaoxi 主干 F6 在工作树施工，主干上的 `claim.json` 单独让 verify 报脏，G-done / X-evidence 红、F0 的验收快照写不进。修复：`gitDirty` 排除 `<records>/features/*/claim.json`，`gitWriteTree` 从临时索引去掉同一路径（与证据、审批同一待遇）；真实改动与其它未跟踪文件照旧算脏。
+- 探针（DEC-182）：修复前树 a1675cdfb825… 上写入标记后 dirty=true 且树哈希改变（退出 0）；修复后退出 1。
+- 证据：`tests/iss070-claim-not-dirty.test.ts` ×2。
