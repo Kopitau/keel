@@ -16,7 +16,7 @@ import {
 } from "./evidence.ts";
 import { ok, type CmdResult } from "./result.ts";
 import { buildTrace } from "./trace.ts";
-import { emptyRunIsFailure, isAllowedTestArgv, isAllowedTestCommand, splitCmd } from "./testcmd.ts";
+import { allowedTestCommandReason, emptyRunIsFailure, expandTestArgv, isAllowedTestArgv, splitCmd } from "./testcmd.ts";
 
 function activeProfile(cfg: JsonMap): JsonMap {
   const profiles = (cfg.profiles ?? {}) as JsonMap;
@@ -63,11 +63,12 @@ export function runVerify(ctx: Ctx): CmdResult {
   const profile = activeProfile(ctx.config);
   const profileName = activeProfileName(ctx.config);
   const testCmd = typeof profile.test_command === "string" ? profile.test_command : "node --test";
-  if (!isAllowedTestCommand(testCmd, profileName || "keel-gate")) {
+  const refused = allowedTestCommandReason(testCmd, profileName || "keel-gate");
+  if (refused) {
     return {
       code: 1,
       stdout: `verify FAIL\ntest_command not allowlisted: ${testCmd}\n`,
-      stderr: "ISS-018: keel-gate test_command must be exactly node --test (full suite)\n",
+      stderr: `${refused}\nallowed shape: launcher prefix + pytest / vitest run / jest / node --test + marker or report arguments; no -k, paths or name patterns (ISS-018 / DEC-188)\n`,
     };
   }
   const started = new Date().toISOString();
@@ -84,19 +85,9 @@ export function runVerify(ctx: Ctx): CmdResult {
   mkdirSync(join(ctx.records, "evidence"), { recursive: true });
   const dest = junitPath(ctx);
   const destRel = join("keel", "evidence", "junit.xml");
-  let argv = splitCmd(testCmd);
-  if (argv[0] === "node" || argv[0] === process.execPath) {
-    const rest = argv.slice(1).filter((a) => a !== "--test");
-    argv = [
-      process.execPath,
-      "--test",
-      "--test-reporter=spec",
-      "--test-reporter-destination=stdout",
-      "--test-reporter=junit",
-      `--test-reporter-destination=${destRel}`,
-      ...rest,
-    ];
-  }
+  // DEC-188: node:test, pytest and vitest each get their junit report wired in
+  // unless the project already declared where it goes.
+  const argv = expandTestArgv(splitCmd(testCmd), destRel);
   if (!isAllowedTestArgv(argv)) {
     return {
       code: 1,

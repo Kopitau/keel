@@ -6,6 +6,7 @@
   "enforcement_tier": "local",
   "keel_version": "0.0.0",
   "profiles": {
+    "_comment": "DEC-188: test_command = launcher prefix (python -m / uv run python -m / uv run / poetry run / npx / pnpm exec / pnpm / yarn / node) + program (pytest / vitest run / jest / node --test) + marker or report arguments (-q -x -m <marker> --tb= --maxfail= --reporter --junitxml=). No -k, no paths, no name patterns (ISS-018). gate verify adds the junit output itself.",
     "active": "unset",
     "keel-gate": {
       "language": "typescript",
@@ -17,7 +18,13 @@
     "python-cli": {
       "language": "python",
       "test_command": "python -m pytest -q",
+      "_example_uv": "uv run python -m pytest -q -m unit",
       "core_marker": "core"
+    },
+    "ts-js": {
+      "language": "typescript",
+      "test_command": "npx vitest run",
+      "_example_pnpm": "pnpm exec vitest run"
     }
   },
   "identities": {

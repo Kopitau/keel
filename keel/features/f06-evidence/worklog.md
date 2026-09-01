@@ -64,3 +64,7 @@
 - 进度：`evidence.ts` 新增 `approvalEvidenceLines` / `readApprovalEvidence` / `evidenceViaApproval` / `evidenceVerdict`；G-done / G-merge / X-evidence 改走 `evidenceVerdict`：`verify.json` 新鲜且对账 → 照旧；缺失或过期 → 找 approved APR 的 `evidence_tree_hash` 等于当前树、exit 0、failed 0、passed > 0 → PASS 并注明 `via APR-nnn`；否则 FAIL 且提示里加一句"local 档可用 APR 快照"。
 - 实现决定：**树哈希排除 `keel/approvals/`**（`git.ts gitWriteTree`，与 evidence / 评审产物同列）。第一次跑测试就撞上：`gate approve` 改写 APR 文件本身会移动树，快照永远对不上批准后的树。APR 是对树的证明、由自身正文哈希（X-apr）绑定，不该计入被证明的树。顺手把排除清单从硬编码 `keel/` 改为按 `records_dir` 计算。
 - 证据：`tests/chg014-evidence-snapshot.test.ts` `REQ-006/AC-9`（verify.json 删除后三条门禁经 APR-001 PASS；树移动后三条 FAIL）；`node --test` **251/251**；`npx tsc --noEmit` 干净。
+
+## 2026-09-01（CHG-014 S5：verify 的 junit 展开）
+
+- 进度：`gate verify` 对 pytest 补 `--junitxml=keel/evidence/junit.xml`、对 `vitest run` 补 `--reporter=default --reporter=junit --outputFile=…`，node:test 保持原展开；证据里的 `command` 仍是展开后的 argv，`evidenceGaps` 用同一套解析核对。fmea-v3 那种本地改 `verify.ts` 补 junit 的补丁可以撤。见 F21 worklog 同日节。
