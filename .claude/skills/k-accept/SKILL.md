@@ -18,7 +18,7 @@ F7.5 + F18. The user nods; you do not.
 ## Procedure
 
 1. `node tools/gate/gate.ts loop status` must be `passed`. If not, stop — review is required before acceptance (REQ-027). **Do not automate the human nod.**
-2. `node tools/gate/gate.ts verify` then `check`.
-3. Draft `gate new apr ...` if needed; fill artifact paths.
+2. `node tools/gate/gate.ts verify` then `check`. Keep that verify.json on disk: `gate approve` freezes its tree hash, command and counts into the APR as `evidence_*` (DEC-187), which is what proves the feature on the local tier after the worktree is gone.
+3. Draft `gate new apr ...` if needed; fill artifact paths. **Acceptance and merge are two APRs and two actions** (C-44): the acceptance APR binds `summary.md`; merging happens afterwards under G-merge, never in the same turn.
 4. Approval commit, two legal paths (C-107/DEC-166): the user runs `gate approve APR-nnn` + commits themselves; **or** the user explicitly tells you to do it — then record their verbatim words in the APR first (`delegated: "「原话」(date)"`), and only then approve + commit under their git identity. Without that record, `gate approve` and pre-commit refuse in an agent environment. Never use an agent git identity for the commit.
 5. Stop. Merge is F8 (`G-merge`): APR + fresh evidence + green trace + no blocking ISS (C-45).

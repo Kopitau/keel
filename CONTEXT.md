@@ -36,6 +36,9 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | proxy coverage | `[proxy:<解除条件>]`，黑不了的 AC 的替身；X-trace 记 WARN 不记 PASS（DEC-168） | 没有解除条件的替身；把 WARN 当 PASS |
 | frontier | 未完成、未认领、且 `blocked_by` 全部已完成的功能；`gate status` 打印（DEC-169） | 用散文"实施顺序"代替机器可查的依赖 |
 | seam | 黑盒验收测试挂上去的那一层（CLI / 路由 / 命令 / 模块 API），在功能计划"测试义务"里点名（RES-904 §6） | 测试挂在比计划更低的缝上却不标 proxy |
+| evidence snapshot | `gate approve` 写进 APR 前言的 `evidence_*` 八个字段；local 档合并后 G-done / G-merge / X-evidence 回读它（DEC-187） | 把 verify.json 提交进仓库；手写 evidence_* |
+| host | 编辑器宿主（Cursor / VS Code）：人与 agent 共用一套终端环境，尾注记 `Host:`，不算 agent（ISS-059） | 把 CURSOR_* 当 agent 标记去触发 DEC-166 |
+| drift | 已批准工件正文哈希与 APR 记录不符；X-apr / G-plan / G-req 报 FAIL，错字级修订以 `gate-warn: <check> ref=APR-nnn` 放行（DEC-185） | 原地改冻结件而不出新版本 |
 
 ## Banned near-synonyms
 

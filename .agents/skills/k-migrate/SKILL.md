@@ -13,6 +13,7 @@ F22. The semantic mapping is this skill; gate only allocates ids, skeletons and 
 2. **Drafts are not a baseline** (C-131). Every migrated REQ/DEC/plan is `迁移初稿（未确认）` until the user confirms and an APR is hashed.
 3. **Do not invent** missing rationale: such DECs are `provisional`, titled `暂定·需补理由`.
 4. Deleting the old tree is a later, explicit user confirmation (C-134).
+5. **Flattening is still a migration** (CHG-014). When the user chooses to delete the old framework and code outright, write `keel/migration-report.md` anyway (what was dropped, what survives in git history), land the deletion as its own commit — never leave 200 deleted files sitting in the working tree — and disable the old framework's SessionStart injection and skills in that same commit. A dirty tree keeps `gate verify` at `dirty: true` and G-done red for as long as it lives.
 
 ## Trellis (0.6.x layout: `.trellis/{workflow.md,config.yaml,spec/,tasks/<t>/,workspace/<dev>/}`)
 

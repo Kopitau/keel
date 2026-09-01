@@ -13,7 +13,7 @@ Trivial: one worklog line. Promote to ISS when it changes behavior, fails a gate
 
 `node tools/gate/gate.ts new iss <title>` — symptom, impact, runnable repro command, fingerprint, pending defense. No runnable repro → do not fix and do not open a blocking ISS: collect data in the worklog. Root cause and fix stay empty until diagnosed; regression test first; stop after three failed repair rounds (C-58/C-60).
 
-Closing: root cause, fix (or explicit wontfix + reason), why it escaped, closure choice, and a `defense_pointer` to a file that exists (C-59/C-62). A repeated fingerprint names `recurrence_of`, explains why the prior defense failed, and escalates one level (C-61).
+Closing: root cause, fix (or explicit wontfix + reason), why it escaped, closure choice, and a `defense_pointer` to a file that exists (C-59/C-62). A repeated fingerprint names `recurrence_of`, explains why the prior defense failed, and escalates one level (C-61); `gate loop clear` reads that field and counts the whole chain against one fuse (DEC-189).
 
 ## Friction (F13)
 

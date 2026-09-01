@@ -20,3 +20,9 @@ Harness notes (not byte caps):
 - Grok Build hooks are fail-open (R2/R5) → never treat L1 as authority.
 - DeepSeek Harness Windows: Python SDK/PTY unsupported; use WSL (C-96).
 - Claude Code is the only primary that needs the `CLAUDE.md` bridge (C-94).
+
+Known pits from the 2026-08 pilots (CHG-014; zhaoxi on Codex Desktop, fmea-v3 on Cursor):
+
+- **Codex Desktop**: every direct `git` call printed `fatal: write failure on 'stdout': Bad file descriptor` and `git commit` reported exit 1 although the commit landed — set `GIT_PAGER=cat` or wrap git in `node spawnSync`; after a sandbox `helper_unknown_error` every command needs escalation; its safety classifier blocked a reviewer whose prompt said "attack" — say "probe / 复现探针". No `CODEX_*` variable has been observed yet: set `KEEL_AGENT=codex` if the trailer says `Agent: unknown` (ISS-059).
+- **Cursor (compatible tier)**: skills are not auto-attached — type `/k-xxx` or the model must Read `.agents/skills/k-*/SKILL.md` itself; the integrated terminal may swallow git stdout (use `node execFileSync` with an absolute git path); the console is not UTF-8 (`PYTHONIOENCODING=utf-8`, assert ASCII markers); a human and the agent share one terminal environment, so keel records `Host: cursor` and never treats it as an agent (ISS-059).
+- **Windows (all harnesses)**: `spawnSync("npx")` fails (ENOENT / EINVAL) — prefer `pnpm exec` / `node` launchers (DEC-188); PowerShell mangles `\` and `"` in one-liners (probes run through `sh -c`, ISS-054); bash heredocs with Chinese text failed in Claude Code — write files with the editor tool; `node -e` user args start at `argv[1]`, not `argv[2]`.

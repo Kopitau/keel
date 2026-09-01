@@ -47,3 +47,9 @@
 - 进度：`platforms.compatible` 加 `cursor`（本仓 / 模板 / init）；`triggers.ts` 探测（`cursor --version` → 本机 3.17.21）与发现表；`platform-limits.md` 一行；`headless.md` 的 `## cursor`（客户端为准，CLI `agent` 与 Grok 同名、未纳入）；计划 v3（规划补充）；CHG-012 + 需求 v6（proposed）+ APR-006 草稿（待用户委托原话）；0.9.1 + `RELEASE-0.9.1.md`。黑盒 `tests/chg012-cursor.test.ts`（REQ-016/AC-1）；`w5-smoke` / `chg010-gates` 平台计数 6 → 7。
 - 待人工：REQ-016/AC-8 的 Cursor 客户端真实触发冒烟（在装有 Cursor 的机器上打开本仓，`/k-status` 能出现即可，记本节）。
 - 修正：AC-7 测试原把 retrieved 日期钉死在 2026-08-28，改为任意日期；Cursor 配方按文档补齐 input / output / success（CLI 未安装，标未核实）。
+
+## 2026-09-01（CHG-014 S7：平台已知坑与技能补句）
+
+- 进度：`tools/gate/platform-limits.md` 新增「2026-08 试点已知坑」三条（Codex Desktop：git `Bad file descriptor`、沙箱升权、安全分类器对 attack 敏感、`KEEL_AGENT=codex`；Cursor：技能不自动挂载、终端吞 git stdout、控制台非 UTF-8、`Host: cursor`；Windows：`npx` 起不来、PowerShell 转义、heredoc、`node -e` argv）。技能各补一句：k-migrate（推平也是迁移，见 F22）、k-accept（保留 verify.json 供 `gate approve` 写快照；验收与合并两个 APR 两次动作）、k-impl（0 ISS / 0 经验候选收口前回看 worklog）、k-handoff（status `next:` / `keel:` 两行的含义）、k-review（lockfile 摘要、预算告警、Finding 形状与 `keel/review/raw/`、`recurrence_of` 归并）、k-log（`recurrence_of` 被 clear 机器读取）、k-evidence（APR 快照回读、DEC-188 命令形状）。CONTEXT.md 加 evidence snapshot / host / drift 三条术语；AGENTS.md 加一条确认规则（DEC-185/186/187）。`gate sync` 镜像 + openai.yaml ×16。
+- 实现决定：把 `tools/gate/PLATFORM-LIMITS.md` 改名为小写 `platform-limits.md`（两步 `git mv`）。AGENTS.md 与 chg012 的测试一直引用小写路径，Windows/macOS 大小写不敏感所以从未红，Linux CI 会读不到；DEC-145 要求文件名小写连字符。旧计划文件里的大写引用属历史记录不改。
+- 证据：`tests/chg014-docs.test.ts`（REQ-016/AC-11、REQ-022/AC-6、镜像与 80 行上限）；7 个技能均 ≤ 62 行；AGENTS.md 62 行；`node --test` **263/263**；`gate check --quick` PASS_WITH_WARN。

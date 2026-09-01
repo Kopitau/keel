@@ -19,7 +19,7 @@ node tools/gate/gate.ts hash <file>     # body hash — what an APR binds
 
 `verify` reruns tests (and `tsc --noEmit` when present) and writes `keel/evidence/verify.json`. That directory is **excluded** from the tree hash so the JSON cannot invalidate itself.
 
-Stale evidence (hash mismatch or non-zero exit) fails `X-evidence` / `G-done` / `G-merge` in the full check; `--quick` never judges evidence, so a dirty daily tree stays green (CHG-011). Re-run verify before claiming done, before the plan-level review and before merge; do not edit the JSON by hand.
+Stale evidence (hash mismatch or non-zero exit) fails `X-evidence` / `G-done` / `G-merge` in the full check; `--quick` never judges evidence, so a dirty daily tree stays green (CHG-011). Re-run verify before claiming done, before the plan-level review and before merge; do not edit the JSON by hand. On the local tier the gate also accepts an approved APR whose `evidence_*` snapshot names the current tree (DEC-187) — that is how a merged feature stays proven after its worktree is deleted. `test_command` is a shape: launcher prefix + pytest / `vitest run` / jest / `node --test` + marker or report arguments; `-k`, paths and name patterns are refused (DEC-188).
 
 ## Tests
 

@@ -37,6 +37,7 @@ Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gat
 - One feature, one branch, one worktree (C-112). Overlapping files → serialize (C-114).
 - After the plan is confirmed the loop is autonomous (DEC-183): implement → test → record → compress the worklog into `summary.md` → next frontier feature. One plan-level review at the end. Stop only for C-21, a fused review, or acceptance.
 - Freezing binds semantics (CHG-011): approvals hash the body; metadata edits are free, a typo fix cites the APR in the worklog, a meaning change is a new version + re-approval.
+- The gate re-hashes every approved artifact (drift = FAIL unless the worklog cites the APR), a current baseline that says confirmed must be APR-bound, and an acceptance APR carries the verify snapshot (DEC-185/186/187, CHG-014).
 
 ## Skill catalog (bodies in `.agents/skills/k-*/SKILL.md`; Claude mirror via `gate sync`)
 

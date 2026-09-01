@@ -25,4 +25,4 @@ A new harness runs `node tools/gate/gate.ts status`, reads the handoff path it p
 
 ## Next session
 
-`gate status` → handoff → plan + worklog (C-27/C-72). Do not bulk-load `keel/` (C-120).
+`gate status` → handoff → plan + worklog (C-27/C-72). Do not bulk-load `keel/` (C-120). The status `next:` line is the truth about the stage — `run k-new` (no baseline), `finish k-new step 4` (no plan), `start Fnn`, or `k-review then k-accept` — and the `keel:` line says whether a newer installer is waiting (`run keel update`).

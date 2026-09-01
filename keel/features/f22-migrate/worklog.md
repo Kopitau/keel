@@ -21,3 +21,8 @@
 ## 2026-08-29（CHG-011 Q4 映射表并入技能）
 
 - 进度：`keel/templates/migrate/`（trellis / superpowers / unstructured / report）删除，映射规则与报告结构并入 `k-migrate` 正文（55 行）；报告落点改为 `keel/migration-report.md`。`tests/chg010-migrate.test.ts` REQ-022/AC-1/2/4/5 改验技能正文。
+
+## 2026-09-01（CHG-014 S7：REQ-022/AC-6 推平也是迁移）
+
+- 进度：k-migrate 规则 5：用户选择推平时仍写 `keel/migration-report.md`，删除作为独立提交落地，旧框架的 SessionStart 注入与技能在同一提交里停用。来源：fmea-v3 213 个 trellis 删除在工作区躺了三天，`gate verify` 一直 `dirty: true`，G-done 永红；Cursor 里 Trellis 的 SessionStart 注入仍在。
+- 证据：`tests/chg014-docs.test.ts` `REQ-022/AC-6`（machine-doc）。
