@@ -74,3 +74,8 @@
 
 - 进度：`gate status` 第五行 `keel: <项目 keel_version> (installer <版本>)`，安装器较新时追加 `— run keel update`。安装器位置：`KEEL_INSTALLER_ROOT`（`none` 跳过）或 `npm root -g` 下的 `keel/package.json`（4 s 超时，失败只打印项目版本）。zhaoxi 在 0.9.0 上给上游当天已删除的机制加固两天，这行字就是为它加的。
 - 证据：`tests/chg014-status.test.ts` `REQ-025/AC-10 …`（较新 / 相等 / 更旧 / 找不到四种）；本仓打印 `keel: 0.9.1 (installer 0.9.1)`。
+
+## 2026-09-01（CHG-014 S8：0.9.2 发布收口）
+
+- 进度：`package.json` / `keel/config.json` 0.9.1 → 0.9.2；`RELEASE-0.9.2.md`（破坏点：门禁对漂移与无 APR 基线变红、树哈希排除 approvals / review/raw、ingest 形状校验与复发熔断、白名单形状、尾注成段、harness 探测；消费项目要做的事 5 条）；OVERVIEW 在途节改写为 v6 / APR-006 待点头与 CHG-014 八切片已落地；handoff 6 行。
+- 证据（提交前脏树）：`npx tsc --noEmit` exit 0；`node --test` **263 / 263 / 0 fail**；`gate verify` PASS（tree `7588ebc3…`，passed=263）；`gate check` 8 条中 G-done / G-merge / X-evidence 仅因工作树脏（S8 文件未提交）FAIL，X-apr WARN（已 waiver），其余 PASS；`gate status` 打印 `keel: 0.9.2 (installer 0.9.2)`。提交后在干净树重跑 verify + check 的结果记在下一行。

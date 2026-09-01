@@ -24,16 +24,17 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-独立评审 P0–R3 已修。CHG-002～007 **approved**（kopit）。requirements **current = v3.md**。**CHG-008 自动评审回路已实施**（`gate loop` + 三类清单），变更单仍 proposed。
+版本 0.9.2（2026-09-01）。requirements **current = v5.md**（APR-005）；**v6 proposed**，携带 CHG-012（Cursor 兼容档）、CHG-013（评审去攻击面 / 不强制异构）、CHG-014（zhaoxi / fmea-v3 审计回流：DEC-185～189、ISS-058～060 已闭环），三份变更单与 v6 待 **APR-006** 一次点头（含提交委托原话）。规划 current = overview-v4.md（APR-005）。
 
-远端、APR-001（仍 draft）、CODEOWNERS 真人仍开着（ISS-016）。
+CHG-014 八个切片已全部落地并提交（S0 记录 → S1 钩子/探测 → S3 冻结件与基线复核 → S4 证据快照 → S5 白名单 → S6 评审回路 → S2 status → S7 文档技能 → S8 发布）；每个切片有红绿测试与 worklog 节，证据见 `RELEASE-0.9.2.md` 与各功能 worklog 2026-09-01 节。
 
 ## 风险与暂定
 
-- 暂定决策计数：0（DEC-155/156 已 confirmed）
-- 人类身份已配 kopit <wwillmee@gmail.com>；APR-001 仍 draft（本次只批 CHG）
-- 远端未配
-- DEC-148 夹具已入仓；macOS/Linux digest 由 CI 矩阵对账
+- 暂定决策计数：0
+- 人类身份已配 kopit <wwillmee@gmail.com>；APR-001 仍 draft（bootstrap）；APR-006 待点头
+- Codex 的环境变量名未实测（本机 Codex CLI 登录失效）：`CODEX_*` 前缀规则 + 父进程名兜底，ISS-059 注明待钉死
+- 本仓 10 个 DEC（APR-002 ×5、APR-003 ×5）在 CHG-011 复核时正文被追加，X-apr 以 F3 worklog 的两行 waiver 放行（DEC-185）
+- REQ-017/AC-4 GitHub Actions 六格真实运行仍为 proxy
 - §8/9 未进 C 记录
 
 ## 主要外部依赖
