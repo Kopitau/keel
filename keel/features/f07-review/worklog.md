@@ -111,3 +111,4 @@
 - 修复（全部红→绿，回归在 `tests/chg014-review-fixes.test.ts`）：ISS-061 同树红色 verify.json 优先于 APR 快照，快照只认已提交且与 HEAD 一致的 APR；ISS-062 一轮 clear 对同一指纹只计一次；ISS-063 白名单删 `-o`、取值参数按形状核；ISS-064 工件路径非文件按 missing、不再 EISDIR；ISS-065（ISS-060 复发）next 行识别已认领功能；ISS-066（ISS-058 复发）交互式提交为主题预留首行；ISS-067 `keel/review/raw` 排除出 pack diff、同轮存档不覆盖。advisory 同轮顺手修了 3 条（存档重名、手写快照、`declaresConfirmed` 否定式误判）并把 v6 三条 AC 措辞对齐代码（`evidence_*` 平铺键；Cursor 记 Host）。
 - 未修的 advisory（留待办，已在 findings.md）：旧全文哈希 APR 的元数据改动会被判漂移（DEC-185 已记为已知边界）；AC-13 与父进程分支只有模块级测试；pack 的 `reqs` 只带当前版本而不带在途的 v6。
 - 证据：`node --test` **272/272**；`npx tsc --noEmit` 干净；`gate check --quick` PASS_WITH_WARN。clear 由新的上下文执行，结果记在下一节。
+- clear（新上下文 `claude-code-fresh-subagent-r2`，2026-09-01T08:32Z，树 `22a17ee09e4e`）：ISS-061～067 七条探针全部 exit 1 / refused，`review loop passed`（round 2，advisory 7 条留待办）。
