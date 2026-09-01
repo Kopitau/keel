@@ -69,3 +69,10 @@
 - 用户原话：「attack review 为什么还是这个？不是主要是功能测试和代码和功能测试审核么？」→「需要 去掉attack面，同时审核不应该强制要求使用不同的cli。只需要运行空白的子代理就可以了」。
 - 进度：`reviewloop.ts` 删除 lens 分类 / 异构判定 / `paths` / `append-attack`；`evidence.review` 去掉 lens 与 heterogeneous 字段；k-review 重写为两轴 + C-31 分级清单；`attack-surface.md` 删除，边界输入并入 `robustness.md`；`headless.md` 改可选；config 去掉 `heterogeneous_review`。DEC-159/160 superseded → DEC-184；DEC-178 复核保留；ISS-024/028/029 备注。需求 v6 改 REQ-007 / 027 / 028；F7 计划 v4；APR-006 同批绑定 CHG-012 + CHG-013 + v6。
 - 证据：`npx tsc --noEmit` 0 错；`node --test` 全绿（见提交）；REQ-027/AC-3 与 REQ-028/AC-1..3 新黑盒在 `tests/chg008-review.test.ts`。
+
+## 2026-09-01（CHG-014 S6：DEC-189 评审回路四处收紧）
+
+- 进度：`reviewloop.ts` ① `rootFingerprint` 沿 ISS 前言 `recurrence_of` 找到链根的 fingerprint，`recordClear` 用它给 `bumpRounds` 计数，链上第三轮仍开即熔断；Finding 新增可选 `recurrence_of`，ingest 写进新 ISS 前言。② `LOCKFILES`（pnpm-lock / package-lock / yarn.lock / uv.lock / poetry.lock / Cargo.lock / go.sum / Gemfile.lock / composer.lock）以 pathspec 排除出 diff 正文，未跟踪的 lockfile 也不 `--no-index` 展开，改附"文件名 + sha256 前 16 位 + 行数"摘要节。③ `packBudget`（默认 120000，`config.review.pack_budget` 可调）：pack 生成后对超预算字段打印 `warn:` 并指出 diff 里最大的文件，pack 照常生成。④ `validateFindings` 只核**形状**（JSON 数组、每项对象、`title`、`blocking` 布尔、可选字段是字符串、`recurrence_of` 形如 ISS-nnn），不合格整体拒绝并逐条列缺项，被拒文件原样存档 `keel/review/raw/round-<n>-<reviewer>.json`；接受的一轮不产生额外文件（REQ-027/AC-10 两份产物不变）。
+- 实现决定：首版把"blocking 缺 repro / impact / 缺 fingerprint"也当拒绝，与 REQ-027/AC-4（DEC-182 降为待核实）和既有 4 条 ingest 测试冲突；改回形状校验，v6 AC-12 与 DEC-189 ④ 措辞同步——zhaoxi 真正的问题是对象代替数组、`severity` 代替 `blocking`、漏 `blocking`，都是形状。首版还把接受的 findings 也存档，撞上 REQ-027/AC-10「产物只有两份」的测试，改为只在拒绝时存档。`keel/review/raw/` 与 `keel/approvals/` 一样不进树哈希、不进 pack 的变更路径。
+- 措辞：代码注释与 ISS 正文里的"攻击探针"改为"复现探针 / probe"（CHG-014 第 11 条；chg010 一条旧断言随之改字，语义不变）。
+- 证据：`tests/chg014-review-loop.test.ts` `REQ-027/AC-11`（lockfile 摘要 + 预算告警点名 big.txt）、`AC-12`（形状校验逐条报错、整体拒绝、存档、接受后 raw 只有被拒那份）、`AC-13`（三段复发链第三轮熔断；无归并时旧行为不熔断）；`node --test` **257/257**；`npx tsc --noEmit` 干净。

@@ -44,3 +44,7 @@
 
 - 现象：Codex 异构评审的 4 条 blocking 探针在 Windows 经 cmd.exe 全部 SyntaxError 退出 1，被记「待核实」，回路误判 passed。
 - 修复：`runReproCommand` 统一 `sh -c`（`probeShell()` 在 Windows 用 `where sh`）；ingest 有待核实 blocking → `in_review`，clear 拒绝直到新一轮。红灯：无补丁时 `tests/iss054-probe-shell.test.ts` 不能加载（probeShell 不存在），行为红灯见 findings.md 第 1 轮输出；修复后 2/2 绿。ISS-054 关闭。
+
+## 2026-09-01（CHG-014 S6：复发链共享熔断计数）
+
+- 进度：ISS 前言 `recurrence_of` 现在被 `gate loop clear` 读取：链上所有 ISS 共用链根的 fingerprint 作 `rounds_on` 键（DEC-189）。k-log 已要求复发必填 `recurrence_of`，这条字段从"审计线索"变成"机器输入"。评审 Finding 也可直接带 `recurrence_of`，ingest 写入新 ISS。见 F7 worklog 同日节。

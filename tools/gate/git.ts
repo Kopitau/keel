@@ -119,6 +119,7 @@ export function gitWriteTree(ctx: Ctx): string {
       `${records}/review/pack.json`,
       `${records}/review/disposition.md`,
       `${records}/review/findings.md`,
+      `${records}/review/raw`,
       `${records}/approvals`,
     ];
     for (const rel of exclude) {

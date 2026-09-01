@@ -292,7 +292,7 @@ test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding whose
     assert.match(result.stdout, /filed iss=- deferred=1/);
     assert.deepEqual(issueFiles(root), []);
     const worklog = readFileSync(join(root, "keel", "review", "findings.md"), "utf8");
-    assert.match(worklog, /攻击探针首次退出 7/);
+    assert.match(worklog, /复现探针首次退出 7/);
     assert.match(worklog, /probe already refused/);
   } finally {
     rmSync(root, { recursive: true, force: true });

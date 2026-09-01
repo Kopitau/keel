@@ -21,7 +21,7 @@ zhaoxi 的方案级回路跑了 11 轮 / 14 次 pack，熔断从未触发：复�
 
 | 选项 | 优点 | 缺点 |
 |---|---|---|
-| **A ① clear 计数时，ISS 前言 `recurrence_of` 指向的旧 ISS 与之共享一个根指纹，链上第三轮仍开即熔断；② pack 对 lockfile（pnpm-lock.yaml / package-lock.json / yarn.lock / uv.lock / poetry.lock / Cargo.lock / go.sum）只写"文件名 + sha256 + 行数"摘要；③ pack 超过 reviewer 预算（默认 120000 字符，config `review.pack_budget`）打印 WARN 并指出最大来源文件；④ ingest 严格校验 Finding 数组（title / blocking 布尔 / repro / impact / fingerprint），不合格整体拒绝并逐条列缺项，原文件原样存档 `keel/review/raw/round-N-<reviewer>.json`** | 熔断真的能触发；lockfile 不再撑爆 pack；格式问题让 reviewer 重出，而不是实现者代笔 | 复发归并依赖 ISS 作者如实填 `recurrence_of`（k-log 已要求） |
+| **A ① clear 计数时，ISS 前言 `recurrence_of` 指向的旧 ISS 与之共享一个根指纹，链上第三轮仍开即熔断；② pack 对 lockfile（pnpm-lock.yaml / package-lock.json / yarn.lock / uv.lock / poetry.lock / Cargo.lock / go.sum）只写"文件名 + sha256 + 行数"摘要；③ pack 超过 reviewer 预算（默认 120000 字符，config `review.pack_budget`）打印 WARN 并指出最大来源文件；④ ingest 严格校验 Finding 数组的形状（JSON 数组、每项是对象、有 `title`、`blocking` 是布尔、repro / impact / fingerprint / recurrence_of 若存在必须是字符串；blocking 缺 repro / impact 仍按 DEC-182 降为待核实），不合格整体拒绝并逐条列缺项，被拒文件原样存档 `keel/review/raw/round-N-<reviewer>.json`；Finding 可带 `recurrence_of` 供 ①归并** | 熔断真的能触发；lockfile 不再撑爆 pack；格式问题让 reviewer 重出，而不是实现者代笔 | 复发归并依赖 ISS 作者如实填 `recurrence_of`（k-log 已要求） |
 | B 只做 ④ | 改动最小 | 熔断与体积问题原样保留 |
 
 ## 推荐理由

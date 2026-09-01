@@ -11,7 +11,7 @@
 // front matter and a fuse report is appended to its body.
 //
 // ISS ingest / clear keep DEC-182: a blocking finding opens an ISS only when its
-// attack probe exits 0 on the unfixed tree; clear reruns every probe and needs a
+// probe exits 0 on the unfixed tree; clear reruns every probe and needs a
 // nonzero exit; every run is appended to the disposition and to evidence.
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -87,7 +87,54 @@ export type Finding = {
   pending_defense?: string;
   body?: string;
   fingerprint?: string;
+  /** DEC-189: the ISS this finding recurs from; the fuse counts the whole chain. */
+  recurrence_of?: string;
 };
+
+/**
+ * DEC-189 / REQ-027 AC-12: the reviewer's output is validated as a whole for its
+ * *shape* — a JSON array of objects with a `title` and a boolean `blocking`, string
+ * fields where present — and either ingested verbatim or rejected with every gap
+ * named. Missing repro / impact on a blocking finding is not a shape error: DEC-182
+ * downgrades it to 待核实 (REQ-027 AC-4). The implementer never edits a reviewer's
+ * findings into shape — a rejected file goes back to a fresh reviewer.
+ */
+export function validateFindings(raw: unknown): { ok: true; findings: Finding[] } | { ok: false; errors: string[] } {
+  if (!Array.isArray(raw)) return { ok: false, errors: ["findings.json must be a JSON array of Finding objects"] };
+  const errors: string[] = [];
+  const out: Finding[] = [];
+  raw.forEach((item, i) => {
+    const at = `finding[${i}]`;
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      errors.push(`${at}: not an object`);
+      return;
+    }
+    const f = item as { [k: string]: unknown };
+    const title = typeof f.title === "string" ? f.title.trim() : "";
+    if (!title) errors.push(`${at}: title missing`);
+    if (typeof f.blocking !== "boolean") {
+      errors.push(`${at}${title ? ` (${title.slice(0, 40)})` : ""}: blocking must be true or false (a severity label is not a verdict)`);
+    }
+    for (const k of ["repro", "impact", "fingerprint", "pending_defense", "body", "recurrence_of"]) {
+      if (f[k] !== undefined && typeof f[k] !== "string") errors.push(`${at}: ${k} must be a string`);
+    }
+    const recurrence = typeof f.recurrence_of === "string" ? f.recurrence_of.trim() : "";
+    if (recurrence && !/^ISS-\d+$/.test(recurrence)) errors.push(`${at}: recurrence_of must be an ISS id`);
+    const fingerprint = typeof f.fingerprint === "string" ? f.fingerprint.trim() : "";
+    out.push({
+      title,
+      blocking: f.blocking === true,
+      repro: typeof f.repro === "string" ? f.repro : "",
+      impact: typeof f.impact === "string" ? f.impact : "",
+      ...(fingerprint ? { fingerprint } : {}),
+      ...(typeof f.pending_defense === "string" ? { pending_defense: f.pending_defense } : {}),
+      ...(typeof f.body === "string" ? { body: f.body } : {}),
+      ...(recurrence ? { recurrence_of: recurrence } : {}),
+    });
+  });
+  if (errors.length > 0) return { ok: false, errors };
+  return { ok: true, findings: out };
+}
 
 const PACK_KEYS = ["diff", "plan", "reqs", "evidence", "worklog_summary"] as const;
 
@@ -99,7 +146,7 @@ const PACK_MAX: { [k: string]: number } = {
   worklog_summary: 4000,
 };
 
-const LOOP_ARTIFACT_RE = /^keel\/review\/(pack\.json|disposition\.md|findings\.md)$|^keel\/evidence\//;
+const LOOP_ARTIFACT_RE = /^keel\/review\/(pack\.json|disposition\.md|findings\.md)$|^keel\/review\/raw\/|^keel\/evidence\//;
 
 export function reviewDir(ctx: Ctx): string {
   return join(ctx.records, "review");
@@ -383,7 +430,7 @@ export function fileFindings(
       deferred.push(f.title);
       note(`- 待核实（无影响说明，未开 ISS）：${f.title}`);
     } else if (f.blocking) {
-      // DEC-182: a blocking repro is an attack probe. It may open an ISS only
+      // DEC-182: a blocking repro is a probe. It may open an ISS only
       // when it actually demonstrates the problem on the current, unfixed tree.
       const command = f.repro.trim();
       const probeTree = gitWriteTree(ctx);
@@ -395,7 +442,7 @@ export function fileFindings(
         probe_errors.push(f.title);
         const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
         note(
-          `- 待核实（攻击探针无法执行，退出 ${probe.exit_code}，回路停在 in_review）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
+          `- 待核实（复现探针无法执行，退出 ${probe.exit_code}，回路停在 in_review）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
         );
         continue;
       }
@@ -403,7 +450,7 @@ export function fileFindings(
         deferred.push(f.title);
         const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
         note(
-          `- 待核实（攻击探针首次退出 ${probe.exit_code}，未开 ISS）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
+          `- 待核实（复现探针首次退出 ${probe.exit_code}，未开 ISS）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
         );
         continue;
       }
@@ -424,6 +471,7 @@ export function fileFindings(
           let body = readFileSync(dest, "utf8");
           body = body.replace(/fingerprint:\s*""/, `fingerprint: "${fp}"`);
           body = body.replace(/source:\s*""/, "source: review-loop");
+          if (f.recurrence_of) body = body.replace(/recurrence_of:\s*""/, `recurrence_of: "${f.recurrence_of}"`);
           body = fillIssueSection(body, "现象", f.title);
           body = fillIssueSection(body, "影响", (f.impact ?? "").replace(/\s+/g, " ").slice(0, 2000));
           body = fillIssueSection(
@@ -433,7 +481,7 @@ export function fileFindings(
           );
           body = body.replace("复现命令：", `复现命令：\n\n\`\`\`\n${command}\n\`\`\``);
           body +=
-            `\n\n## 打开态攻击探针\n\n` +
+            `\n\n## 打开态复现探针\n\n` +
             `- probe_exit_code: ${probe.exit_code}\n` +
             `- probe_recorded_at: ${probeRecordedAt}\n` +
             `- probe_tree_hash: ${probeTree || "(none)"}\n` +
@@ -564,10 +612,34 @@ export function canClear(runs: ReproRun[], issIds: string[]): boolean {
   return issIds.every((id) => runs.some((r) => r.iss === id && r.refused));
 }
 
-export function bumpRounds(state: LoopState, stillOpen: string[]): LoopState {
+/**
+ * DEC-189: an ISS that recurs from an older one (`recurrence_of`) shares that
+ * chain's fuse counter. zhaoxi's 007→016→024→028→031 chain ran eleven rounds
+ * because every recurrence carried a fresh fingerprint and `rounds_on` never
+ * passed 1. The root of the chain is the oldest ISS; its fingerprint (or id) keys
+ * the counter for every descendant.
+ */
+export function rootFingerprint(ctx: Ctx, id: string, fallback = ""): string {
+  const seen = new Set<string>();
+  let cur = id;
+  let fp = fallback || id;
+  for (let depth = 0; depth < 20 && cur && !seen.has(cur); depth++) {
+    seen.add(cur);
+    const body = issBody(ctx, cur);
+    if (!body) break;
+    const { attrs } = parseFrontmatter(body);
+    fp = (attrs.fingerprint ?? "").trim() || cur;
+    const parent = (attrs.recurrence_of ?? "").trim().match(/^ISS-\d+/)?.[0] ?? "";
+    if (!parent) break;
+    cur = parent;
+  }
+  return fp;
+}
+
+export function bumpRounds(state: LoopState, stillOpen: string[], rootOf?: (id: string) => string): LoopState {
   const rounds_on = { ...state.rounds_on };
   for (const id of stillOpen) {
-    const fp = state.iss_fp?.[id] ?? id;
+    const fp = rootOf ? rootOf(id) : (state.iss_fp?.[id] ?? id);
     rounds_on[fp] = (rounds_on[fp] ?? 0) + 1;
   }
   const fused = Object.values(rounds_on).some((n) => n >= (state.fuse_threshold || FUSE_THRESHOLD));
@@ -617,7 +689,7 @@ export function probeShell(): string | null {
 }
 
 /**
- * Attack probes are POSIX one-liners on every OS. cmd.exe mangles the quoting a
+ * Probes are POSIX one-liners on every OS. cmd.exe mangles the quoting a
  * `node -e "…"` probe needs, so on Windows a real hole read as "not reproduced"
  * (ISS-054, first live plan-level review). Run through sh wherever it exists;
  * cmd.exe is the last resort only.
@@ -727,13 +799,36 @@ export function defaultBase(ctx: Ctx): string {
  * lines. `git diff <base>` already covers committed, staged and unstaged work
  * without overlap, so the ISS-052 two-command working-tree diff is gone (ISS-055).
  */
+/** DEC-189: lockfiles are summarized, never diffed — one of them alone breached the 400 KB pack cap in a pilot. */
+export const LOCKFILES = ["pnpm-lock.yaml", "package-lock.json", "yarn.lock", "uv.lock", "poetry.lock", "Cargo.lock", "go.sum", "Gemfile.lock", "composer.lock"];
+
+function isLockfile(path: string): boolean {
+  return LOCKFILES.includes(basename(path.replace(/\\/g, "/")));
+}
+
 const PACK_EXCLUDES = [
   "--",
   ".",
   ":(exclude)keel/review/disposition.md",
   ":(exclude)keel/review/findings.md",
   ":(exclude)keel/evidence",
+  ...LOCKFILES.map((name) => `:(exclude,glob)**/${name}`),
+  ...LOCKFILES.map((name) => `:(exclude)${name}`),
 ];
+
+function lockfileSummary(ctx: Ctx, paths: string[]): string {
+  const rows: string[] = [];
+  for (const rel of paths) {
+    const abs = join(ctx.root, rel);
+    if (!existsSync(abs)) {
+      rows.push(`- ${rel} (deleted)`);
+      continue;
+    }
+    const text = readFileSync(abs, "utf8");
+    rows.push(`- ${rel} sha256=${sha256Normalized(text).slice(0, 16)} lines=${text.split(/\r?\n/).length}`);
+  }
+  return rows.length > 0 ? `\n# lockfiles (bodies omitted, DEC-189):\n${rows.join("\n")}\n` : "";
+}
 
 export function baseDiff(ctx: Ctx, base: string): string {
   const body = git(ctx, ["diff", "--diff-filter=d", "-U2", base, ...PACK_EXCLUDES]).stdout;
@@ -744,6 +839,7 @@ export function baseDiff(ctx: Ctx, base: string): string {
     .map((l) => l.trim())
     .filter((p) => p && !LOOP_ARTIFACT_RE.test(p));
   const added = untracked
+    .filter((p) => !isLockfile(p))
     .map((p) => git(ctx, ["diff", "--no-index", "-U2", "--", "/dev/null", p]).stdout)
     .filter(Boolean)
     .join("\n");
@@ -752,7 +848,12 @@ export function baseDiff(ctx: Ctx, base: string): string {
     .map((l) => l.trim())
     .filter(Boolean);
   const tail = deleted.length > 0 ? `\n# deleted files (bodies omitted):\n${deleted.map((p) => `- ${p}`).join("\n")}\n` : "";
-  return [body, added].filter(Boolean).join("\n") + tail;
+  const changedLocks = git(ctx, ["diff", "--name-only", base]).stdout
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter((p) => p && isLockfile(p));
+  const locks = [...new Set([...changedLocks, ...untracked.filter(isLockfile)])];
+  return [body, added].filter(Boolean).join("\n") + tail + lockfileSummary(ctx, locks);
 }
 
 /** The five C-39 inputs: diff since base, the current overview, requirements, evidence, worklog digest. */
@@ -781,6 +882,43 @@ export function buildPack(ctx: Ctx, base: string): { [k: string]: string } {
     evidence,
     worklog_summary: worklogDigest(ctx),
   };
+}
+
+export const PACK_BUDGET = 120000;
+
+/** DEC-189: what one reviewer context can actually read; `review.pack_budget` in config overrides. */
+export function packBudget(ctx: Ctx): number {
+  const review = (ctx.config.review ?? {}) as { pack_budget?: unknown };
+  const n = Number(review.pack_budget);
+  return Number.isFinite(n) && n > 0 ? n : PACK_BUDGET;
+}
+
+function largestDiffFile(diff: string): { path: string; chars: number } | null {
+  const parts = diff.split(/^diff --git a\/(.+?) b\/.*$/m);
+  let best: { path: string; chars: number } | null = null;
+  for (let i = 1; i + 1 < parts.length; i += 2) {
+    const path = parts[i] ?? "";
+    const chars = (parts[i + 1] ?? "").length;
+    if (!best || chars > best.chars) best = { path, chars };
+  }
+  return best;
+}
+
+/** Non-fatal: a field over budget names itself and, for the diff, the file that dominates it. */
+export function packBudgetWarnings(ctx: Ctx, pack: { [k: string]: string }): string[] {
+  const budget = packBudget(ctx);
+  const out: string[] = [];
+  for (const k of PACK_KEYS) {
+    const len = (pack[k] ?? "").length;
+    if (len <= budget) continue;
+    let hint = "split the plan into smaller review scopes or narrow --base";
+    if (k === "diff") {
+      const big = largestDiffFile(pack[k] ?? "");
+      if (big) hint = `largest file ${big.path} (${big.chars} chars); ${hint}`;
+    }
+    out.push(`warn: pack field '${k}' is ${len} chars > reviewer budget ${budget} (DEC-189) — ${hint}`);
+  }
+  return out;
 }
 
 function writeGeneratedPack(ctx: Ctx, pack: { [k: string]: string }): { result: CmdResult; hash: string } {
@@ -847,8 +985,9 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       "pack",
       `plan=${plan || "-"} base=${base} plan_complete=${complete} files=${paths.length} implementer=${impl} reviewer=${reviewer || "-"} pack=${wr.hash.slice(0, 12)}`,
     );
+    const budgetWarnings = packBudgetWarnings(ctx, pack);
     return ok(
-      `${wr.result.stdout}files=${paths.length}\n`,
+      `${wr.result.stdout}files=${paths.length}\n${budgetWarnings.map((w) => `${w}\n`).join("")}`,
     );
   }
   if (sub === "ingest") {
@@ -866,17 +1005,37 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
       return fail("working tree moved since pack; re-run gate loop pack (ISS-023)\n");
     }
     const worklogRel = flag(args, "worklog") || "";
-    let findings: Finding[] = [];
-    try {
-      findings = JSON.parse(readFileSync(file, "utf8")) as Finding[];
-    } catch {
-      return fail("findings.json invalid\n");
-    }
-    if (!Array.isArray(findings)) return fail("findings.json must be an array\n");
     const reviewer = flag(args, "reviewer") || st.reviewer_harness || process.env.KEEL_HARNESS || "";
     if (!reviewer || reviewer === "unknown") {
       return fail("ingest requires --reviewer <harness>; empty findings are not a review (ISS-023)\n");
     }
+    // DEC-189: a file the loop cannot accept is archived verbatim (keel/review/raw/), so
+    // the rejection can be traced back to what the reviewer wrote; the two review
+    // products (REQ-027 AC-10) stay findings.md and disposition.md.
+    const rawText = readFileSync(file, "utf8");
+    const rawName = `round-${st.round + 1}-${reviewer.replace(/[^A-Za-z0-9._-]+/g, "_")}.json`;
+    const archive = (): void => {
+      const rawDir = join(reviewDir(ctx), "raw");
+      mkdirSync(rawDir, { recursive: true });
+      writeFileSync(join(rawDir, rawName), rawText, "utf8");
+    };
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(rawText) as unknown;
+    } catch {
+      archive();
+      return fail(`findings.json invalid JSON; archived as keel/review/raw/${rawName} — ask the reviewer for a valid Finding[] (DEC-189)\n`);
+    }
+    const checked = validateFindings(parsed);
+    if (!checked.ok) {
+      archive();
+      return fail(
+        `findings rejected (${checked.errors.length} gap(s)); archived as keel/review/raw/${rawName} — a fresh reviewer must re-issue, the implementer does not rewrite it (DEC-189 / C-41):\n` +
+          checked.errors.map((e) => `- ${e}`).join("\n") +
+          "\n",
+      );
+    }
+    const findings: Finding[] = checked.findings;
     const impl = flag(args, "implementer") || st.implementer_harness || "unknown";
     const out = fileFindings(ctx, findings, worklogRel);
     // DEC-182: a blocking finding without a probe, or whose probe ran and did not
@@ -975,6 +1134,8 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
       tree_hash: gitWriteTree(ctx),
     },
     still,
+    // DEC-189: recurrences count against the root of their chain.
+    (id) => rootFingerprint(ctx, id, st.iss_fp?.[id] ?? id),
   );
   // Probes that never executed keep the loop open even when every ISS is refused (ISS-054).
   const next: LoopState =
