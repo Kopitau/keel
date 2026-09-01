@@ -1,11 +1,12 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import process from "node:process";
 import type { Ctx } from "./ctx.ts";
 import { sha256Body } from "./hash.ts";
 import { gitIdentity } from "./git.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
-import { detectHarness } from "./harness.ts";
+import { ancestorProcessNames, detectHarness } from "./harness.ts";
 import { mdFiles } from "./walk.ts";
 
 type Agent = { name?: string; email?: string };
@@ -74,7 +75,8 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   const { attrs, body } = parseFrontmatter(raw);
   // DEC-166: run from an agent environment, approval is delegation — legal only
   // when the APR itself records the user's instruction, before approve runs.
-  const harness = detectHarness();
+  // ISS-059: environment markers first, process ancestry (codex / claude / …) as the fallback.
+  const harness = detectHarness(process.env, { ancestors: ancestorProcessNames });
   if (harness && !(attrs.delegated ?? "").trim()) {
     return fail(
       `refuse: gate approve is running inside ${harness.agent} but ${id} has no 'delegated:' record.\n` +

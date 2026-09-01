@@ -142,3 +142,10 @@
 - 决定（worklog 级，见 v5 未决问题第 1 点）：审批哈希改为正文哈希（`sha256Body`，去掉前言），旧全文哈希在文件未动时仍接受；正文不符 → G-req WARN，`gate-warn: G-req ref=APR-nnn` 放行；`gate approve` / `gate hash` 同步。理由：CHG-011 的状态翻转曾迫使重绑 APR-004（8f77b84），这正是要去掉的摩擦。
 - 缺口猎取（C-06）：新上下文子代理对 v5 报 40 条，处置全部写进 v5「未决问题」；v5 / overview-v4 状态改 proposed，待 APR-005 一次点头（含 8 条超出 CHG-011 字面的解读）。
 - 证据：`npx tsc --noEmit` 0 错；`node --test` 222 passed / 0 failed；`gate check --quick` = PASS_WITH_WARN（仅 REQ-017/AC-4 proxy），`checks=4`；新黑盒 `tests/chg011-quick-gate.test.ts` 6 条（REQ-017/AC-6、REQ-005/AC-6、AC-7、REQ-011/AC-4、REQ-018/AC-1、REQ-006/AC-4）。
+
+## 2026-09-01（CHG-014 S1：提交尾注成段 + harness 探测覆盖 Codex/Cursor）
+
+- 进度：ISS-058 / ISS-059 红→绿。`hook.ts` 新增 `insertTrailers`（尾注单独成段、作者自写尾注段直接追加、git `#` 注释块留最后；Keel-Precommit 与身份尾注合并一次插入）；`harness.ts` 探测顺序 `KEEL_AGENT` → `CLAUDECODE` → 任一 `CODEX_*` → `AI_AGENT` → 父进程名（`codex`/`claude`/`opencode`/`grok`/`dsh`，Windows 一次 CIM 查询 ≈150 ms，POSIX 一次 `ps`，`KEEL_ANCESTRY=0` 可关）；Cursor / VS Code 只记 `Host:` 不当 agent；`precommitAprNotes` 在无法识别但暂存了无委托 approved APR 时打印 WARN；`approve.ts` 同步走父进程兜底。
+- 实现决定：**编辑器宿主不等于 agent**。Cursor 集成终端里人手动 `git commit` 与 Cursor agent 的 shell 共享一套环境变量，若把 CURSOR_* 当 agent 标记，DEC-166 会拒绝人类在 Cursor 里的正常审批提交；所以宿主只记 `Host:`，守卫只对 Claude Code / Codex / 父进程为 harness 可执行文件的情形生效。Codex 的具体变量名未实测（本机 Codex CLI 登录失效，`refresh_token_reused`），暂用 `CODEX_*` 前缀规则，ISS-059 里注明待用户在 Codex Desktop 取一次 `Get-ChildItem env:` 后钉死。
+- C-34: ref=ISS-059 —— `tests/r6-field-guards.test.ts`「a human outside any harness」与 `tests/w2-gate.test.ts`「approve as a human」两条夹具加 `KEEL_ANCESTRY=0`：测试进程本身跑在 `claude.exe` 之下，新的父进程兜底会如实识别出 harness，夹具必须显式声明"无祖先"才仍是"平面终端里的人"。断言未改。
+- 证据：`tests/chg014-hook-harness.test.ts` 5 条（ISS-058、REQ-019/AC-5、ISS-059、REQ-019/AC-6 ×2）先红后绿；`node --test` **245/245**；`npx tsc --noEmit` 干净；`gate check --quick` PASS_WITH_WARN（仅 REQ-017/AC-4 proxy）。本仓提交 `7238be8` 是 ISS-058 的活样本（尾注折进主题）。

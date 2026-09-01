@@ -5,21 +5,28 @@ import type { Ctx } from "./ctx.ts";
 import { git, gitBranch, gitDir, gitIdentity, gitStagedContent } from "./git.ts";
 import { isForceUpdate, parsePrePushLine } from "./bypass.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
-import { detectHarness, type EnvMap } from "./harness.ts";
+import { ancestorProcessNames, detectHarness, detectHost, type DetectOptions, type EnvMap } from "./harness.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
+
+const DEFAULT_DETECT: DetectOptions = { ancestors: ancestorProcessNames };
+
+function stagedApprovals(ctx: Ctx): string[] {
+  return git(ctx, ["diff", "--cached", "--name-only"]).stdout
+    .split(/\n/)
+    .map((s) => s.trim().replace(/\\/g, "/"))
+    .filter((s) => /\/approvals\/APR-\d+.*\.md$/.test(s));
+}
 
 /**
  * DEC-166 commit-time guard: validate the approval commit BEING MADE, which the
  * history-based X-apr can only judge after the fact. An agent may land an APR
  * commit on the user's explicit instruction — but then the APR file itself must
  * carry that instruction (`delegated:` non-empty), and an agent git identity
- * still never lands approvals (C-107).
+ * still never lands approvals (C-107). ISS-059: the guard used to be skipped
+ * whenever the harness was not recognized, i.e. everywhere but Claude Code.
  */
-export function precommitAprGaps(ctx: Ctx, env: EnvMap = process.env): string[] {
-  const staged = git(ctx, ["diff", "--cached", "--name-only"]).stdout
-    .split(/\n/)
-    .map((s) => s.trim().replace(/\\/g, "/"))
-    .filter((s) => /\/approvals\/APR-\d+.*\.md$/.test(s));
+export function precommitAprGaps(ctx: Ctx, env: EnvMap = process.env, opts: DetectOptions = DEFAULT_DETECT): string[] {
+  const staged = stagedApprovals(ctx);
   const gaps: string[] = [];
   if (staged.length === 0) return gaps;
   const ident = gitIdentity(ctx);
@@ -30,7 +37,7 @@ export function precommitAprGaps(ctx: Ctx, env: EnvMap = process.env): string[] 
       (a.email && a.email.toLowerCase() === ident.email.toLowerCase()) ||
       (a.name && a.name.toLowerCase() === ident.name.toLowerCase()),
   );
-  const harness = detectHarness(env);
+  const harness = detectHarness(env, opts);
   for (const rel of staged) {
     const text = gitStagedContent(ctx, rel);
     if (!text) continue;
@@ -48,9 +55,31 @@ export function precommitAprGaps(ctx: Ctx, env: EnvMap = process.env): string[] 
   return gaps;
 }
 
+/** Non-fatal notes: an editor host was seen but no agent could be told apart from a human (ISS-059). */
+export function precommitAprNotes(ctx: Ctx, env: EnvMap = process.env, opts: DetectOptions = DEFAULT_DETECT): string[] {
+  const staged = stagedApprovals(ctx);
+  if (staged.length === 0) return [];
+  if (detectHarness(env, opts)) return [];
+  const host = detectHost(env, opts);
+  const undelegated = staged.filter((rel) => {
+    const text = gitStagedContent(ctx, rel);
+    if (!text) return false;
+    const { attrs } = parseFrontmatter(text);
+    return (attrs.status ?? "") === "approved" && !(attrs.delegated ?? "").trim();
+  });
+  if (undelegated.length === 0) return [];
+  const where = host ? `inside ${host.host} (${host.via})` : "from an unrecognized environment";
+  return [
+    `warn: approval ${undelegated.join(", ")} is being committed ${where}; if an agent made this commit the APR must record 'delegated:' — set KEEL_AGENT=<harness> so the guard can tell (DEC-166 / ISS-059)`,
+  ];
+}
+
 function runPrecommitApr(ctx: Ctx): CmdResult {
   const gaps = precommitAprGaps(ctx);
-  if (gaps.length === 0) return ok("pre-commit-apr: ok\n");
+  if (gaps.length === 0) {
+    const notes = precommitAprNotes(ctx);
+    return ok(["pre-commit-apr: ok", ...notes].join("\n") + "\n");
+  }
   return fail(gaps.map((g) => `refuse: ${g}`).join("\n") + "\n");
 }
 
@@ -96,25 +125,89 @@ function writeStamp(ctx: Ctx): CmdResult {
   return ok("pre-commit stamp written\n");
 }
 
-function applyPrecommitTrailer(ctx: Ctx, text: string): string {
-  let next = text;
-  if (!/^Keel-Precommit:\s/m.test(next)) {
-    const stamp = precommitStampPath(ctx);
-    const ran = Boolean(stamp && existsSync(stamp));
-    if (!next.endsWith("\n")) next += "\n";
-    next += `Keel-Precommit: ${ran ? "ok" : "skipped"}\n`;
-    if (ran && stamp) {
-      try {
-        unlinkSync(stamp);
-      } catch {
-        /* ignore */
-      }
+const TRAILER_LINE = /^[A-Za-z][A-Za-z0-9-]*:\s/;
+
+/**
+ * ISS-058: git reads "everything up to the first blank line" as the subject, so
+ * trailers glued to a one-line message became part of the subject in both pilot
+ * repositories. Trailers go into their own final paragraph — after a blank line,
+ * or appended to an existing trailer paragraph the author already wrote — and
+ * git's trailing `#` comment block (interactive commits) stays last.
+ */
+export function insertTrailers(text: string, trailers: string[]): string {
+  if (trailers.length === 0) return text;
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  let cut = lines.length;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const l = lines[i] ?? "";
+    if (l.startsWith("#") || l.trim() === "") {
+      cut = i;
+      continue;
     }
+    break;
   }
-  return next;
+  const head = lines.slice(0, cut);
+  const comments = lines.slice(cut).filter((l) => l.startsWith("#"));
+  const headText = head.join("\n").replace(/\s+$/, "");
+  const parts: string[] = [];
+  if (headText) {
+    parts.push(headText);
+    const lastParagraph = headText.split(/\n\s*\n/).pop() ?? "";
+    const paragraphLines = lastParagraph.split("\n");
+    // A subject alone is never a trailer paragraph; only a multi-line trailer block, or a
+    // body paragraph made of `Key: value` lines after a subject, is extended in place.
+    const isTrailerParagraph =
+      paragraphLines.every((l) => TRAILER_LINE.test(l)) && headText.includes("\n");
+    if (!isTrailerParagraph) parts.push("");
+  }
+  parts.push(...trailers);
+  let out = parts.join("\n") + "\n";
+  if (comments.length > 0) out += "\n" + comments.join("\n") + "\n";
+  return out;
 }
 
-export function runHook(ctx: Ctx, args: string[]): CmdResult {
+function precommitTrailer(ctx: Ctx, text: string): string[] {
+  if (/^Keel-Precommit:\s/m.test(text)) return [];
+  const stamp = precommitStampPath(ctx);
+  const ran = Boolean(stamp && existsSync(stamp));
+  if (ran && stamp) {
+    try {
+      unlinkSync(stamp);
+    } catch {
+      /* ignore */
+    }
+  }
+  return [`Keel-Precommit: ${ran ? "ok" : "skipped"}`];
+}
+
+function identityTrailers(ctx: Ctx, text: string, env: EnvMap, opts: DetectOptions): string[] {
+  if (/^Feature:\s/m.test(text)) return [];
+  const ident = gitIdentity(ctx);
+  const branch = gitBranch(ctx);
+  const agents = ((ctx.config.identities ?? {}) as { agents?: { name?: string; email?: string }[] })
+    .agents ?? [];
+  const listed = agents.find((a) => a.email && a.email.toLowerCase() === ident.email.toLowerCase());
+  // DEC-166: an agent environment self-identifies instead of stamping "unknown"
+  // while the harness writes its own truthful trailer next door (ISS-059).
+  const detected = detectHarness(env, opts);
+  const agent = env.KEEL_AGENT || listed?.name || detected?.agent || "unknown";
+  const feature =
+    env.KEEL_FEATURE ||
+    (featureFromBranch(branch) !== "unknown"
+      ? featureFromBranch(branch)
+      : /^(master|main)$/.test(branch)
+        ? "trunk"
+        : "unknown");
+  const session = env.KEEL_SESSION || detected?.session || "unknown";
+  const out = [`Feature: ${feature}`, `Developer: ${ident.name}`, `Agent: ${agent}`, `Session: ${session}`];
+  if (agent === "unknown") {
+    const host = detectHost(env, opts);
+    if (host) out.push(`Host: ${host.host}`);
+  }
+  return out;
+}
+
+export function runHook(ctx: Ctx, args: string[], env: EnvMap = process.env, opts: DetectOptions = DEFAULT_DETECT): CmdResult {
   const name = args[0] ?? "";
   if (name === "pre-push") return runPrePush(ctx, args.slice(1));
   if (name === "pre-commit-stamp") return writeStamp(ctx);
@@ -126,38 +219,8 @@ export function runHook(ctx: Ctx, args: string[]): CmdResult {
   }
   const file = args[1] ?? "";
   if (!file || !existsSync(file)) return fail("commit message file missing\n");
-  let text = readFileSync(file, "utf8");
-  text = applyPrecommitTrailer(ctx, text);
-  if (!/^Feature:\s/m.test(text)) {
-    const ident = gitIdentity(ctx);
-    const branch = gitBranch(ctx);
-    const agents = ((ctx.config.identities ?? {}) as { agents?: { name?: string; email?: string }[] })
-      .agents ?? [];
-    const listed = agents.find(
-      (a) => a.email && a.email.toLowerCase() === ident.email.toLowerCase(),
-    );
-    // DEC-166: an agent environment self-identifies instead of stamping
-    // "unknown" while the harness writes its own truthful trailer next door.
-    const detected = detectHarness();
-    const agent = process.env.KEEL_AGENT || listed?.name || detected?.agent || "unknown";
-    const feature =
-      process.env.KEEL_FEATURE ||
-      (featureFromBranch(branch) !== "unknown"
-        ? featureFromBranch(branch)
-        : /^(master|main)$/.test(branch)
-          ? "trunk"
-          : "unknown");
-    const session = process.env.KEEL_SESSION || detected?.session || "unknown";
-    const trailers = [
-      `Feature: ${feature}`,
-      `Developer: ${ident.name}`,
-      `Agent: ${agent}`,
-      `Session: ${session}`,
-      "",
-    ].join("\n");
-    if (!text.endsWith("\n")) text += "\n";
-    text += trailers;
-  }
-  writeFileSync(file, text, "utf8");
+  const text = readFileSync(file, "utf8");
+  const trailers = [...precommitTrailer(ctx, text), ...identityTrailers(ctx, text, env, opts)];
+  writeFileSync(file, insertTrailers(text, trailers), "utf8");
   return ok("");
 }

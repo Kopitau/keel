@@ -162,14 +162,17 @@ test("REQ-018 approve as a human fills a normalized hash", () => {
   // runs inside a harness (CLAUDECODE=1 inherited), which DEC-166 rightly
   // refuses without a delegation record. Strip the markers for the call.
   const saved: { [k: string]: string | undefined } = {};
-  for (const k of ["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID", "AI_AGENT", "KEEL_AGENT"]) {
+  for (const k of ["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID", "AI_AGENT", "KEEL_AGENT", "KEEL_ANCESTRY"]) {
     saved[k] = process.env[k];
     delete process.env[k];
   }
+  // ISS-059: the process-ancestry fallback would still see the harness above this test.
+  process.env.KEEL_ANCESTRY = "0";
   let r;
   try {
     r = runApprove(ctx, ["APR-001"]);
   } finally {
+    delete process.env.KEEL_ANCESTRY;
     for (const [k, v] of Object.entries(saved)) if (v !== undefined) process.env[k] = v;
   }
   assert.equal(r.code, 0, r.stderr);

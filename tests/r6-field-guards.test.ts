@@ -106,7 +106,8 @@ test("R6c pre-commit-apr: a human outside any harness needs nothing", () => {
   const dir = gitRepo("apr3");
   aprFile(dir, '""');
   fixtureGit(dir, ["add", "-A"]);
-  assert.deepEqual(precommitAprGaps(makeCtx(dir), { PATH: "/usr/bin" }), []);
+  // KEEL_ANCESTRY=0: the test process itself sits under a harness executable (ISS-059 fallback).
+  assert.deepEqual(precommitAprGaps(makeCtx(dir), { PATH: "/usr/bin", KEEL_ANCESTRY: "0" }), []);
 });
 
 test("R6c pre-commit-apr: an agent git identity is refused regardless of delegation", () => {

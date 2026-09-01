@@ -20,3 +20,7 @@
 - 进度：保留 DEC-155 三档策略；计划解析改为读取一行全部反引号路径、按数字选择 v10 而非 v9，并把目录/通配范围与其中文件视为重叠。
 - 进度：第二身份认领同一功能会 fail 且不覆盖首个 claim；`worktree rm` 同时释放 claim；git add 失败时不再留下半完成 claim。重新分配通过现有 rm→add 路径完成，没有新增未确认 CLI 接口。
 - 证据：`tests/chg010-branch-policy.test.ts` 5/5。
+
+## 2026-09-01（CHG-014 S1：REQ-019/AC-5、AC-6 落地）
+
+- 进度：C-115 尾注改为独立 trailer 段（`git log --format=%s` 只含主题，`%(trailers:key=Feature)` 可解析）；`Agent:` 在 Codex / Claude Code 环境由环境标记或父进程名识别，Cursor / VS Code 记 `Host:`。实现与证据见 F17 worklog 2026-09-01 节；黑盒 `REQ-019/AC-5`、`REQ-019/AC-6` 在 `tests/chg014-hook-harness.test.ts`。
