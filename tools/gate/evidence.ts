@@ -1,9 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
+import { parseFrontmatter } from "./frontmatter.ts";
 import { sha256Normalized } from "./hash.ts";
 import { gitDirty, gitHead, gitWriteTree } from "./git.ts";
 import { isAllowedTestArgv, splitCmd } from "./testcmd.ts";
+import { mdFiles } from "./walk.ts";
 
 export type EvidenceReviewRun = {
   iss: string;
@@ -154,4 +156,95 @@ export function tail2kb(text: string): string {
 export function hashReport(xml: string): string {
   if (!xml) return "";
   return sha256Normalized(xml);
+}
+
+// ---------------------------------------------------------------- DEC-187: evidence carried by an APR
+
+/** The verify facts an approval freezes in its front matter (flat `evidence_*` keys). */
+export type ApprovalEvidence = {
+  apr: string;
+  tree_hash: string;
+  git_commit: string;
+  command: string;
+  exit_code: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  recorded_at: string;
+};
+
+export const APPROVAL_EVIDENCE_KEYS = [
+  "evidence_tree_hash",
+  "evidence_commit",
+  "evidence_command",
+  "evidence_exit_code",
+  "evidence_passed",
+  "evidence_failed",
+  "evidence_skipped",
+  "evidence_recorded_at",
+] as const;
+
+/** Front-matter lines `gate approve` writes when a fresh, green verify.json is on disk (DEC-187). */
+export function approvalEvidenceLines(ev: Evidence): string[] {
+  return [
+    `evidence_tree_hash: ${ev.tree_hash}`,
+    `evidence_commit: ${ev.git_commit}`,
+    `evidence_command: "${(ev.command ?? "").replace(/"/g, "'")}"`,
+    `evidence_exit_code: ${ev.exit_code}`,
+    `evidence_passed: ${ev.counts?.passed ?? 0}`,
+    `evidence_failed: ${ev.counts?.failed ?? 0}`,
+    `evidence_skipped: ${ev.counts?.skipped ?? 0}`,
+    `evidence_recorded_at: ${ev.finished || new Date().toISOString()}`,
+  ];
+}
+
+/** Every approved APR that carries an evidence snapshot. */
+export function readApprovalEvidence(ctx: Ctx): ApprovalEvidence[] {
+  const out: ApprovalEvidence[] = [];
+  for (const path of mdFiles(join(ctx.records, "approvals"), "APR-")) {
+    const { attrs } = parseFrontmatter(readFileSync(path, "utf8"));
+    if ((attrs.status ?? "").toLowerCase() !== "approved") continue;
+    const tree = (attrs.evidence_tree_hash ?? "").trim();
+    if (!tree) continue;
+    out.push({
+      apr: (attrs.id ?? "").match(/^APR-\d+/)?.[0] ?? basename(path).match(/^APR-\d+/)?.[0] ?? basename(path),
+      tree_hash: tree,
+      git_commit: (attrs.evidence_commit ?? "").trim(),
+      command: (attrs.evidence_command ?? "").trim(),
+      exit_code: Number(attrs.evidence_exit_code ?? "1"),
+      passed: Number(attrs.evidence_passed ?? "0"),
+      failed: Number(attrs.evidence_failed ?? "0"),
+      skipped: Number(attrs.evidence_skipped ?? "0"),
+      recorded_at: (attrs.evidence_recorded_at ?? "").trim(),
+    });
+  }
+  return out;
+}
+
+/**
+ * DEC-187: with verify.json gone (local tier after a merge, worktree deleted) or
+ * stale, an approved APR whose snapshot names the current tree and exited 0 is the
+ * evidence. A moved tree matches nothing and the gate still asks for `gate verify`.
+ */
+export function evidenceViaApproval(ctx: Ctx): ApprovalEvidence | null {
+  const tree = gitWriteTree(ctx);
+  if (!tree) return null;
+  for (const ev of readApprovalEvidence(ctx)) {
+    if (ev.tree_hash === tree && ev.exit_code === 0 && ev.failed === 0 && ev.passed > 0) return ev;
+  }
+  return null;
+}
+
+export type EvidenceVerdict =
+  | { ok: true; via: string; ev: Evidence | null }
+  | { ok: false; gaps: string[] };
+
+/** verify.json when it is fresh and reconciles; otherwise an APR snapshot for this very tree; otherwise the gaps. */
+export function evidenceVerdict(ctx: Ctx): EvidenceVerdict {
+  const ev = readEvidence(ctx);
+  const gaps = evidenceGaps(ctx, ev);
+  if (gaps.length === 0) return { ok: true, via: "verify", ev };
+  const apr = evidenceViaApproval(ctx);
+  if (apr) return { ok: true, via: apr.apr, ev };
+  return { ok: false, gaps };
 }

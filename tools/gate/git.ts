@@ -1,5 +1,5 @@
 import { copyFileSync, existsSync, unlinkSync } from "node:fs";
-import { isAbsolute, join, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 import type { Ctx } from "./ctx.ts";
@@ -109,13 +109,17 @@ export function gitWriteTree(ctx: Ctx): string {
     const headIdx = join(dir, "index");
     if (existsSync(headIdx)) copyFileSync(headIdx, tmp);
     git(ctx, ["add", "-A"], env);
-    // Evidence and the review loop's own products never move the tree they bind
-    // (C-33 / CHG-011): drop them from the temporary index whether tracked or not.
+    // Evidence, the review loop's own products and the approvals never move the
+    // tree they bind (C-33 / CHG-011 / DEC-187): an APR attests a tree — its own
+    // hashes live in its body — so approving must not invalidate the verify it
+    // freezes. Drop them from the temporary index whether tracked or not.
+    const records = relative(ctx.root, ctx.records).split("\\").join("/") || "keel";
     const exclude = [
-      "keel/evidence",
-      "keel/review/pack.json",
-      "keel/review/disposition.md",
-      "keel/review/findings.md",
+      `${records}/evidence`,
+      `${records}/review/pack.json`,
+      `${records}/review/disposition.md`,
+      `${records}/review/findings.md`,
+      `${records}/approvals`,
     ];
     for (const rel of exclude) {
       git(ctx, ["rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", rel], env);

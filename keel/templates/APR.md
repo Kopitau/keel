@@ -21,6 +21,10 @@ artifacts:
 
 哈希绑规范性内容：错字修订不作废，语义变才重批（C-106）。
 
+## 证据快照（DEC-187）
+
+`gate approve` 时若盘上有与当前树一致、退出码 0 的 `keel/evidence/verify.json`，会把 `evidence_tree_hash / evidence_commit / evidence_command / evidence_exit_code / evidence_passed / evidence_failed / evidence_skipped / evidence_recorded_at` 写进本文件前言。local 档合并、工作树删除后，G-done / G-merge / X-evidence 以该快照为证据（树必须仍一致）；github 档以 CI 复算为准。
+
 ## 提交纪律（C-107 / DEC-166）
 
 审批的**判断**必须来自用户本人（对话确认，原话可溯）。**提交动作**允许两条路径：

@@ -35,8 +35,9 @@ change: CHG-014
 
 ## 影响
 
-- `approve.ts`：读 `verify.json`，树一致且 exit 0 时写入 `evidence:` 块（缺失或过期时照常批准并打印提示）。
-- `evidence.ts` 新增 `evidenceFromApprovals(ctx)`；`check.ts` 的 G-done / G-merge / X-evidence 在无 `verify.json` 时回读。
+- `approve.ts`：读 `verify.json`，树一致且 exit 0 时写入前言的平铺字段 `evidence_tree_hash / evidence_commit / evidence_command / evidence_exit_code / evidence_passed / evidence_failed / evidence_skipped / evidence_recorded_at`（keel 的前言解析器只认平铺键，故不用嵌套块；缺失或过期时照常批准并打印提示）。
+- `evidence.ts` 新增 `readApprovalEvidence` / `evidenceViaApproval` / `evidenceVerdict`；`check.ts` 的 G-done / G-merge / X-evidence 在 `verify.json` 缺失或过期时回读。
+- `git.ts` 的树哈希把 `keel/approvals/` 与 evidence、评审产物一并排除：APR 是对树的证明、由自身正文哈希绑定，批准动作本身不能让它冻结的 verify 失效（否则快照永远对不上批准后的树）。
 - APR 模板加 `evidence:` 说明；REQ-006 增 AC-9、REQ-018 增 AC-8（需求 v6 / CHG-014）。
 - 消费项目：zhaoxi master 需要用新 gate 重新 approve 一份验收 APR 或在 master 跑一次 verify。
 

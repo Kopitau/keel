@@ -5,7 +5,7 @@ import { parseFrontmatter } from "./frontmatter.ts";
 import { readCurrent } from "./indexgen.ts";
 import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { mdFiles } from "./walk.ts";
-import { evidenceGaps, readEvidence } from "./evidence.ts";
+import { evidenceVerdict, readEvidence } from "./evidence.ts";
 import { gitLastAuthor, gitLastBody } from "./git.ts";
 import { commitLooksAgentMade } from "./harness.ts";
 import { collectBypassFindings } from "./bypass.ts";
@@ -280,19 +280,20 @@ function gDone(ctx: Ctx): CheckItem {
     return pass("G-done", "in progress: no completion claim yet; plan-level review not due (REQ-027)");
   }
   let ev: ReturnType<typeof readEvidence> = null;
+  let via = "verify";
   if (summaries.length > 0) {
-    ev = readEvidence(ctx);
-    if (!ev) {
+    // DEC-187: verify.json, or the snapshot an approved APR froze for this very tree.
+    const verdict = evidenceVerdict(ctx);
+    if (!verdict.ok) {
+      const missingJson = verdict.gaps.includes("verify.json missing");
       return fail(
         "G-done",
-        `summary.md present (${summaries.join(", ")}) but verify.json missing`,
-        "run: gate verify (C-33). Missing evidence is fail, not skip (ISS-002)",
+        missingJson ? `summary.md present (${summaries.join(", ")}) but verify.json missing` : verdict.gaps.join("; "),
+        "run: gate verify (C-33 对账); on the local tier an approved APR snapshot for this tree also counts (DEC-187)",
       );
     }
-    const gaps = evidenceGaps(ctx, ev);
-    if (gaps.length > 0) {
-      return fail("G-done", gaps.join("; "), "run: gate verify (C-33 对账)");
-    }
+    ev = verdict.ev;
+    via = verdict.via;
     const missing = uncoveredClaimed(ctx);
     if (missing.length > 0) {
       return fail("G-done", `claimed ACs uncovered: ${missing.join(", ")}`, "C-33/C-32 mark black-box tests REQ-nnn/AC-i");
@@ -317,17 +318,25 @@ function gDone(ctx: Ctx): CheckItem {
       acknowledged: true,
     };
   }
+  const evidenceNote = via === "verify" ? "evidence 对账" : `evidence via ${via} (DEC-187)`;
   return pass(
     "G-done",
     loop
-      ? "evidence 对账 + claimed AC trace + plan-level review passed"
-      : "in progress: features without summary remain; plan-level review not yet due (REQ-027)",
+      ? `${evidenceNote} + claimed AC trace + plan-level review passed`
+      : `in progress: features without summary remain; plan-level review not yet due (REQ-027)${summaries.length > 0 ? `; ${evidenceNote}` : ""}`,
   );
 }
 
 // X-evidence — full check only (CHG-011): judged when done or merge is claimed,
 // never in --quick, so a dirty daily tree does not redden the hook.
 function xEvidence(ctx: Ctx): CheckItem {
+  const verdict = evidenceVerdict(ctx);
+  if (verdict.ok) {
+    if (verdict.via === "verify" && verdict.ev) {
+      return pass("X-evidence", `fresh tree ${verdict.ev.tree_hash.slice(0, 12)}…; junit 对账`);
+    }
+    return pass("X-evidence", `no fresh verify.json; approved ${verdict.via} snapshot matches this tree (DEC-187)`);
+  }
   const ev = readEvidence(ctx);
   if (!ev) {
     const summaries = summarizedFeatureDirs(ctx);
@@ -337,14 +346,10 @@ function xEvidence(ctx: Ctx): CheckItem {
     return fail(
       "X-evidence",
       `summary.md present (${summaries.join(", ")}) but verify.json missing`,
-      "run: gate verify (C-33). Missing evidence is fail, not skip (ISS-002)",
+      "run: gate verify (C-33). Missing evidence is fail, not skip (ISS-002); an approved APR snapshot for this tree also counts (DEC-187)",
     );
   }
-  const gaps = evidenceGaps(ctx, ev);
-  if (gaps.length > 0) {
-    return fail("X-evidence", gaps.join("; "), "run: gate verify before claiming done or merging (C-33)");
-  }
-  return pass("X-evidence", `fresh tree ${ev.tree_hash.slice(0, 12)}…; junit 对账`);
+  return fail("X-evidence", verdict.gaps.join("; "), "run: gate verify before claiming done or merging (C-33)");
 }
 
 function openIssueIds(ctx: Ctx): string[] {
@@ -372,9 +377,9 @@ function gMerge(ctx: Ctx): CheckItem {
   if (approved === 0) {
     return skip("G-merge", "no approved APR; merge gate applies at merge time (C-45)");
   }
-  const gaps = evidenceGaps(ctx, readEvidence(ctx));
-  if (gaps.length > 0) {
-    return fail("G-merge", `evidence: ${gaps.join("; ")}`, "run: gate verify (C-45)");
+  const verdict = evidenceVerdict(ctx);
+  if (!verdict.ok) {
+    return fail("G-merge", `evidence: ${verdict.gaps.join("; ")}`, "run: gate verify (C-45); an approved APR snapshot for this tree also counts (DEC-187)");
   }
   const missing = uncoveredClaimed(ctx);
   if (missing.length > 0) {
@@ -384,7 +389,7 @@ function gMerge(ctx: Ctx): CheckItem {
   if (blocking.length > 0) {
     return fail("G-merge", `open issues: ${blocking.join(", ")}`, "close or wontfix blocking ISS (C-45)");
   }
-  return pass("G-merge", `${approved} approved APR; evidence+trace green; no open ISS`);
+  return pass("G-merge", `${approved} approved APR; evidence (${verdict.via}) + trace green; no open ISS`);
 }
 
 // X-apr — an approved APR was committed by a human, or by an agent under a recorded

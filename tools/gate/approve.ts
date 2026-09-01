@@ -8,6 +8,7 @@ import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
 import { ancestorProcessNames, detectHarness } from "./harness.ts";
 import { mdFiles } from "./walk.ts";
+import { APPROVAL_EVIDENCE_KEYS, approvalEvidenceLines, evidenceFresh, readEvidence } from "./evidence.ts";
 
 type Agent = { name?: string; email?: string };
 
@@ -110,8 +111,35 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   if (/date:\s*/.test(next) && attrs.date !== undefined) {
     next = next.replace(/date:\s+\S+/, `date: ${today}`);
   }
+  // DEC-187: freeze the verify facts of this very tree into the approval so the local
+  // tier keeps its evidence after the worktree (and its gitignored verify.json) is gone.
+  const ev = readEvidence(ctx);
+  let note = "";
+  if (ev && evidenceFresh(ctx, ev) && !ev.dirty && (ev.counts?.failed ?? 0) === 0 && (ev.counts?.passed ?? 0) > 0) {
+    next = withApprovalEvidence(next, approvalEvidenceLines(ev));
+    note = `evidence snapshot written: tree ${ev.tree_hash.slice(0, 12)}… passed=${ev.counts.passed} (DEC-187)\n`;
+  } else {
+    note = "no fresh green verify.json for this tree; approval carries no evidence snapshot (run gate verify first if this APR accepts a feature, DEC-187)\n";
+  }
   writeFileSync(file, next, "utf8");
   return ok(
-    `approved ${id} as ${ident.name} <${ident.email}>\ncommit this file with your human git identity.\n`,
+    `approved ${id} as ${ident.name} <${ident.email}>\n${note}commit this file with your human git identity.\n`,
   );
+}
+
+/** Replace or add the flat `evidence_*` lines just before the closing `---` of the front matter. */
+export function withApprovalEvidence(text: string, lines: string[]): string {
+  const src = text.replace(/\r\n/g, "\n").split("\n");
+  if ((src[0] ?? "").trim() !== "---") return text;
+  let close = -1;
+  for (let i = 1; i < src.length; i++) {
+    if ((src[i] ?? "").trim() === "---") {
+      close = i;
+      break;
+    }
+  }
+  if (close < 0) return text;
+  const keys = new Set<string>(APPROVAL_EVIDENCE_KEYS);
+  const kept = src.slice(1, close).filter((l) => !keys.has(l.split(":")[0]?.trim() ?? ""));
+  return ["---", ...kept, ...lines, ...src.slice(close)].join("\n");
 }

@@ -37,3 +37,8 @@
 - 进度：`changechain.ts` 新增 `inspectApprovedArtifacts`（对每份 approved APR 引用的工件重算正文哈希；旧全文哈希在文件未动时仍接受；`pending`/空哈希留给原有检查）、`approvalBinding`、`declaredStatusOf` / `declaresConfirmed`、`isPlanArtifact`。X-apr：工件缺失 → FAIL（不可 waiver）；正文漂移 → WARN 带 `waivers`，按 APR 逐条 `gate-warn: X-apr ref=APR-nnn` 放行，否则升 FAIL（C-103 既有机制）。
 - 本仓落地：CHG-011 Q5 追加复核记录的 10 个 DEC（APR-002 ×5、APR-003 ×5）首次被报出；F3 worklog 写两行 waiver，X-apr 现为 WARN（已认可）。
 - 证据：`tests/chg014-frozen-artifacts.test.ts` `REQ-018/AC-7`（漂移 FAIL → waiver 后 WARN → 缺失 FAIL）；`node --test` **249/249**；`npx tsc --noEmit` 干净；本仓 `gate check --all`：G-req PASS、G-plan PASS、X-apr WARN（waived）。
+
+## 2026-09-01（CHG-014 S4：REQ-018/AC-8 批准写证据快照）
+
+- 进度：`approve.ts` 在填哈希、翻 approved 之后，若 `verify.json` 新鲜（树一致、exit 0、非脏、passed > 0、failed 0）则用 `withApprovalEvidence` 把 `evidence_*` 八个平铺键写进前言（已有则整组替换），输出 `evidence snapshot written: tree …`；否则照常批准并提示"无新鲜绿色 verify"。APR 模板加「证据快照（DEC-187）」一节。
+- 证据：`tests/chg014-evidence-snapshot.test.ts` `REQ-018/AC-8`（写入八键、再批准无证据时提示、`withApprovalEvidence` 替换不重复）。
