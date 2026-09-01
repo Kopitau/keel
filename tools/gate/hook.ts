@@ -150,6 +150,12 @@ export function insertTrailers(text: string, trailers: string[]): string {
   const comments = lines.slice(cut).filter((l) => l.startsWith("#"));
   const headText = head.join("\n").replace(/\s+$/, "");
   const parts: string[] = [];
+  if (!headText) {
+    // ISS-066: an interactive commit hands us an empty message plus git's comment
+    // block. Leave line 1 for the subject the human is about to type and a blank
+    // line after it, so the trailers stay their own paragraph.
+    parts.push("", "");
+  }
   if (headText) {
     parts.push(headText);
     const lastParagraph = headText.split(/\n\s*\n/).pop() ?? "";

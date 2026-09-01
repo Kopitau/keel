@@ -3,7 +3,8 @@ import { basename, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { sha256Normalized } from "./hash.ts";
-import { gitDirty, gitHead, gitWriteTree } from "./git.ts";
+import { git, gitDirty, gitHead, gitWriteTree } from "./git.ts";
+import { posixRel } from "./walk.ts";
 import { isAllowedTestArgv, splitCmd } from "./testcmd.ts";
 import { mdFiles } from "./walk.ts";
 
@@ -198,14 +199,24 @@ export function approvalEvidenceLines(ev: Evidence): string[] {
   ];
 }
 
-/** Every approved APR that carries an evidence snapshot. */
-export function readApprovalEvidence(ctx: Ctx): ApprovalEvidence[] {
+/** The APR file is committed and byte-identical to HEAD: a snapshot typed into the working tree proves nothing. */
+function approvalCommitted(ctx: Ctx, path: string): boolean {
+  const rel = posixRel(ctx.root, path);
+  if (git(ctx, ["ls-files", "--error-unmatch", "--", rel]).status !== 0) return false;
+  return git(ctx, ["diff", "--quiet", "HEAD", "--", rel]).status === 0;
+}
+
+/** Every approved, committed APR that carries an evidence snapshot. */
+export function readApprovalEvidence(ctx: Ctx, opts: { committedOnly?: boolean } = {}): ApprovalEvidence[] {
   const out: ApprovalEvidence[] = [];
   for (const path of mdFiles(join(ctx.records, "approvals"), "APR-")) {
     const { attrs } = parseFrontmatter(readFileSync(path, "utf8"));
     if ((attrs.status ?? "").toLowerCase() !== "approved") continue;
     const tree = (attrs.evidence_tree_hash ?? "").trim();
     if (!tree) continue;
+    // keel/approvals is outside the tree hash (DEC-187), so the fallback only trusts
+    // what a human identity actually committed — never eight lines still in the editor.
+    if (opts.committedOnly !== false && !approvalCommitted(ctx, path)) continue;
     out.push({
       apr: (attrs.id ?? "").match(/^APR-\d+/)?.[0] ?? basename(path).match(/^APR-\d+/)?.[0] ?? basename(path),
       tree_hash: tree,
@@ -239,11 +250,18 @@ export type EvidenceVerdict =
   | { ok: true; via: string; ev: Evidence | null }
   | { ok: false; gaps: string[] };
 
-/** verify.json when it is fresh and reconciles; otherwise an APR snapshot for this very tree; otherwise the gaps. */
+/**
+ * verify.json when it is fresh and reconciles; otherwise an APR snapshot for this
+ * very tree — but only when verify.json is absent or speaks about another tree. A
+ * red or unreconciled verify.json for the current tree is the latest word on it
+ * (ISS-061); an older approval never overrules it.
+ */
 export function evidenceVerdict(ctx: Ctx): EvidenceVerdict {
   const ev = readEvidence(ctx);
   const gaps = evidenceGaps(ctx, ev);
   if (gaps.length === 0) return { ok: true, via: "verify", ev };
+  const tree = gitWriteTree(ctx);
+  if (ev && tree && ev.tree_hash === tree) return { ok: false, gaps };
   const apr = evidenceViaApproval(ctx);
   if (apr) return { ok: true, via: apr.apr, ev };
   return { ok: false, gaps };

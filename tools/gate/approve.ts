@@ -8,6 +8,7 @@ import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
 import { ancestorProcessNames, detectHarness } from "./harness.ts";
 import { mdFiles } from "./walk.ts";
+import { isRegularFile } from "./changechain.ts";
 import { APPROVAL_EVIDENCE_KEYS, approvalEvidenceLines, evidenceFresh, readEvidence } from "./evidence.ts";
 
 type Agent = { name?: string; email?: string };
@@ -92,6 +93,7 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   for (const rel of paths) {
     const abs = join(ctx.root, rel);
     if (!existsSync(abs)) return fail(`artifact missing: ${rel}\n`);
+    if (!isRegularFile(abs)) return fail(`artifact is not a file: ${rel} (name the file, not its directory)\n`);
     // CHG-011 / REQ-018 AC-1: bind the body; metadata edits never void an approval.
     const digest = sha256Body(readFileSync(abs));
     const pathEsc = rel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

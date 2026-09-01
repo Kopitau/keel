@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 60
+- count: 67
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -65,3 +65,10 @@
 | ISS-058 | ISS-058 提交尾注紧贴主题行追加，被 git 折进主题 | closed | `ISS-058-commit-trailers-are-appended-without-a-b.md` |
 | ISS-059 | ISS-059 harness 探测只认 Claude Code，DEC-166 的提交守卫在其他 agent 环境从不触发 | closed | `ISS-059-harness-detection-knows-only-claude-code.md` |
 | ISS-060 | ISS-060 空项目上 `gate status` 的 `next:` 行误导为"计划完成待评审" | closed | `ISS-060-gate-status-next-line-misleads-on-an-emp.md` |
+| ISS-061 | ISS-061 X-evidence / G-done / G-merge report PASS via an APR evidence snapshot while a red verify.json for the same tree is on disk | closed | `ISS-061-x-evidence-g-done-g-merge-report-pass-vi.md` |
+| ISS-062 | ISS-062 Fuse counter double-counts when two open ISS share one recurrence root: the loop fuses after two rounds instead of three | closed | `ISS-062-fuse-counter-double-counts-when-two-open.md` |
+| ISS-063 | ISS-063 Test-command allowlist accepts pytest -o (ini override), which narrows the suite: -o addopts=--lf, -o testpaths=unit, -o addopts=-k_smoke all pass | closed | `ISS-063-test-command-allowlist-accepts-pytest-o-.md` |
+| ISS-064 | ISS-064 gate check (also --quick, i.e. the pre-commit hook) crashes with EISDIR when an approved APR's artifact path is a directory | closed | `ISS-064-gate-check-also-quick-ie-the-pre-commit-.md` |
+| ISS-065 | ISS-065 gate status next: says 'no feature planned yet — add feature plans' when the remaining features are claimed (claim.json) and not done | closed | `ISS-065-gate-status-next-says-no-feature-planned.md` |
+| ISS-066 | ISS-066 Interactive git commit still folds the keel trailers into the subject: the hook writes them at the top of an empty message with no blank line left for the subject | closed | `ISS-066-interactive-git-commit-still-folds-the-k.md` |
+| ISS-067 | ISS-067 A committed keel/review/raw archive (rejected reviewer output) is diffed into the next review pack | closed | `ISS-067-a-committed-keelreviewraw-archive-reject.md` |

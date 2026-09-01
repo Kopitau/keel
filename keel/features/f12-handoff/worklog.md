@@ -23,3 +23,7 @@
 
 - 进度：`status.ts` 的 `next:` 改为按项目状态四选一（无基线 → run k-new；有基线无规划 → finish k-new step 4；有前沿 → start Fnn；全部 summary → k-review 再 k-accept；只剩被阻塞 → 列 blocker）。fmea-v3 在 Cursor 里被"no unblocked feature left — plan-level review"误导的那一幕不会再发生。
 - 证据：`tests/chg014-status.test.ts` `ISS-060 …`、`REQ-012/AC-5 …`；`node --test` **260/260**；`npx tsc --noEmit` 干净；本仓 `gate status` 第四行现为 `next: start F1 (frontier); then read …`。
+
+## 2026-09-01（评审第 1 轮：ISS-065，ISS-060 复发）
+
+- next 行识别已认领（claim.json）功能：「claimed and in progress: Fnn — continue in its worktree or release the claim」。见 F7 worklog 同日节。

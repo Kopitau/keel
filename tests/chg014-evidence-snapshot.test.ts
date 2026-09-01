@@ -109,7 +109,7 @@ test("REQ-018/AC-8 gate approve writes the evidence_* snapshot of the current tr
   assert.match(text, /^evidence_passed: 1$/m);
   assert.match(text, /^evidence_exit_code: 0$/m);
   assert.match(text, /^evidence_command: "node --test"$/m);
-  const snap = readApprovalEvidence(makeCtx(f.root));
+  const snap = readApprovalEvidence(makeCtx(f.root), { committedOnly: false });
   assert.equal(snap.length, 1);
   assert.equal(snap[0]?.tree_hash, ev.tree_hash);
   // approving again without evidence keeps the file well-formed and reports the gap
@@ -129,6 +129,9 @@ test("REQ-006/AC-9 with verify.json gone, G-done / G-merge / X-evidence accept a
   greenEvidence(f.root);
   const human = makeCtx(f.root, { name: "kopit", email: "wwillmee@gmail.com" });
   assert.equal(runApprove(human, ["APR-001"]).code, 0);
+  // the human commits the approval (keel/approvals is outside the tree hash, so verify.json stays fresh)
+  f.git(["add", "-A"]);
+  f.git(["commit", "-q", "-m", "approve F1"]);
   const ctx = makeCtx(f.root);
   // with verify.json present the full check is green the normal way
   let out = runCheck(ctx, []).stdout;

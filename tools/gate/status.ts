@@ -19,6 +19,8 @@ export type StatusShape = {
   hasPlan: boolean;
   frontier: string[];
   blocked: Frontier["blocked"];
+  /** Features with a claim.json and no summary — someone is on them (ISS-065). */
+  claimed: string[];
   planDone: boolean;
 };
 
@@ -32,6 +34,9 @@ export function nextLine(shape: StatusShape, handoff: string): string {
   if (!shape.hasPlan) return "requirements baselined, plan missing — finish k-new step 4 (unified plan + APR), then k-impl";
   if (shape.frontier.length > 0) return `start ${shape.frontier[0]} (frontier); then read ${handoff}`;
   if (shape.planDone) return `all features have summary.md — plan-level review (k-review), then acceptance (k-accept); read ${handoff}`;
+  if (shape.claimed.length > 0) {
+    return `claimed and in progress: ${shape.claimed.join(", ")} — continue in its worktree or release the claim (gate worktree rm); read ${handoff}`;
+  }
   if (shape.blocked.length > 0) {
     const waiting = shape.blocked.map((b) => `${b.id} (by ${b.by.join(", ")})`).join("; ");
     return `no unblocked feature — waiting on blockers: ${waiting}; read ${handoff}`;
@@ -136,6 +141,7 @@ export function runStatus(ctx: Ctx): CmdResult {
     hasPlan: Boolean(planCurrent.file) && existsSync(join(ctx.records, "plan", planCurrent.file ?? "")),
     frontier: fr.frontier,
     blocked: fr.blocked,
+    claimed: fr.claimed,
     planDone: planComplete(ctx),
   };
   const lines = [

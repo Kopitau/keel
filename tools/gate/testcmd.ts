@@ -54,10 +54,15 @@ const PYTHON_FLAGS = [
   /^-p$/,
   /^-W$/,
   /^-m$/,
-  /^-o$/,
 ];
-/** Flags that consume the next token (a marker expression, a plugin name, a warning filter, an ini override). */
-const PYTHON_VALUE_FLAGS = new Set(["-m", "-p", "-W", "-o"]);
+/** Flags that consume the next token (a marker expression, a plugin switch, a warning filter). `-o` is refused: an ini override can rewrite addopts / testpaths (ISS-063). */
+const PYTHON_VALUE_FLAGS = new Set(["-m", "-p", "-W"]);
+/** What a value flag may carry: `-p` only disables plugins, `-m` / `-W` never name a path. */
+const PYTHON_VALUE_SHAPE: { [flag: string]: RegExp } = {
+  "-p": /^no:[A-Za-z0-9_.-]+$/,
+  "-m": /^[A-Za-z0-9_ ()!.-]+$/,
+  "-W": /^[A-Za-z0-9_:.,*-]+$/,
+};
 
 const NODE_FLAGS = [
   /^--reporter(=\S+)?$/,
@@ -78,6 +83,11 @@ const NODE_FLAGS = [
   /^--experimental-strip-types$/,
 ];
 const NODE_VALUE_FLAGS = new Set(["--reporter", "--outputFile", "--test-reporter", "--test-reporter-destination"]);
+/** Reporter names only — a module path could be anything; output destinations are paths by nature. */
+const NODE_VALUE_SHAPE: { [flag: string]: RegExp } = {
+  "--reporter": /^[A-Za-z0-9_-]+$/,
+  "--test-reporter": /^[A-Za-z0-9_-]+$/,
+};
 
 /** Narrowing switches (ISS-018): refused whatever comes after them. */
 const NARROWING = /^(-k|-t|-g|--grep|--test-name-pattern|--testNamePattern|--testPathPattern|--testPathPatterns|--test-only|--only|--test-skip-pattern|--changed|--related|--findRelatedTests|--onlyChanged|--lf|--last-failed|--ff|--deselect|--ignore)(=.*)?$/;
@@ -112,16 +122,29 @@ function stripLauncher(argv: string[]): { launcher: string[]; rest: string[] } {
   return { launcher: [], rest: argv };
 }
 
-function checkArgs(args: string[], flags: RegExp[], valueFlags: Set<string>): string | null {
+function checkArgs(
+  args: string[],
+  flags: RegExp[],
+  valueFlags: Set<string>,
+  valueShape: { [flag: string]: RegExp },
+): string | null {
   for (let i = 0; i < args.length; i++) {
     const a = args[i] ?? "";
     if (NARROWING.test(a)) return `narrowing switch ${a} refused (ISS-018)`;
     if (a.startsWith("-")) {
+      const eq = a.indexOf("=");
+      const name = eq > 0 ? a.slice(0, eq) : a;
+      const inline = eq > 0 ? a.slice(eq + 1) : "";
       if (!flags.some((re) => re.test(a))) return `argument ${a} is not a marker or report class argument (DEC-188)`;
+      if (inline && valueShape[name] && !valueShape[name].test(inline)) return `${a} is not a plain name (DEC-188)`;
       if (valueFlags.has(a)) {
         const v = args[i + 1] ?? "";
         if (!v || v.startsWith("-")) return `${a} needs a value`;
-        if (PATH_LIKE.test(v)) return `${a} ${v} selects a path, not a category (ISS-018)`;
+        // a shaped value (marker expression, plugin disable, warning filter, reporter name) is judged by its shape;
+        // anything else must not look like a path or a test id
+        if (valueShape[a]) {
+          if (!valueShape[a].test(v)) return `${a} ${v} is not allowed (only markers / plugin disables / reporter names, DEC-188)`;
+        } else if (PATH_LIKE.test(v)) return `${a} ${v} selects a path, not a category (ISS-018)`;
         i += 1;
       }
       continue;
@@ -140,7 +163,7 @@ export function parseTestCommand(argvIn: string[]): ParsedTestCommand {
     const rest = argv.slice(1);
     if (!rest.includes("--test")) return { ok: false, launcher: [], args: rest, reason: "node without --test is not a test run" };
     const args = rest.filter((a) => a !== "--test");
-    const bad = checkArgs(args, NODE_FLAGS, NODE_VALUE_FLAGS);
+    const bad = checkArgs(args, NODE_FLAGS, NODE_VALUE_FLAGS, NODE_VALUE_SHAPE);
     if (bad) return { ok: false, program: "node-test", family: "node", launcher: [], args, reason: bad };
     return { ok: true, program: "node-test", family: "node", launcher: [], args };
   }
@@ -148,20 +171,20 @@ export function parseTestCommand(argvIn: string[]): ParsedTestCommand {
   const head = rest[0] ?? "";
   if (head === "pytest") {
     const args = rest.slice(1);
-    const bad = checkArgs(args, PYTHON_FLAGS, PYTHON_VALUE_FLAGS);
+    const bad = checkArgs(args, PYTHON_FLAGS, PYTHON_VALUE_FLAGS, PYTHON_VALUE_SHAPE);
     if (bad) return { ok: false, program: "pytest", family: "python", launcher, args, reason: bad };
     return { ok: true, program: "pytest", family: "python", launcher, args };
   }
   if (head === "vitest") {
     if (rest[1] !== "run") return { ok: false, program: "vitest", family: "node", launcher, args: rest.slice(1), reason: "vitest needs the non-interactive `run` form (DEC-188)" };
     const args = rest.slice(2);
-    const bad = checkArgs(args, NODE_FLAGS, NODE_VALUE_FLAGS);
+    const bad = checkArgs(args, NODE_FLAGS, NODE_VALUE_FLAGS, NODE_VALUE_SHAPE);
     if (bad) return { ok: false, program: "vitest", family: "node", launcher, args, reason: bad };
     return { ok: true, program: "vitest", family: "node", launcher, args };
   }
   if (head === "jest") {
     const args = rest.slice(1);
-    const bad = checkArgs(args, NODE_FLAGS, NODE_VALUE_FLAGS);
+    const bad = checkArgs(args, NODE_FLAGS, NODE_VALUE_FLAGS, NODE_VALUE_SHAPE);
     if (bad) return { ok: false, program: "jest", family: "node", launcher, args, reason: bad };
     return { ok: true, program: "jest", family: "node", launcher, args };
   }

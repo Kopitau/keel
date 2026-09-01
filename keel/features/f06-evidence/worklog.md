@@ -68,3 +68,7 @@
 ## 2026-09-01（CHG-014 S5：verify 的 junit 展开）
 
 - 进度：`gate verify` 对 pytest 补 `--junitxml=keel/evidence/junit.xml`、对 `vitest run` 补 `--reporter=default --reporter=junit --outputFile=…`，node:test 保持原展开；证据里的 `command` 仍是展开后的 argv，`evidenceGaps` 用同一套解析核对。fmea-v3 那种本地改 `verify.ts` 补 junit 的补丁可以撤。见 F21 worklog 同日节。
+
+## 2026-09-01（评审第 1 轮：ISS-061）
+
+- 同树的红色 / 未对账 `verify.json` 优先于任何 APR 快照；快照只认已提交且与 HEAD 一致的 APR 文件。见 F7 worklog 同日「评审第 1 轮」节。

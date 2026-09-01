@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
@@ -54,7 +54,8 @@ export function inspectApprovedArtifacts(ctx: Ctx): ArtifactDrift[] {
       if (!recorded || recorded === "pending") continue;
       const rel = artifact.path.replace(/^\.\//, "");
       const abs = join(ctx.root, rel);
-      if (!existsSync(abs)) {
+      // ISS-064: a directory (or anything that is not a regular file) is "missing", never a crash.
+      if (!isRegularFile(abs)) {
         out.push({ apr: apr.id, path: rel, state: "missing" });
         continue;
       }
@@ -62,6 +63,14 @@ export function inspectApprovedArtifacts(ctx: Ctx): ArtifactDrift[] {
     }
   }
   return out;
+}
+
+export function isRegularFile(abs: string): boolean {
+  try {
+    return statSync(abs).isFile();
+  } catch {
+    return false;
+  }
 }
 
 /** Plan-class artifacts are judged in G-plan (quick) as well as in X-apr (DEC-185). */
@@ -86,16 +95,22 @@ export function declaredStatusOf(text: string): string {
   return m ? unquote(m[1] ?? "") : "";
 }
 
-/** DEC-186: a file that says it was confirmed / approved has to be able to prove it. */
+/**
+ * DEC-186: a file that says it was confirmed / approved has to be able to prove it.
+ * A negated mention ("not yet approved", "unconfirmed", "未确认", "待批准") is not a claim.
+ */
 export function declaresConfirmed(status: string): boolean {
-  return /confirmed|approved|已确认|已批准/i.test(status);
+  const s = status.toLowerCase();
+  if (/\b(not(\s+yet)?|never|un|pending|awaiting)[\s-]*(approved|confirmed|approval|confirmation)\b/.test(s)) return false;
+  if (/未(经|被)?(确认|批准)|待(用户)?(确认|批准|点头)|尚未(确认|批准)/.test(s)) return false;
+  return /\b(confirmed|approved)\b|已确认|已批准/.test(s);
 }
 
 /** Which approved APRs name `rel`, and whether any of them still matches its body today. */
 export function approvalBinding(ctx: Ctx, rel: string): { boundBy: string[]; matched: boolean } {
   const target = rel.replace(/\\/g, "/").replace(/^\.\//, "");
   const abs = join(ctx.root, target);
-  const raw = existsSync(abs) ? readFileSync(abs) : null;
+  const raw = isRegularFile(abs) ? readFileSync(abs) : null;
   const boundBy: string[] = [];
   let matched = false;
   for (const apr of approvedApprovals(ctx)) {

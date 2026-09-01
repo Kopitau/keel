@@ -70,8 +70,8 @@ test("REQ-012/AC-5 next: says finish k-new step 4 with a baseline but no plan, s
   assert.match(lineOf(status(done), "next"), /^next: all features have summary\.md — plan-level review \(k-review\), then acceptance \(k-accept\)/);
   rmSync(done, { recursive: true, force: true });
   const handoff = "keel/handoff.md";
-  assert.match(nextLine({ hasBaseline: true, hasPlan: true, frontier: [], blocked: [{ id: "F2", by: ["F1"] }], planDone: false }, handoff), /waiting on blockers: F2 \(by F1\)/);
-  assert.match(nextLine({ hasBaseline: true, hasPlan: true, frontier: [], blocked: [], planDone: false }, handoff), /no feature planned yet/);
+  assert.match(nextLine({ hasBaseline: true, hasPlan: true, frontier: [], blocked: [{ id: "F2", by: ["F1"] }], claimed: [], planDone: false }, handoff), /waiting on blockers: F2 \(by F1\)/);
+  assert.match(nextLine({ hasBaseline: true, hasPlan: true, frontier: [], blocked: [], claimed: [], planDone: false }, handoff), /no feature planned yet/);
 });
 
 test("REQ-025/AC-10 gate status prints the project keel_version next to the installer's and says run keel update when the installer is newer", () => {

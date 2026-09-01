@@ -40,7 +40,7 @@ test("REQ-021/AC-6 narrowing the suite — -k, -t, name patterns, paths, test id
     ["uv run python -m pytest -q -k smoke", "python-cli", /narrowing switch -k/],
     ["python -m pytest tests/unit", "python-cli", /positional tests\/unit/],
     ["python -m pytest tests/test_x.py::test_y", "python-cli", /positional/],
-    ["python -m pytest -m tests/unit", "python-cli", /selects a path/],
+    ["python -m pytest -m tests/unit", "python-cli", /selects a path|not allowed/],
     ["pytest --lf", "python-cli", /narrowing switch --lf/],
     ["npx vitest run src/a.test.ts", "ts-js", /positional src\/a\.test\.ts/],
     ["npx vitest run -t login", "ts-js", /narrowing switch -t/],

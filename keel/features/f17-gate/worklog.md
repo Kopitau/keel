@@ -149,3 +149,7 @@
 - 实现决定：**编辑器宿主不等于 agent**。Cursor 集成终端里人手动 `git commit` 与 Cursor agent 的 shell 共享一套环境变量，若把 CURSOR_* 当 agent 标记，DEC-166 会拒绝人类在 Cursor 里的正常审批提交；所以宿主只记 `Host:`，守卫只对 Claude Code / Codex / 父进程为 harness 可执行文件的情形生效。Codex 的具体变量名未实测（本机 Codex CLI 登录失效，`refresh_token_reused`），暂用 `CODEX_*` 前缀规则，ISS-059 里注明待用户在 Codex Desktop 取一次 `Get-ChildItem env:` 后钉死。
 - C-34: ref=ISS-059 —— `tests/r6-field-guards.test.ts`「a human outside any harness」与 `tests/w2-gate.test.ts`「approve as a human」两条夹具加 `KEEL_ANCESTRY=0`：测试进程本身跑在 `claude.exe` 之下，新的父进程兜底会如实识别出 harness，夹具必须显式声明"无祖先"才仍是"平面终端里的人"。断言未改。
 - 证据：`tests/chg014-hook-harness.test.ts` 5 条（ISS-058、REQ-019/AC-5、ISS-059、REQ-019/AC-6 ×2）先红后绿；`node --test` **245/245**；`npx tsc --noEmit` 干净；`gate check --quick` PASS_WITH_WARN（仅 REQ-017/AC-4 proxy）。本仓提交 `7238be8` 是 ISS-058 的活样本（尾注折进主题）。
+
+## 2026-09-01（评审第 1 轮：ISS-064 / ISS-066）
+
+- 工件路径为目录时 `gate check --quick` 不再崩（按 missing）；交互式提交的空消息给主题预留首行（ISS-058 复发）。见 F7 worklog 同日节。

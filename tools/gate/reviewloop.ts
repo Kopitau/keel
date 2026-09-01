@@ -638,8 +638,12 @@ export function rootFingerprint(ctx: Ctx, id: string, fallback = ""): string {
 
 export function bumpRounds(state: LoopState, stillOpen: string[], rootOf?: (id: string) => string): LoopState {
   const rounds_on = { ...state.rounds_on };
+  // ISS-062: one clear is one round for a fingerprint, however many open ISS share it.
+  const counted = new Set<string>();
   for (const id of stillOpen) {
     const fp = rootOf ? rootOf(id) : (state.iss_fp?.[id] ?? id);
+    if (counted.has(fp)) continue;
+    counted.add(fp);
     rounds_on[fp] = (rounds_on[fp] ?? 0) + 1;
   }
   const fused = Object.values(rounds_on).some((n) => n >= (state.fuse_threshold || FUSE_THRESHOLD));
@@ -811,6 +815,7 @@ const PACK_EXCLUDES = [
   ".",
   ":(exclude)keel/review/disposition.md",
   ":(exclude)keel/review/findings.md",
+  ":(exclude)keel/review/raw",
   ":(exclude)keel/evidence",
   ...LOCKFILES.map((name) => `:(exclude,glob)**/${name}`),
   ...LOCKFILES.map((name) => `:(exclude)${name}`),
@@ -1013,9 +1018,12 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     // the rejection can be traced back to what the reviewer wrote; the two review
     // products (REQ-027 AC-10) stay findings.md and disposition.md.
     const rawText = readFileSync(file, "utf8");
-    const rawName = `round-${st.round + 1}-${reviewer.replace(/[^A-Za-z0-9._-]+/g, "_")}.json`;
+    const rawDir = join(reviewDir(ctx), "raw");
+    const rawStem = `round-${st.round + 1}-${reviewer.replace(/[^A-Za-z0-9._-]+/g, "_")}`;
+    // A second rejection in the same round keeps the first archive (no overwrite).
+    let rawName = `${rawStem}.json`;
+    for (let n = 2; existsSync(join(rawDir, rawName)); n++) rawName = `${rawStem}-${n}.json`;
     const archive = (): void => {
-      const rawDir = join(reviewDir(ctx), "raw");
       mkdirSync(rawDir, { recursive: true });
       writeFileSync(join(rawDir, rawName), rawText, "utf8");
     };
