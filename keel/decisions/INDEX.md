@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 184
+- count: 189
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -189,3 +189,8 @@
 | DEC-182 | 自动评审复现命令的漏洞态与修复态判定 | confirmed | `DEC-182-review-repro-exit-code-contract.md` |
 | DEC-183 | keel 减重：门禁留 8 条骨架、预提交只跑秒级检查、评审改为方案级一轮、记录三合一 | confirmed | `DEC-183-lighten-keel-keep-8-gates-quick-only-hoo.md` |
 | DEC-184 | 评审不设攻击面视角、不强制异构：未参与实现的空白上下文子代理即可 | confirmed | `DEC-184-review-no-attack-lens-fresh-subagent-same-harness.md` |
+| DEC-185 | X-apr 重算每个已批准工件的正文哈希，漂移即 FAIL（waiver 须按 APR 逐条引用） | confirmed | `DEC-185-x-apr-rehashes-approved-artifacts-and-fa.md` |
+| DEC-186 | 当前需求 / 规划版本声明"已确认"必须能追到 approved 且哈希匹配的 APR，否则 G-req / G-plan FAIL | confirmed | `DEC-186-declared-confirmed-baseline-must-be-boun.md` |
+| DEC-187 | 批准时把 verify 证据快照写进 APR，local 档合并后 G-done / G-merge / X-evidence 可回读 APR 证据 | confirmed | `DEC-187-acceptance-apr-carries-the-verify-eviden.md` |
+| DEC-188 | 测试命令白名单改为"启动器前缀 + 测试程序 + 允许的参数类"，仍禁 -k 与路径参数 | confirmed | `DEC-188-test-command-allowlist-launcher-prefix-p.md` |
+| DEC-189 | 评审回路：recurrence_of 链共享同一熔断计数；pack 体积预算告警、lockfile 只留摘要、Finding 严格校验并存档原件 | confirmed | `DEC-189-review-loop-recurrence-fingerprints-shar.md` |

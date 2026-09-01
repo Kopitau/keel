@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 57
+- count: 60
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -62,3 +62,6 @@
 | ISS-055 | ISS-055 The review loop can pass an incomplete plan using an empty, same-harness pack | closed | `ISS-055-the-review-loop-can-pass-an-incomplete-p.md` |
 | ISS-056 | ISS-056 Hand-editing disposition front matter is sufficient to manufacture a passed review | closed | `ISS-056-hand-editing-disposition-front-matter-is.md` |
 | ISS-057 | ISS-057 The plan's named acceptance-test obligations are substantially missing | closed | `ISS-057-the-plans-named-acceptance-test-obligati.md` |
+| ISS-058 | ISS-058 提交尾注紧贴主题行追加，被 git 折进主题 | open | `ISS-058-commit-trailers-are-appended-without-a-b.md` |
+| ISS-059 | ISS-059 harness 探测只认 Claude Code，DEC-166 的提交守卫在其他 agent 环境从不触发 | open | `ISS-059-harness-detection-knows-only-claude-code.md` |
+| ISS-060 | ISS-060 空项目上 `gate status` 的 `next:` 行误导为"计划完成待评审" | open | `ISS-060-gate-status-next-line-misleads-on-an-emp.md` |

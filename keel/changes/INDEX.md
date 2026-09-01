@@ -1,7 +1,7 @@
 # changes index (generated)
 
 - generator: gate index
-- count: 13
+- count: 14
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -18,3 +18,4 @@
 | CHG-011 | CHG-011 keel 减重：门禁 22 → 8、预提交只跑秒级检查、冻结只管语义、记录三合一、方案级评审、测试按功能 | approved | `CHG-011-lighten-keel-22-gates-to-8-quick-only-ho.md` |
 | CHG-012 | CHG-012 Cursor 客户端登记为兼容档平台 | proposed | `CHG-012-cursor-client-as-compatible-harness.md` |
 | CHG-013 | CHG-013 评审去掉攻击面视角、不强制异构：空白上下文子代理即可 | proposed | `CHG-013-review-no-attack-lens-no-mandatory-heterogeneity.md` |
+| CHG-014 | CHG-014 两个试点项目（zhaoxi / fmea-v3）审计回流：钩子、探测、证据、冻结件、评审回路、白名单 | proposed | `CHG-014-audit-feedback-from-zhaoxi-and-fmea-v3-p.md` |
