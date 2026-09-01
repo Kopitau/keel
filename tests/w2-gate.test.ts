@@ -136,7 +136,7 @@ test("REQ-004 gate index writes a unique current pointer", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-018 approve refuses an agent git identity", () => {
+test("REQ-018 approve under an agent git identity refuses without the user's words and succeeds with them (DEC-190)", () => {
   const dir = fixture();
   writeFileSync(
     join(dir, "keel", "approvals", "APR-001.md"),
@@ -146,7 +146,15 @@ test("REQ-018 approve refuses an agent git identity", () => {
   const ctx = makeCtx(dir, { name: "keel-agent", email: "agent@keel.local" });
   const r = runApprove(ctx, ["APR-001"]);
   assert.equal(r.code, 1);
-  assert.match(r.stderr, /agent list/);
+  assert.match(r.stderr, /records no user words/);
+  writeFileSync(
+    join(dir, "keel", "approvals", "APR-001.md"),
+    "---\nid: APR-001\nstatus: draft\napprover: \"\"\ndelegated: \"「批准」(2026-09-01)\"\n---\n\n- path: AGENTS.md\n  content_sha256: pending\n",
+    "utf8",
+  );
+  const ok = runApprove(ctx, ["APR-001"]);
+  assert.equal(ok.code, 0, ok.stderr);
+  assert.match(readFileSync(join(dir, "keel", "approvals", "APR-001.md"), "utf8"), /approver: "Ada <ada@example.com>"/);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -154,7 +162,7 @@ test("REQ-018 approve as a human fills a normalized hash", () => {
   const dir = fixture();
   writeFileSync(
     join(dir, "keel", "approvals", "APR-001.md"),
-    "---\nid: APR-001\nstatus: draft\napprover: \"\"\ndate: 2026-01-01\n---\n\n- path: AGENTS.md\n  content_sha256: pending\n",
+    "---\nid: APR-001\nstatus: draft\napprover: \"\"\ndelegated: \"「由你提交」(2026-01-01)\"\ndate: 2026-01-01\n---\n\n- path: AGENTS.md\n  content_sha256: pending\n",
     "utf8",
   );
   const ctx = makeCtx(dir, { name: "Ada", email: "ada@example.com" });

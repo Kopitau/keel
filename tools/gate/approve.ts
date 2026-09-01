@@ -1,36 +1,18 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import process from "node:process";
 import type { Ctx } from "./ctx.ts";
 import { sha256Body } from "./hash.ts";
-import { gitIdentity } from "./git.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
-import { ancestorProcessNames, detectHarness } from "./harness.ts";
 import { mdFiles } from "./walk.ts";
 import { isRegularFile } from "./changechain.ts";
 import { APPROVAL_EVIDENCE_KEYS, approvalEvidenceLines, evidenceFresh, readEvidence } from "./evidence.ts";
 
-type Agent = { name?: string; email?: string };
+type Human = { name?: string; email?: string };
 
-function agentList(ctx: Ctx): Agent[] {
-  const identities = (ctx.config.identities ?? {}) as { agents?: Agent[] };
-  return identities.agents ?? [];
-}
-
-function humanList(ctx: Ctx): Agent[] {
-  const identities = (ctx.config.identities ?? {}) as { humans?: Agent[] };
+function humanList(ctx: Ctx): Human[] {
+  const identities = (ctx.config.identities ?? {}) as { humans?: Human[] };
   return identities.humans ?? [];
-}
-
-function isAgent(ident: { name: string; email: string }, agents: Agent[]): boolean {
-  const email = ident.email.toLowerCase();
-  const name = ident.name.toLowerCase();
-  return agents.some(
-    (a) =>
-      (a.email && a.email.toLowerCase() === email) ||
-      (a.name && a.name.toLowerCase() === name),
-  );
 }
 
 function artifactPaths(body: string, attrsBlock: string): string[] {
@@ -43,24 +25,22 @@ function artifactPaths(body: string, attrsBlock: string): string[] {
   return paths;
 }
 
+function flagValue(args: string[], name: string): string {
+  const i = args.indexOf(`--${name}`);
+  if (i < 0) return "";
+  return (args[i + 1] ?? "").trim();
+}
+
+/**
+ * DEC-190: an approval is the user's decision, recorded verbatim in the APR
+ * (`delegated:`), and names the human who decided (`approver:`). Who runs this
+ * command or commits the file is not a rule any more — the pilots showed the git
+ * author field neither proves anything nor stops anyone, while it stalled every
+ * approval (C-107 identity clause retired; C-111 trust model unchanged).
+ */
 export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   const id = args[0] ?? "";
-  if (!id) return usage("usage: gate approve APR-001\n");
-  const ident = gitIdentity(ctx);
-  if (isAgent(ident, agentList(ctx))) {
-    return fail(
-      `refuse: git identity ${ident.name} <${ident.email}> is on the agent list (C-107). Run gate approve as a human.\n`,
-    );
-  }
-  const humans = humanList(ctx);
-  if (humans.length === 0) {
-    return fail("refuse: identities.humans is empty; fill a human git identity before approve (C-107).\n");
-  }
-  if (!isAgent(ident, humans)) {
-    return fail(
-      `refuse: ${ident.name} <${ident.email}> is not in identities.humans (C-107).\n`,
-    );
-  }
+  if (!id || id.startsWith("--")) return usage('usage: gate approve APR-001 [--approver "Name <email>"]\n');
   const dir = join(ctx.records, "approvals");
   // `gate new apr` writes APR-nnn-<slug>.md; resolve both that and the bare name.
   const candidates = [join(dir, `${id}.md`), join(dir, id.endsWith(".md") ? id : `${id}.md`)];
@@ -75,15 +55,20 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   if (!file) return fail(`APR file not found: ${id}\n`);
   const raw = readFileSync(file, "utf8");
   const { attrs, body } = parseFrontmatter(raw);
-  // DEC-166: run from an agent environment, approval is delegation — legal only
-  // when the APR itself records the user's instruction, before approve runs.
-  // ISS-059: environment markers first, process ancestry (codex / claude / …) as the fallback.
-  const harness = detectHarness(process.env, { ancestors: ancestorProcessNames });
-  if (harness && !(attrs.delegated ?? "").trim()) {
+  const words = (attrs.delegated ?? "").trim();
+  if (!words) {
     return fail(
-      `refuse: gate approve is running inside ${harness.agent} but ${id} has no 'delegated:' record.\n` +
-        `Record the user's verbatim instruction first — delegated: "「原话」(YYYY-MM-DD)" — then rerun (C-107/DEC-166).\n`,
+      `refuse: ${id} records no user words. Put the user's verbatim approval in the front matter first — ` +
+        `delegated: "「原话」(YYYY-MM-DD)" — then rerun; who commits does not matter (DEC-190).\n`,
     );
+  }
+  const human = humanList(ctx)[0];
+  const approver =
+    flagValue(args, "approver") ||
+    (attrs.approver ?? "").trim() ||
+    (human?.name ? `${human.name}${human.email ? ` <${human.email}>` : ""}` : "");
+  if (!approver) {
+    return fail('refuse: no approver to name — pass --approver "Name <email>" or fill identities.humans in the config (DEC-190).\n');
   }
   const fmMatch = raw.match(/^---\n[\s\S]*?\n---/);
   const fm = fmMatch ? fmMatch[0] : "";
@@ -108,7 +93,7 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   const today = new Date().toISOString().slice(0, 10);
   next = next.replace(/status:\s+\S+/, "status: approved");
   if (/approver:\s*/.test(next)) {
-    next = next.replace(/approver:\s*.*/, `approver: "${ident.name} <${ident.email}>"`);
+    next = next.replace(/approver:\s*.*/, `approver: "${approver}"`);
   }
   if (/date:\s*/.test(next) && attrs.date !== undefined) {
     next = next.replace(/date:\s+\S+/, `date: ${today}`);
@@ -125,7 +110,7 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   }
   writeFileSync(file, next, "utf8");
   return ok(
-    `approved ${id} as ${ident.name} <${ident.email}>\n${note}commit this file with your human git identity.\n`,
+    `approved ${id} for ${approver} on the user's words ${words.slice(0, 60)}\n${note}commit this file with any git identity (DEC-190).\n`,
   );
 }
 

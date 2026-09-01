@@ -102,24 +102,23 @@ test("R6c pre-commit-apr: a recorded delegation clears the agent path", () => {
   assert.deepEqual(precommitAprGaps(makeCtx(dir), { CLAUDECODE: "1" }), []);
 });
 
-test("R6c pre-commit-apr: a human outside any harness needs nothing", () => {
+test("R6c pre-commit-apr: even outside any harness an approved APR needs the user's words (DEC-190)", () => {
   const dir = gitRepo("apr3");
   aprFile(dir, '""');
   fixtureGit(dir, ["add", "-A"]);
-  // KEEL_ANCESTRY=0: the test process itself sits under a harness executable (ISS-059 fallback).
-  assert.deepEqual(precommitAprGaps(makeCtx(dir), { PATH: "/usr/bin", KEEL_ANCESTRY: "0" }), []);
+  const gaps = precommitAprGaps(makeCtx(dir), { PATH: "/usr/bin", KEEL_ANCESTRY: "0" });
+  assert.equal(gaps.length, 1, JSON.stringify(gaps));
+  assert.match(gaps[0] ?? "", /records no delegation/);
 });
 
-test("R6c pre-commit-apr: an agent git identity is refused regardless of delegation", () => {
+test("R6c pre-commit-apr: an agent git identity with a recorded delegation is accepted (DEC-190 retired the identity clause)", () => {
   const dir = gitRepo("apr4");
   aprFile(dir, '"「由你提交」(2026-08-26)"');
   const g = (args: string[]) => fixtureGit(dir, args);
   g(["config", "user.name", "keel-agent"]);
   g(["config", "user.email", "agent@keel.local"]);
   g(["add", "-A"]);
-  const gaps = precommitAprGaps(makeCtx(dir), {});
-  assert.equal(gaps.length, 1, JSON.stringify(gaps));
-  assert.match(gaps[0] ?? "", /agent git identity/);
+  assert.deepEqual(precommitAprGaps(makeCtx(dir), {}), []);
 });
 
 test("R6c X-apr: an agent-trailer APR commit without delegation fails post-hoc", () => {

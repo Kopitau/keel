@@ -30,3 +30,7 @@
 - C-34: ref=DEC-179 新增四条 REQ-011/AC-5 黑盒关系测试并更新测试名基线。
 - 绿灯：新增测试 4/4；连同既有 G-req/approve 回归为 54/54；`npx tsc --noEmit` exit 0；`gate check --quick` 为 PASS_WITH_WARN，G-req 报告 `2 producing CHG(s) APR-bound`，唯一 WARN 仍是用户明确延期的 REQ-017/AC-4 六格 proxy。
 - 追溯：`gate trace` 已把 REQ-011/AC-5 绑定到 `tests/chg010-change-chain.test.ts`；AC-1～4 未在本切片冒充覆盖，留给后续 P1 子切片。
+
+## 2026-09-01（需求 v6 确认）
+
+- CHG-012 / CHG-013 / CHG-014 由用户 2026-09-01「批准V6和三份变更单。并以我的身份提交。」一次批准，APR-006 绑定三份变更单与 `requirements/v6.md` 正文哈希；v6 `status: confirmed`，`requirements/INDEX.md` current → v6.md；v5 冻结不改。提交按 DEC-190 由 agent 身份完成。

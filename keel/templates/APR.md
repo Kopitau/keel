@@ -25,11 +25,6 @@ artifacts:
 
 `gate approve` 时若盘上有与当前树一致、退出码 0 的 `keel/evidence/verify.json`，会把 `evidence_tree_hash / evidence_commit / evidence_command / evidence_exit_code / evidence_passed / evidence_failed / evidence_skipped / evidence_recorded_at` 写进本文件前言。local 档合并、工作树删除后，G-done / G-merge / X-evidence 以该快照为证据（树必须仍一致）；github 档以 CI 复算为准。
 
-## 提交纪律（C-107 / DEC-166）
+## 提交纪律（DEC-190）
 
-审批的**判断**必须来自用户本人（对话确认，原话可溯）。**提交动作**允许两条路径：
-
-1. **人类亲手**：人类 git 身份、非 agent 环境提交，`delegated` 留空。
-2. **记录在案的委托**：用户明确指示 agent 提交时，先把原话写进 `delegated: "「原话」(YYYY-MM-DD)"`，再 `gate approve` + 提交。agent 环境下 `gate approve` 与 pre-commit 都会拒绝无委托记录的审批；X-apr 事后按提交尾注复核。
-
-任何情况下 agent 的 **git 身份**（identities.agents）都不许出现在审批提交上。
+审批的**判断**必须来自用户本人：把用户的原话（含日期）写进前言 `delegated: "「原话」(YYYY-MM-DD)"`，`approver:` 写批准人（`gate approve` 默认取 `identities.humans[0]`，可用 `--approver` 指定）。然后 `gate approve APR-nnn` 绑定哈希并提交——**谁提交都可以**（agent 用自己的 git 身份即可）。没有原话时 `gate approve` 拒绝、pre-commit 拒绝、X-apr FAIL。

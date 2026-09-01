@@ -1,10 +1,10 @@
 ---
 id: CHG-014
-status: proposed
+status: approved
 date: 2026-09-01
 requirements_from: v5.md
 requirements_to: v6.md
-decisions: [DEC-185, DEC-186, DEC-187, DEC-188, DEC-189]
+decisions: [DEC-185, DEC-186, DEC-187, DEC-188, DEC-189, DEC-190]
 issues: [ISS-058, ISS-059, ISS-060]
 ---
 
@@ -23,6 +23,7 @@ issues: [ISS-058, ISS-059, ISS-060]
 - DEC-187（验收 APR 携带 verify 证据快照；local 档回读，adr）。
 - DEC-188（测试命令白名单：启动器前缀 + 测试程序 + 允许的参数类）。
 - DEC-189（评审回路：复发指纹共享熔断计数、lockfile 摘要、pack 预算告警、Finding 严格校验与存档）。
+- DEC-190（审批提交不再要求人类 git 身份：APR 有用户原话 + 批准人即可，谁提交都行；取代 C-107 身份条款与 DEC-166/167 的身份守卫。用户 2026-09-01「这个也是卡点，把只能由我的身份提交去掉」）。
 - ISS-058 / ISS-059 / ISS-060（钩子尾注、harness 探测、status 措辞），按 k-bugfix 红绿修。
 - `gate status` 打印 `keel: <项目版本> (installer <版本> …)`，安装器较新时提示 `run keel update`（REQ-025 AC-10）。
 - `tools/gate/platform-limits.md` 增补 Codex Desktop / Cursor / Windows 的已知坑；k-migrate、k-accept、k-impl、k-handoff、k-review 技能各补一句（见「修改」）。
@@ -31,10 +32,10 @@ issues: [ISS-058, ISS-059, ISS-060]
 
 - REQ-001：增 AC-7（当前需求版本声明已确认须能追到 approved 且哈希匹配的 APR，否则 G-req FAIL，DEC-186）。
 - REQ-004：增 AC-11（当前规划总览同理 → G-plan FAIL，DEC-186）。
-- REQ-006：增 AC-9（local 档无 `verify.json` 时可回读 approved APR 的 evidence 快照，树一致才算，DEC-187）。
+- REQ-006：增 AC-9（local 档无 `verify.json` 时可回读 approved APR 的 evidence 快照，树一致才算，DEC-187）；增 AC-10（`gate trace` / `gate verify` 输出按功能的人话摘要——用户 2026-09-01「273条测试通过，门禁这些感觉没有什么意义。应该有类似测试或者门禁分类的说明，通过什么测试了XX功能通过了」；AGENTS.md「Turn end」要求按功能汇报证据）。
 - REQ-012：增 AC-5（`gate status` 的 `next:` 三种形态：无基线 → run k-new；有基线无规划 → finish k-new step 4；全部功能有 summary → k-review 再 k-accept，ISS-060）；增 AC-6（每轮工作收尾用通俗中文说清做了什么 / 现在状态 / 还剩什么，再以「下一步：」结束；编号与门禁名只作括号补充——用户 2026-09-01 补充：「每次一轮对话结束，但是没有推荐下一步的动作。应该修改」「对于工作和下一步经常很简短，应该要让人可以更清晰的知道情况，不能只有代码缩写介绍」；AGENTS.md 加 Turn end 节，k-handoff 补一句）。
 - REQ-016：增 AC-11（`platform-limits.md` 含 Codex Desktop / Cursor / Windows 的已知坑与对策；machine-doc）。
-- REQ-018：增 AC-7（已批准工件正文漂移 → X-apr FAIL，waiver 逐 APR 引用，DEC-185）、AC-8（`gate approve` 写入 evidence 快照，DEC-187）。
+- REQ-018：描述与 AC-2 重写（审批 = 用户原话 + 批准人 + 正文哈希，提交身份不限，DEC-190）；增 AC-7（已批准工件正文漂移 → X-apr FAIL，waiver 逐 APR 引用，DEC-185）、AC-8（`gate approve` 写入 evidence 快照，DEC-187）。
 - REQ-019：增 AC-5（尾注前空行，`git log --format=%s` 只含主题，ISS-058）、AC-6（`Agent:` 由环境标记或父进程名识别 Codex / Cursor / Claude Code，识别不到写 unknown 且可 `KEEL_AGENT` 覆盖；DEC-166 守卫在识别出的任一 agent 环境都触发，ISS-059）。
 - REQ-021：增 AC-6（白名单形态，DEC-188）。
 - REQ-022：增 AC-6（用户选择推平仍写迁移报告、删除单独提交，machine-doc）。
@@ -61,4 +62,4 @@ issues: [ISS-058, ISS-059, ISS-060]
 
 ## 批准
 
-待用户点头 → APR-006 同批绑定本文件、CHG-012、CHG-013 与 `keel/requirements/v6.md` 正文哈希；人类身份或记录在案的委托提交（C-107/DEC-166）。
+2026-09-01 用户「批准V6和三份变更单。并以我的身份提交。」→ APR-006 同批绑定本文件、CHG-012、CHG-013 与 `keel/requirements/v6.md` 正文哈希；按 DEC-190 由 agent 以自己的 git 身份提交，原话在 APR 前言 `delegated:`。

@@ -24,14 +24,14 @@ keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记�
 
 ## 在途功能
 
-版本 0.9.2（2026-09-01）。requirements **current = v5.md**（APR-005）；**v6 proposed**，携带 CHG-012（Cursor 兼容档）、CHG-013（评审去攻击面 / 不强制异构）、CHG-014（zhaoxi / fmea-v3 审计回流：DEC-185～189、ISS-058～060 已闭环），三份变更单与 v6 待 **APR-006** 一次点头（含提交委托原话）。规划 current = overview-v4.md（APR-005）。
+版本 0.9.2（2026-09-01）。requirements **current = v6.md**（APR-006，2026-09-01 用户原话一次批准，绑定 CHG-012 Cursor 兼容档、CHG-013 评审去攻击面 / 不强制异构、CHG-014 zhaoxi / fmea-v3 审计回流：DEC-185～190、ISS-058～067 已闭环）；v5 冻结不改。规划 current = overview-v4.md（APR-005）。
 
 CHG-014 八个切片已全部落地并提交（S0 记录 → S1 钩子/探测 → S3 冻结件与基线复核 → S4 证据快照 → S5 白名单 → S6 评审回路 → S2 status → S7 文档技能 → S8 发布）；每个切片有红绿测试与 worklog 节，证据见 `RELEASE-0.9.2.md` 与各功能 worklog 2026-09-01 节。
 
 ## 风险与暂定
 
 - 暂定决策计数：0
-- 人类身份已配 kopit <wwillmee@gmail.com>；APR-001 仍 draft（bootstrap）；APR-006 待点头
+- 人类身份已配 kopit <wwillmee@gmail.com>；APR-001 仍 draft（bootstrap）；APR-006 approved（DEC-190：审批凭用户原话，agent 身份提交）
 - Codex Desktop 的 `CODEX_*` 变量已实测（2026-09-01 用户回报）并入回归测试；父进程名兜底保留给不导出标记的 harness
 - 本仓 10 个 DEC（APR-002 ×5、APR-003 ×5）在 CHG-011 复核时正文被追加，X-apr 以 F3 worklog 的两行 waiver 放行（DEC-185）
 - REQ-017/AC-4 GitHub Actions 六格真实运行仍为 proxy

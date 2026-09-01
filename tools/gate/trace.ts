@@ -317,11 +317,68 @@ export function traceWarnings(ctx: Ctx, claimed: string[]): { proxies: string[];
   return { proxies, whitebox: [...new Set(whitebox)] };
 }
 
+/**
+ * REQ-006/AC-10 (CHG-014): what the tests proved, by feature and in words — a
+ * person reads "F17 门禁：6 条验收，黑盒 5，替身 1", never "273 passed".
+ * One line per feature that has a plan: every REQ the plan claims, with its title
+ * from the requirements file, how many acceptance criteria it has and how many of
+ * them a black-box test covers, which are stand-ins, which are missing, and the
+ * test files behind it.
+ */
+export function featureCoverageLines(ctx: Ctx): string[] {
+  const { rows, reqFile } = buildTrace(ctx);
+  const reqPath = join(ctx.records, "requirements", reqFile);
+  const body = existsSync(reqPath) ? readFileSync(reqPath, "utf8") : "";
+  const titles = new Map<string, string>();
+  for (const m of body.matchAll(/^##\s+(REQ-\d{3})\s+(.+?)\s*$/gm)) titles.set(m[1] ?? "", m[2] ?? "");
+  const feats = join(ctx.records, "features");
+  if (!existsSync(feats)) return [];
+  const out: string[] = [];
+  for (const name of readdirSync(feats).sort()) {
+    const planDir = join(feats, name, "plan");
+    if (!existsSync(planDir)) continue;
+    const plans = readdirSync(planDir)
+      .filter((f) => /^v\d+\.md$/.test(f))
+      .sort((a, b) => Number(a.slice(1, -3)) - Number(b.slice(1, -3)));
+    const latest = plans[plans.length - 1];
+    if (!latest) continue;
+    const text = readFileSync(join(planDir, latest), "utf8");
+    const fid = text.match(/^feature:\s*(\S+)/m)?.[1] ?? name;
+    const reqs = [...new Set((text.match(/^req:\s*(.+)$/m)?.[1] ?? "").match(/REQ-\d{3}/g) ?? [])];
+    const done = existsSync(join(feats, name, "summary.md"));
+    const parts: string[] = [];
+    for (const req of reqs) {
+      const row = rows.find((r) => r.req === req);
+      const title = titles.get(req) ?? "";
+      if (!row) {
+        parts.push(`${req} ${title}：需求书里没有此条`.trim());
+        continue;
+      }
+      const n = row.criteria;
+      const proxy = row.proxyAc.length;
+      const missing = row.uncoveredAc.length;
+      const covered = Math.max(0, n - proxy - missing);
+      const files = row.tests.map((t) => posixRel(ctx.root, t));
+      const detail = [
+        `黑盒 ${covered}`,
+        proxy > 0 ? `替身 ${proxy}（${row.proxyAc.map((p) => `AC-${p.ac}`).join(" ")}）` : "",
+        missing > 0 ? `缺 ${missing}（${row.uncoveredAc.map((a) => `AC-${a}`).join(" ")}）` : "",
+      ]
+        .filter(Boolean)
+        .join("，");
+      parts.push(`${req} ${title}：${n} 条验收，${detail}${files.length > 0 ? `；测试 ${files.join(", ")}` : "；无测试"}`);
+    }
+    out.push(`${fid} ${name}（${done ? "已 summary" : "施工中"}）— ${parts.join(" ｜ ") || "计划未绑定 REQ"}`);
+  }
+  return out;
+}
+
 export function runTrace(ctx: Ctx): CmdResult {
   const { rows, reqFile } = buildTrace(ctx);
   if (!existsSync(join(ctx.records, "requirements", reqFile))) {
     return fail("requirements current file missing\n");
   }
+  const byFeature = featureCoverageLines(ctx);
   const lines = [
     `# trace matrix (generated)`,
     "",
@@ -329,6 +386,10 @@ export function runTrace(ctx: Ctx): CmdResult {
     `- generator: gate trace`,
     `- counts black-box test names only (DEC-168); [proxy:...] is a stand-in, not coverage`,
     `- enforcement scope: claimed means the owner feature has summary.md (DEC-174)`,
+    "",
+    "## 按功能（人话，REQ-006/AC-10）",
+    "",
+    ...(byFeature.length > 0 ? byFeature.map((l) => `- ${l}`) : ["- （没有带计划的功能）"]),
     "",
     "| REQ | scope | verification | tests | criteria | uncovered AC | proxy AC |",
     "|---|---|---|---|---|---|---|",

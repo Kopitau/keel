@@ -12,7 +12,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { makeCtx } from "../tools/gate/ctx.ts";
 import { agentFromAncestry, detectHarness, detectHost } from "../tools/gate/harness.ts";
-import { insertTrailers, precommitAprGaps, precommitAprNotes } from "../tools/gate/hook.ts";
+import { insertTrailers, precommitAprGaps } from "../tools/gate/hook.ts";
 import { scrubHookGitEnv, scrubProcessGitEnv } from "./fixtures/git-env.ts";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -152,7 +152,7 @@ test("REQ-019/AC-6 the Agent trailer names codex under a CODEX_ environment and 
   rmSync(root, { recursive: true, force: true });
 });
 
-test("REQ-019/AC-6 the DEC-166 guard refuses an undelegated approved APR staged from a codex environment, and only warns inside an editor host", () => {
+test("REQ-019/AC-6 the approval guard asks for the user's words in every environment — codex, cursor or none — and is satisfied by them alone (DEC-190)", () => {
   const root = tempRepo("guard");
   const apr = join(root, "keel", "approvals", "APR-001-demo.md");
   writeFileSync(
@@ -164,21 +164,15 @@ test("REQ-019/AC-6 the DEC-166 guard refuses an undelegated approved APR staged 
   assert.equal(r.status, 0, r.stderr);
   const ctx = makeCtx(root);
   const none = { ancestors: () => [] as string[] };
-  // before ISS-059 this environment produced no gap at all
-  const codexGaps = precommitAprGaps(ctx, cleanEnv({ CODEX_SANDBOX_NETWORK_DISABLED: "1" }), none);
-  assert.equal(codexGaps.length, 1, codexGaps.join("; "));
-  assert.match(codexGaps[0] ?? "", /committed from codex.*DEC-166/);
-  const byProcess = precommitAprGaps(ctx, cleanEnv(), { ancestors: () => ["node.exe", "Codex.exe"] });
-  assert.match(byProcess[0] ?? "", /committed from codex/);
-  const cursorEnv = cleanEnv({ CURSOR_TRACE_ID: "abc" });
-  assert.deepEqual(precommitAprGaps(ctx, cursorEnv, none), []);
-  const notes = precommitAprNotes(ctx, cursorEnv, none);
-  assert.equal(notes.length, 1);
-  assert.match(notes[0] ?? "", /inside cursor \(env\).*KEEL_AGENT/);
-  // a recorded delegation satisfies the guard everywhere
+  for (const env of [cleanEnv({ CODEX_SANDBOX_NETWORK_DISABLED: "1" }), cleanEnv({ CURSOR_TRACE_ID: "abc" }), cleanEnv()]) {
+    const gaps = precommitAprGaps(ctx, env, none);
+    assert.equal(gaps.length, 1, gaps.join("; "));
+    assert.match(gaps[0] ?? "", /records no delegation.*DEC-190/);
+  }
   writeFileSync(apr, readFileSync(apr, "utf8").replace('delegated: ""', 'delegated: "「批准提交」(2026-09-01)"'), "utf8");
   spawnSync("git", ["add", "-A"], { cwd: root, encoding: "utf8", env: cleanEnv() });
-  assert.deepEqual(precommitAprGaps(ctx, cleanEnv({ CODEX_SANDBOX_NETWORK_DISABLED: "1" }), none), []);
-  assert.deepEqual(precommitAprNotes(ctx, cursorEnv, none), []);
+  for (const env of [cleanEnv({ CODEX_SANDBOX_NETWORK_DISABLED: "1" }), cleanEnv({ CURSOR_TRACE_ID: "abc" }), cleanEnv()]) {
+    assert.deepEqual(precommitAprGaps(ctx, env, none), []);
+  }
   rmSync(root, { recursive: true, force: true });
 });

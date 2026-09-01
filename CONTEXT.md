@@ -16,7 +16,7 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | RES | one research question, one file (C-09) | “we looked around” with no file |
 | ISS | issue record with a defense pointer (C-58) | chat-only bug notes |
 | CHG | change request; current requirements file is frozen (C-64) | editing `vN.md` in place |
-| APR | approval with content hash; human git identity (C-106/107) | agent-authored “approved” commits |
+| APR | approval with content hash, the user's verbatim words (`delegated:`) and a named approver; any git identity may commit it (C-106, DEC-190) | an `approved` APR without the user's words; treating the git author as the approval |
 | oss field | direct-dependency reuse registered in the `oss:` field of the RES that chose it (C-88, CHG-011) | separate OSS files; undocumented copies of upstream code |
 | lesson | one verified line appended to the `#经验候选` worklog line (`→ 经验：…`) or a DEC line (CHG-011); user-level notes in `~/.keel/knowledge/` | LES/KLES files; pasting secrets into user-level notes |
 | quick check | `gate check --quick` = G-req, G-plan, X-trace, X-bypass; what the pre-commit hook runs (CHG-011) | running the test suite in a hook |

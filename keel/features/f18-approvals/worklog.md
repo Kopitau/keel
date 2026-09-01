@@ -42,3 +42,9 @@
 
 - 进度：`approve.ts` 在填哈希、翻 approved 之后，若 `verify.json` 新鲜（树一致、exit 0、非脏、passed > 0、failed 0）则用 `withApprovalEvidence` 把 `evidence_*` 八个平铺键写进前言（已有则整组替换），输出 `evidence snapshot written: tree …`；否则照常批准并提示"无新鲜绿色 verify"。APR 模板加「证据快照（DEC-187）」一节。
 - 证据：`tests/chg014-evidence-snapshot.test.ts` `REQ-018/AC-8`（写入八键、再批准无证据时提示、`withApprovalEvidence` 替换不重复）。
+
+## 2026-09-01（DEC-190：审批提交不再要求人类 git 身份；APR-006 批准）
+
+- 用户："这个也是卡点，把只能由我的身份提交去掉"。DEC-190 confirmed（adr，supersedes DEC-166 的身份守卫；C-107 身份条款退役，C-111 信任模型不变）。`approve.ts` 重写：不核 git 身份，要求 `delegated:` 非空并填 `approver:`（`--approver` 或 `identities.humans[0]`）；`hook.ts` 的 pre-commit 守卫只核原话；`check.ts` X-apr 只核原话 + 批准人 + pending 哈希 + 漂移。v6 REQ-018 描述与 AC-2 重写；AGENTS.md「Do not」、CONTEXT.md APR 词条、APR 模板「提交纪律」、k-new 第 5 步、k-accept 第 4 步同步；DEC-166 标 superseded。
+- C-34: ref=DEC-190 —— `tests/w2-gate.test.ts`「approve refuses an agent git identity」改为"无原话拒绝、有原话通过"；`tests/r6-field-guards.test.ts` 两条身份守卫测试改为"任何环境都要原话 / agent 身份有原话即通过"；`tests/chg014-hook-harness.test.ts` 最后一条改为三种环境同一判据；新增 `tests/chg014-approval-words.test.ts`（REQ-018/AC-2 ×3：approve、pre-commit、X-apr）。
+- APR-006：用户原话「批准V6和三份变更单。并以我的身份提交。」写入 `delegated:`；`gate approve APR-006` 由 agent 执行并以 keel-agent 身份提交（DEC-190）；绑定 CHG-012 / CHG-013 / CHG-014 与 `requirements/v6.md`；v6 状态改 confirmed，`requirements/INDEX.md` current → v6.md。

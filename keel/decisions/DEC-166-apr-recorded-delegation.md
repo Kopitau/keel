@@ -1,7 +1,8 @@
 ---
 id: DEC-166
 title: C-107 修订：审批提交允许记录在案的委托
-status: confirmed
+status: superseded
+superseded_by: DEC-190
 date: 2026-08-26
 features: [F18, F17]
 research: [RES-903]

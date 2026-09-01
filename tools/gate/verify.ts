@@ -15,7 +15,7 @@ import {
   type Evidence,
 } from "./evidence.ts";
 import { ok, type CmdResult } from "./result.ts";
-import { buildTrace } from "./trace.ts";
+import { buildTrace, featureCoverageLines } from "./trace.ts";
 import { allowedTestCommandReason, emptyRunIsFailure, expandTestArgv, isAllowedTestArgv, splitCmd } from "./testcmd.ts";
 
 function activeProfile(cfg: JsonMap): JsonMap {
@@ -160,6 +160,9 @@ export function runVerify(ctx: Ctx): CmdResult {
     `dirty: ${ev.dirty}`,
     `counts: passed=${counts.passed} failed=${counts.failed} skipped=${counts.skipped}`,
     `evidence: ${join(ctx.records, "evidence", "verify.json")}`,
+    // REQ-006/AC-10: the count above means nothing on its own — say what it proved, by feature.
+    "coverage by feature:",
+    ...featureCoverageLines(ctx).map((l) => `  ${l}`),
     "",
   ];
   if (exitCode !== 0) {

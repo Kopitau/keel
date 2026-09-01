@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 189
+- count: 190
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -170,7 +170,7 @@
 | DEC-163 | G-research 开检 RES 实质 | superseded | `DEC-163-res-substance-floor.md` |
 | DEC-164 | 经验候选标签接上读取端 | superseded | `DEC-164-lesson-candidate-reader.md` |
 | DEC-165 | 其余五项「空即合规」检查暂不审计 | superseded | `DEC-165-defer-empty-compliant-audit.md` |
-| DEC-166 | C-107 修订：审批提交允许记录在案的委托 | confirmed | `DEC-166-apr-recorded-delegation.md` |
+| DEC-166 | C-107 修订：审批提交允许记录在案的委托 | superseded | `DEC-166-apr-recorded-delegation.md` |
 | DEC-167 | 审批路径触发提交时守卫（代替字面上的全量 check） | confirmed | `DEC-167-apr-commit-time-guard.md` |
 | DEC-168 | 测试分黑盒验收与白盒回归：只有黑盒可挂 AC 名，X-trace 只数黑盒 | confirmed | `DEC-168-test-kinds-black-box-acceptance-vs-white.md` |
 | DEC-169 | 前沿读取端：功能计划声明 blocked_by，gate status 打印"现在能开工什么 | confirmed | `DEC-169-frontier-blocked-by-in-feature-plans-gat.md` |
@@ -194,3 +194,4 @@
 | DEC-187 | 批准时把 verify 证据快照写进 APR，local 档合并后 G-done / G-merge / X-evidence 可回读 APR 证据 | confirmed | `DEC-187-acceptance-apr-carries-the-verify-eviden.md` |
 | DEC-188 | 测试命令白名单改为"启动器前缀 + 测试程序 + 允许的参数类"，仍禁 -k 与路径参数 | confirmed | `DEC-188-test-command-allowlist-launcher-prefix-p.md` |
 | DEC-189 | 评审回路：recurrence_of 链共享同一熔断计数；pack 体积预算告警、lockfile 只留摘要、Finding 严格校验并存档原件 | confirmed | `DEC-189-review-loop-recurrence-fingerprints-shar.md` |
+| DEC-190 | 审批提交不再要求人类 git 身份：APR 里有用户原话即可，谁提交都行 | confirmed | `DEC-190-approval-commits-need-the-users-words-no.md` |

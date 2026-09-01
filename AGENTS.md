@@ -12,7 +12,7 @@ Then follow its navigation. Read more if you need it. Do **not** bulk-load the r
 
 ## Turn end
 
-A reply that closes a round of work ends with a wrap-up a person can follow without reading code: (1) what was done and why it matters, in plain sentences; (2) where things stand now — what is green, what is red, what that means; (3) what is left or risky; (4) a final paragraph that starts with `下一步：` — the one action you recommend next and, if anything, the single decision only the user can make. Ids and gate names (REQ-nnn, DEC-nnn, ISS-nnn, X-apr, tree hashes) may follow a plain sentence in parentheses; they never replace it. Short is not the goal, clear is. Never end on a status dump, a table, or an open list of options (REQ-012/AC-6, CHG-014).
+A reply that closes a round of work ends with a wrap-up a person can follow without reading code: (1) what was done and why it matters, in plain sentences; (2) where things stand now — what is green, what is red, what that means; (3) what is left or risky; (4) a final paragraph that starts with `下一步：` — the one action you recommend next and, if anything, the single decision only the user can make. Ids and gate names (REQ-nnn, DEC-nnn, ISS-nnn, X-apr, tree hashes) may follow a plain sentence in parentheses; they never replace it. Evidence is reported **by feature** — which feature's acceptance criteria now have passing black-box tests, which are stand-ins, which are missing (`gate trace` / `gate verify` print that summary) — never as a bare test count. Short is not the goal, clear is. Never end on a status dump, a table, or an open list of options (REQ-012/AC-6, CHG-014).
 
 Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gate check --quick` (4 checks, seconds) runs in the pre-commit hook; `gate check` (8 checks) before claiming done, review and merge; CI reruns it (C-100).
 
@@ -62,5 +62,5 @@ Tier is `enforcement_tier` in the config (this repo: `github`, CODEOWNERS on). O
 - Auto-inject records into context (C-120).
 - Rewrite confirmed files in place.
 - Hash raw disk bytes (DEC-144).
-- Submit APR commits with an agent git identity; agent-made APR commits need a `delegated:` record of the user's instruction (C-107/DEC-166).
+- Mark an APR `approved` without the user's verbatim words in `delegated:` (DEC-190). Who commits it is not a rule; the words are.
 - Add runtime npm dependencies. New **dev** dependencies need a DEC (DEC-154).

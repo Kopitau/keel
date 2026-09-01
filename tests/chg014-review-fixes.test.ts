@@ -145,14 +145,14 @@ test("ISS-063 pytest -o (ini override) and plugin / reporter module values are r
 test("ISS-064 an approved artifact path that is a directory is reported as missing, and gate check --quick does not crash", () => {
   const root = project("iss064");
   mkdirSync(join(root, "keel", "approvals"), { recursive: true });
-  writeFileSync(join(root, "keel", "approvals", "APR-001-x.md"), "---\nid: APR-001\nstatus: approved\nartifacts:\n  - path: keel/features/f01-x/plan\n    content_sha256: 0123\n---\n\n# APR-001\n", "utf8");
+  writeFileSync(join(root, "keel", "approvals", "APR-001-x.md"), "---\nid: APR-001\nstatus: approved\napprover: \"kopit\"\ndelegated: \"「由你提交」(2026-09-01)\"\nartifacts:\n  - path: keel/features/f01-x/plan\n    content_sha256: 0123\n---\n\n# APR-001\n", "utf8");
   const ctx = makeCtx(root);
   assert.deepEqual(inspectApprovedArtifacts(ctx).map((d) => d.state), ["missing"]);
   // quick: no crash (the directory is not a plan file, so G-plan has nothing to say); full: X-apr reports it missing
   assert.match(line(runCheck(ctx, ["--quick"]).stdout, "G-plan"), /^PASS G-plan/);
   assert.match(line(runCheck(ctx, []).stdout, "X-apr"), /^FAIL X-apr  approved artifact missing: keel\/features\/f01-x\/plan \(APR-001\)/);
   const human = makeCtx(root, { name: "kopit", email: "wwillmee@gmail.com" });
-  writeFileSync(join(root, "keel", "approvals", "APR-001-x.md"), readFileSync(join(root, "keel", "approvals", "APR-001-x.md"), "utf8").replace("status: approved", "status: draft").replace("content_sha256: 0123", "content_sha256: pending").replace("id: APR-001", 'id: APR-001\ndelegated: "「由你提交」(2026-09-01)"'), "utf8");
+  writeFileSync(join(root, "keel", "approvals", "APR-001-x.md"), readFileSync(join(root, "keel", "approvals", "APR-001-x.md"), "utf8").replace("status: approved", "status: draft").replace("content_sha256: 0123", "content_sha256: pending"), "utf8");
   const r = runApprove(human, ["APR-001"]);
   assert.equal(r.code, 1);
   assert.match(r.stderr, /artifact is not a file: keel\/features\/f01-x\/plan/);

@@ -6,8 +6,6 @@ import { readCurrent } from "./indexgen.ts";
 import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceVerdict, readEvidence } from "./evidence.ts";
-import { gitLastAuthor, gitLastBody } from "./git.ts";
-import { commitLooksAgentMade } from "./harness.ts";
 import { collectBypassFindings } from "./bypass.ts";
 import { claimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
 import { computeFrontier } from "./frontier.ts";
@@ -392,22 +390,15 @@ function gMerge(ctx: Ctx): CheckItem {
   return pass("G-merge", `${approved} approved APR; evidence (${verdict.via}) + trace green; no open ISS`);
 }
 
-// X-apr — an approved APR was committed by a human, or by an agent under a recorded
-// delegation, and actually binds artifact hashes (ISS-053).
+// X-apr — an approved APR records the user's verbatim words and names its approver
+// (DEC-190), binds real hashes (ISS-053), and its artifacts have not drifted (DEC-185).
 function xApr(ctx: Ctx): CheckItem {
   const aprDir = join(ctx.records, "approvals");
   if (!existsSync(aprDir)) return skip("X-apr", "no approvals dir");
-  const identities = (ctx.config.identities ?? {}) as {
-    agents?: { name?: string; email?: string }[];
-    humans?: { name?: string; email?: string }[];
-  };
-  const agents = identities.agents ?? [];
   const approved: string[] = [];
   for (const n of readdirSync(aprDir)) {
     if (!n.startsWith("APR-") || !n.endsWith(".md")) continue;
-    const rel = join("keel", "approvals", n).split("\\").join("/");
-    const abs = join(aprDir, n);
-    const raw = readFileSync(abs, "utf8");
+    const raw = readFileSync(join(aprDir, n), "utf8");
     const { attrs } = parseFrontmatter(raw);
     if ((attrs.status ?? "") !== "approved") continue;
     approved.push(n);
@@ -418,32 +409,15 @@ function xApr(ctx: Ctx): CheckItem {
         "re-run gate approve so every artifact carries its normalized hash (C-106 / ISS-053)",
       );
     }
-    if ((identities.humans ?? []).length === 0) {
-      return fail("X-apr", `${n} is approved but identities.humans is empty`, "C-107");
-    }
-    const author = gitLastAuthor(ctx, rel);
-    const email = author.email.toLowerCase();
-    const name = author.name.toLowerCase();
-    const agentHit = agents.some(
-      (a) =>
-        (a.email && a.email.toLowerCase() === email) ||
-        (a.name && a.name.toLowerCase() === name),
-    );
-    if (agentHit) {
+    if (!(attrs.delegated ?? "").trim()) {
       return fail(
         "X-apr",
-        `${n} last commit author ${author.name} <${author.email}> is an agent`,
-        "rewrite the APR commit with a human identity (C-107)",
+        `${n} is approved but records no delegation — the user's verbatim words are the approval`,
+        "add 'delegated: \"「原话」(YYYY-MM-DD)\"' to the APR front matter (DEC-190)",
       );
     }
-    // DEC-166: judge the trailers the environment writes — an agent-made commit is
-    // legitimate only when the APR records the user's delegation.
-    if (commitLooksAgentMade(gitLastBody(ctx, rel)) && !(attrs.delegated ?? "").trim()) {
-      return fail(
-        "X-apr",
-        `${n} commit carries agent trailers but the APR records no delegation`,
-        "add 'delegated: <用户原话+日期>' to the APR, or have the human recommit (C-107/DEC-166)",
-      );
+    if (!(attrs.approver ?? "").trim()) {
+      return fail("X-apr", `${n} is approved but names no approver`, "gate approve fills approver from identities.humans or --approver (DEC-190)");
     }
   }
   if (approved.length === 0) return pass("X-apr", "no approved APR commits to check");
@@ -469,7 +443,7 @@ function xApr(ctx: Ctx): CheckItem {
       waivers: aprs,
     };
   }
-  return pass("X-apr", `${approved.length} approved APR(s): human author or recorded delegation; hashes bound and unchanged`);
+  return pass("X-apr", `${approved.length} approved APR(s): user words recorded; hashes bound and unchanged`);
 }
 
 // X-bypass — hooks skipped, hooksPath moved, tests dir gone, CI workflow weakened (C-105).

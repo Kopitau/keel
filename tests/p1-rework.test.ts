@@ -84,7 +84,7 @@ test("REQ-019 P1-8 gitWriteTree works in a linked worktree", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-018 P1-7 approve refuses empty humans list", () => {
+test("REQ-018 P1-7 approve refuses when nobody can be named as approver, and --approver resolves it (DEC-190)", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-p1-apr-"));
   mkdirSync(join(dir, "keel", "approvals"), { recursive: true });
   writeFileSync(
@@ -98,12 +98,15 @@ test("REQ-018 P1-7 approve refuses empty humans list", () => {
   writeFileSync(join(dir, "AGENTS.md"), "# k\n", "utf8");
   writeFileSync(
     join(dir, "keel", "approvals", "APR-001.md"),
-    "---\nid: APR-001\nstatus: draft\napprover: \"\"\n---\n\n- path: AGENTS.md\n  content_sha256: pending\n",
+    "---\nid: APR-001\nstatus: draft\napprover: \"\"\ndelegated: \"「批准」(2026-09-01)\"\n---\n\n- path: AGENTS.md\n  content_sha256: pending\n",
     "utf8",
   );
   const r = runApprove(makeCtx(dir, { name: "Ada", email: "ada@example.com" }), ["APR-001"]);
   assert.equal(r.code, 1);
-  assert.match(r.stderr, /humans is empty/);
+  assert.match(r.stderr, /no approver to name/);
+  const named = runApprove(makeCtx(dir, { name: "Ada", email: "ada@example.com" }), ["APR-001", "--approver", "Ada <ada@example.com>"]);
+  assert.equal(named.code, 0, named.stderr);
+  assert.match(readFileSync(join(dir, "keel", "approvals", "APR-001.md"), "utf8"), /approver: "Ada <ada@example.com>"/);
   rmSync(dir, { recursive: true, force: true });
 });
 

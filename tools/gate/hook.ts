@@ -18,68 +18,29 @@ function stagedApprovals(ctx: Ctx): string[] {
 }
 
 /**
- * DEC-166 commit-time guard: validate the approval commit BEING MADE, which the
- * history-based X-apr can only judge after the fact. An agent may land an APR
- * commit on the user's explicit instruction — but then the APR file itself must
- * carry that instruction (`delegated:` non-empty), and an agent git identity
- * still never lands approvals (C-107). ISS-059: the guard used to be skipped
- * whenever the harness was not recognized, i.e. everywhere but Claude Code.
+ * DEC-190 commit-time guard: an APR being committed as `approved` must carry the
+ * user's verbatim words (`delegated:`). That is the whole rule — the git identity
+ * of the committer and the harness it runs in are not judged any more (C-107's
+ * identity clause retired; the pilots showed it stalled every approval and
+ * proved nothing).
  */
-export function precommitAprGaps(ctx: Ctx, env: EnvMap = process.env, opts: DetectOptions = DEFAULT_DETECT): string[] {
-  const staged = stagedApprovals(ctx);
+export function precommitAprGaps(ctx: Ctx, _env: EnvMap = process.env, _opts: DetectOptions = DEFAULT_DETECT): string[] {
   const gaps: string[] = [];
-  if (staged.length === 0) return gaps;
-  const ident = gitIdentity(ctx);
-  const agents = ((ctx.config.identities ?? {}) as { agents?: { name?: string; email?: string }[] })
-    .agents ?? [];
-  const agentIdentity = agents.some(
-    (a) =>
-      (a.email && a.email.toLowerCase() === ident.email.toLowerCase()) ||
-      (a.name && a.name.toLowerCase() === ident.name.toLowerCase()),
-  );
-  const harness = detectHarness(env, opts);
-  for (const rel of staged) {
+  for (const rel of stagedApprovals(ctx)) {
     const text = gitStagedContent(ctx, rel);
     if (!text) continue;
     const { attrs } = parseFrontmatter(text);
     if ((attrs.status ?? "") !== "approved") continue;
-    if (agentIdentity) {
-      gaps.push(`${rel}: approval commit under agent git identity ${ident.name} (C-107)`);
-    }
-    if (harness && !(attrs.delegated ?? "").trim()) {
-      gaps.push(
-        `${rel}: committed from ${harness.agent} but the APR records no delegation — add 'delegated: <用户原话+日期>' (DEC-166)`,
-      );
+    if (!(attrs.delegated ?? "").trim()) {
+      gaps.push(`${rel}: approved but records no delegation — add 'delegated: "「用户原话」(YYYY-MM-DD)"'; who commits does not matter (DEC-190)`);
     }
   }
   return gaps;
 }
 
-/** Non-fatal notes: an editor host was seen but no agent could be told apart from a human (ISS-059). */
-export function precommitAprNotes(ctx: Ctx, env: EnvMap = process.env, opts: DetectOptions = DEFAULT_DETECT): string[] {
-  const staged = stagedApprovals(ctx);
-  if (staged.length === 0) return [];
-  if (detectHarness(env, opts)) return [];
-  const host = detectHost(env, opts);
-  const undelegated = staged.filter((rel) => {
-    const text = gitStagedContent(ctx, rel);
-    if (!text) return false;
-    const { attrs } = parseFrontmatter(text);
-    return (attrs.status ?? "") === "approved" && !(attrs.delegated ?? "").trim();
-  });
-  if (undelegated.length === 0) return [];
-  const where = host ? `inside ${host.host} (${host.via})` : "from an unrecognized environment";
-  return [
-    `warn: approval ${undelegated.join(", ")} is being committed ${where}; if an agent made this commit the APR must record 'delegated:' — set KEEL_AGENT=<harness> so the guard can tell (DEC-166 / ISS-059)`,
-  ];
-}
-
 function runPrecommitApr(ctx: Ctx): CmdResult {
   const gaps = precommitAprGaps(ctx);
-  if (gaps.length === 0) {
-    const notes = precommitAprNotes(ctx);
-    return ok(["pre-commit-apr: ok", ...notes].join("\n") + "\n");
-  }
+  if (gaps.length === 0) return ok("pre-commit-apr: ok\n");
   return fail(gaps.map((g) => `refuse: ${g}`).join("\n") + "\n");
 }
 
