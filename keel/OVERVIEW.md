@@ -32,7 +32,7 @@ CHG-014 八个切片已全部落地并提交（S0 记录 → S1 钩子/探测 �
 
 - 暂定决策计数：0
 - 人类身份已配 kopit <wwillmee@gmail.com>；APR-001 仍 draft（bootstrap）；APR-006 待点头
-- Codex 的环境变量名未实测（本机 Codex CLI 登录失效）：`CODEX_*` 前缀规则 + 父进程名兜底，ISS-059 注明待钉死
+- Codex Desktop 的 `CODEX_*` 变量已实测（2026-09-01 用户回报）并入回归测试；父进程名兜底保留给不导出标记的 harness
 - 本仓 10 个 DEC（APR-002 ×5、APR-003 ×5）在 CHG-011 复核时正文被追加，X-apr 以 F3 worklog 的两行 waiver 放行（DEC-185）
 - REQ-017/AC-4 GitHub Actions 六格真实运行仍为 proxy
 - §8/9 未进 C 记录

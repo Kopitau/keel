@@ -45,7 +45,7 @@ node -e "import('file:///E:/program/en/tools/gate/harness.ts').then(m=>{const r=
 
 ## 修复
 
-探测顺序改为：`KEEL_AGENT` 覆盖 → `CLAUDECODE` → 任一 `CODEX_*` 变量 → `AI_AGENT` → 父进程名（`codex` / `claude` / `opencode` / `grok` / `dsh`；Windows 一次 CIM 查询约 150 ms、POSIX 一次 `ps`，只在环境标记缺席时调用，`KEEL_ANCESTRY=0` 可关）。Cursor / VS Code 只作为 `Host:` 记录（人也可能在其终端里手动提交），不当 agent、不触发 DEC-166；无法识别但暂存了无委托的 approved APR 时 pre-commit 打印 WARN 提示设置 `KEEL_AGENT`。Codex 的具体变量名尚未实测（本机 Codex CLI 登录失效），前缀规则待用户在 Codex Desktop 里 `Get-ChildItem env:` 后钉死。
+探测顺序改为：`KEEL_AGENT` 覆盖 → `CLAUDECODE` → 任一 `CODEX_*` 变量 → `AI_AGENT` → 父进程名（`codex` / `claude` / `opencode` / `grok` / `dsh`；Windows 一次 CIM 查询约 150 ms、POSIX 一次 `ps`，只在环境标记缺席时调用，`KEEL_ANCESTRY=0` 可关）。Cursor / VS Code 只作为 `Host:` 记录（人也可能在其终端里手动提交），不当 agent、不触发 DEC-166；无法识别但暂存了无委托的 approved APR 时 pre-commit 打印 WARN 提示设置 `KEEL_AGENT`。Codex Desktop 的变量名已由用户 2026-09-01 在应用内 `Get-ChildItem env:` 实测：`CODEX_APP_TOOLS_PIPE_PATH`、`CODEX_CI=1`、`CODEX_INTERNAL_ORIGINATOR_OVERRIDE=Codex Desktop`、`CODEX_MCP_NODE_PATH`、`CODEX_SANDBOX_NETWORK_DISABLED=1`、`CODEX_SESSION_ID`、`CODEX_THREAD_ID`；前缀规则据此钉死，会话号取 `CODEX_THREAD_ID`（再退到 `CODEX_SESSION_ID`），回归测试用这七个变量的真实形状。
 
 ## 为何未被更早发现
 

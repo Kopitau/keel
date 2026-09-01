@@ -112,6 +112,17 @@ test("ISS-059 detectHarness recognizes Codex by environment prefix and agents by
   assert.equal(detectHarness(cleanEnv())?.agent, undefined);
   assert.equal(detectHarness(cleanEnv({ CODEX_SANDBOX_NETWORK_DISABLED: "1" }))?.agent, "codex");
   assert.equal(detectHarness(cleanEnv({ CODEX_THREAD_ID: "t-9", CODEX_HOME: "x" }))?.session, "t-9");
+  // the environment Codex Desktop actually exports (user dump, 2026-09-01)
+  const codexDesktop = cleanEnv({
+    CODEX_APP_TOOLS_PIPE_PATH: "\\\\.\\pipe\\codex-browser-use-52deea64",
+    CODEX_CI: "1",
+    CODEX_INTERNAL_ORIGINATOR_OVERRIDE: "Codex Desktop",
+    CODEX_MCP_NODE_PATH: "C:\\Users\\x\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\node.exe",
+    CODEX_SANDBOX_NETWORK_DISABLED: "1",
+    CODEX_SESSION_ID: "01a05b9f-638b-7cd3-8121-3fe7c3935793",
+    CODEX_THREAD_ID: "01a05b9f-638b-7cd3-8121-3fe7c3935793",
+  });
+  assert.deepEqual(detectHarness(codexDesktop), { agent: "codex", session: "01a05b9f-638b-7cd3-8121-3fe7c3935793" });
   assert.equal(detectHarness(cleanEnv({ CLAUDECODE: "1", CLAUDE_CODE_SESSION_ID: "c-1" }))?.session, "c-1");
   assert.equal(detectHarness(cleanEnv({ KEEL_AGENT: "opencode" }))?.agent, "opencode");
   assert.equal(detectHarness(cleanEnv(), { ancestors: () => ["node.exe", "sh.exe", "git.exe", "Codex.exe"] })?.agent, "codex");

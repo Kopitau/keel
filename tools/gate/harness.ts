@@ -24,8 +24,10 @@ export type HostId = { host: string; via: "env" | "process" };
  * environment markers (a CLAUDECODE flag, any CODEX_* variable), the generic
  * AI_AGENT hint, and finally the process ancestry (`codex` / `claude` /
  * `opencode` / `grok` above git). Only markers actually observed on a machine
- * are hard-coded; the CODEX_* prefix rule stands until a real Codex env dump
- * names the variable (ISS-059).
+ * are hard-coded. Codex Desktop, observed 2026-09-01 (ISS-059): CODEX_SESSION_ID,
+ * CODEX_THREAD_ID (the conversation), CODEX_SANDBOX_NETWORK_DISABLED=1, CODEX_CI=1,
+ * CODEX_INTERNAL_ORIGINATOR_OVERRIDE="Codex Desktop", CODEX_APP_TOOLS_PIPE_PATH,
+ * CODEX_MCP_NODE_PATH — the prefix rule below covers all of them.
  */
 export function detectHarness(env: EnvMap = process.env, opts: DetectOptions = {}): HarnessId | null {
   const explicit = (env.KEEL_AGENT ?? "").trim();

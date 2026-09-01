@@ -19,6 +19,7 @@
 - `gate approve` 在盘上有与当前树一致、退出码 0 的 `verify.json` 时把 `evidence_*` 八个字段写进 APR 前言；local 档合并、工作树删除后 G-done / G-merge / X-evidence 回读它（树必须仍一致）。
 - `gate status` 的 `next:` 按项目状态四选一（run k-new / finish k-new step 4 / start Fnn / k-review 再 k-accept），并新增 `keel: <项目版本> (installer <版本>)` 行，安装器较新时提示 `run keel update`（`KEEL_INSTALLER_ROOT` 可指定或 `none` 跳过）。
 - `gate loop pack`：lockfile（pnpm-lock.yaml / package-lock.json / yarn.lock / uv.lock / poetry.lock / Cargo.lock / go.sum / Gemfile.lock / composer.lock）只留"文件名 + sha256 + 行数"摘要；pack 字段超过 reviewer 预算（默认 120000 字符，config `review.pack_budget`）打印 `warn:` 并指出最大来源文件。
+- **每轮回复以「下一步」收尾**（REQ-012/AC-6）：AGENTS.md 规定 agent 的每一轮回复最后一段是 `下一步：<一条推荐动作>`，并点明只有用户能定的事；`gate status` 的 `next:` 行是它的机器来源。
 - `platform-limits.md` 记录 Codex Desktop / Cursor / Windows 的已知坑与对策；k-migrate（推平也是迁移：报告 + 独立删除提交 + 停用旧框架注入）、k-accept（验收与合并两个 APR、保留 verify.json 供快照）、k-impl（0 ISS / 0 经验候选收口前回看 worklog）、k-handoff、k-review、k-log、k-evidence 各补一句。
 
 ## 消费项目要做的事
@@ -29,4 +30,4 @@
    - G-req / G-plan 报"declares … but no approved APR binds it" → 让人跑 `gate approve`（或记录委托后由 agent 跑），或把状态改回 proposed。fmea-v3 的 APR-001 / APR-002 属此类（其 v3 已由 APR-003 绑定，当前版本不红，但两份 draft 该补签）。
 3. 验收过的功能在 local 档要留证据：对验收 APR 重新 `gate approve`（有新鲜 verify.json 时会写入快照），或在主干重跑 verify。zhaoxi master 目前 `verify.json missing`。
 4. 本地改过 `tools/gate/` 的项目（zhaoxi 的 reviewloop / changechain / check；fmea-v3 的 testcmd / verify）：update 会覆盖这些文件，原来的本地补丁在 0.9.2 里已有对应实现，可以放弃。
-5. Codex Desktop 用户：如果提交尾注仍是 `Agent: unknown`，在 Codex 里跑一次 `Get-ChildItem env: | Where-Object Name -match 'CODEX|AGENT|SESSION'` 把变量名回报上游（ISS-059 的前缀规则待钉死）；临时可设 `KEEL_AGENT=codex`。
+5. Codex Desktop 用户：更新后提交尾注会自动写 `Agent: codex` 与 `Session: <CODEX_THREAD_ID>`（2026-09-01 实测的 `CODEX_*` 变量）；只有完全不导出标记的 harness 才需要 `KEEL_AGENT`。

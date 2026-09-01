@@ -27,3 +27,7 @@
 ## 2026-09-01（评审第 1 轮：ISS-065，ISS-060 复发）
 
 - next 行识别已认领（claim.json）功能：「claimed and in progress: Fnn — continue in its worktree or release the claim」。见 F7 worklog 同日节。
+
+## 2026-09-01（CHG-014 补：REQ-012/AC-6 每轮回复以「下一步」收尾）
+
+- 用户："每次一轮对话结束，但是没有推荐下一步的动作。应该修改。" AGENTS.md 加「Turn end」节（每轮回复最后一段 `下一步：` 一条推荐动作 + 只有用户能定的事；不得以状态堆 / 表格 / 开放选项收尾），k-handoff 补一句，v6 REQ-012 增 AC-6（machine-doc），`tests/chg014-docs.test.ts` 守住 AGENTS.md 与技能文本。根指令在 Codex / Cursor 也原生装载，所以规则跨 harness 生效；`gate status` 的 `next:` 行是它的机器来源。
