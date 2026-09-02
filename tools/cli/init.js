@@ -105,6 +105,9 @@ export function runInit(opts) {
   for (let i = 0; i < INIT_COPY.length; i++) {
     const rel = INIT_COPY[i];
     const src = join(source, rel);
+    // CHG-015: the reviewer checklist is shipped when the installer has it; an older
+    // installer without it still initializes.
+    if (!existsSync(src) && rel === "keel/review/checklist.md") continue;
     if (!existsSync(src)) return fail("installer missing " + rel + "\n");
     copyTree(src, join(cwd, rel));
   }

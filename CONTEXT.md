@@ -22,6 +22,7 @@ English headwords; Chinese notes allowed. Only terms and banned near-synonyms (C
 | quick check | `gate check --quick` = G-req, G-plan, X-trace, X-bypass; what the pre-commit hook runs (CHG-011) | running the test suite in a hook |
 | body hash | approval hash over normalized text minus the front matter; metadata edits never void an APR (CHG-011) | re-approving for a status flip |
 | disposition / findings | the two plan-level review products in `keel/review/` (REQ-027, CHG-011) | state.json / per-feature review files |
+| checklist (三问) | `keel/review/checklist.md`: the reviewer's three questions — standards and maintainability, implemented, functional tests written and passing — plus the three blocking kinds; a blocking finding's evidence is a failing test or a criterion with no black-box test (REQ-028 v7, DEC-191) | robustness.md / requirements.md / attack-surface.md, attack probes that exit 0 |
 | autonomous loop | implement → test → record → compress worklog into summary → next frontier feature; humans at C-21, fuse, acceptance (DEC-183) | stopping after every slice to ask |
 | worklog | append-only feature implementation log (C-20) | rewriting history in place |
 | OVERVIEW | living project picture (C-54) | versioning OVERVIEW as a frozen artifact |

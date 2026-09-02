@@ -9,7 +9,7 @@
 
 1. 先运行 `node tools/gate/gate.ts loop pack --base <rev> --implementer <h> --reviewer <other-h>`。`--base` 是规划起点的 commit 或 tree；同一规划再次 pack 继承上次的 base，否则取上次 passed 的树；都没有就拒绝，范围为空也拒绝（ISS-055）。diff 对整文件删除只列名（正文省略）、上下文 2 行。探针在所有平台经 `sh -c` 执行（ISS-054）。
 2. 调用前重新解析 `keel/review/pack.json`，顶层键必须恰为 `diff`、`plan`、`reqs`、`evidence`、`worklog_summary`，并记录 `pack_hash` 与当前 tree hash。只把这五样复制到一次性输入目录；实现聊天、handoff、完整 worklog 和主仓不得作为额外项目材料交给 reviewer。
-3. 统一 finding 字段为 `title`、`blocking`、`repro`、`impact`、`fingerprint`，可选 `body` 与 `pending_defense`。blocking finding 缺 `repro` 或 `impact` 时不得开 ISS；问题存在时攻击探针退出 0，修复或拒绝后退出非 0。
+3. 统一 finding 字段为 `title`、`blocking`、`repro`、`impact`、`fingerprint`，可选 `ac`、`kind`、`body` 与 `pending_defense`。blocking finding 的凭据是 `repro`（在当前树上会失败的测试或检查命令：退出非 0 且输出含测试失败，修好后退出 0）或 `ac`（trace 显示没有黑盒测试的验收标准）；凭据站不住或缺 `impact` 时不得开 ISS（DEC-191）。
 4. 调用成功至少同时满足：进程退出 0、出现各 harness 的正常终态、最终输出可解析并通过本地 schema、pack/tree 未漂移、旁车证据含 implementer/reviewer family、CLI 版本、显式 model、脱敏 argv、stdout/stderr、退出码、日期。调用成功不等于评审通过；仍须把 `Finding[]` 交给 `gate loop ingest`。
 5. 鉴权、配额、429、超时、信号、缺 flag、错误事件、空输出或 schema 错误任一发生即停止。允许显式安排另一家仍然异构的全新调用，但旧失败要保留，same-harness fallback 永远禁止。
 
@@ -20,7 +20,8 @@
   {
     "title": "简短标题",
     "blocking": true,
-    "repro": "问题存在时退出 0 的命令",
+    "repro": "会失败的测试或检查命令（缺口在时退出非 0 且输出含测试失败，修好后 0）",
+    "ac": "可选：REQ-nnn/AC-i，只填它表示该验收标准没有黑盒测试",
     "impact": "对正确性或需求达成的影响",
     "fingerprint": "稳定指纹",
     "body": "可选补充",

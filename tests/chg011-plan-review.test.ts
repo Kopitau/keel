@@ -131,7 +131,7 @@ test("REQ-027/AC-10 a full loop leaves only findings.md and disposition.md as re
   const ctx = makeCtx(root);
   writeFileSync(
     join(root, "probe.js"),
-    "const { existsSync } = require('node:fs');\nprocess.exit(existsSync('fixed.flag') ? 1 : 0);\n",
+    "const { existsSync } = require('node:fs');\nif (!existsSync('fixed.flag')) { console.log('not ok 1 - fixed.flag missing'); process.exit(1); }\nprocess.exit(0);\n",
     "utf8",
   );
   writeFileSync(join(root, "src.txt"), "changed\n", "utf8");
@@ -161,7 +161,7 @@ test("REQ-027/AC-10 a full loop leaves only findings.md and disposition.md as re
   assert.equal(readLoopState(ctx)?.status, "passed");
   const disposition = readFileSync(join(root, "keel", "review", "disposition.md"), "utf8");
   for (const event of ["| pack |", "| ingest |", "| clear |", "| verdict |"]) assert.ok(disposition.includes(event), event);
-  assert.match(disposition, /exit=1 refused/);
+  assert.match(disposition, /exit=0 passed/);
   assert.match(runLoop(ctx, ["status"]).stdout, /review loop: passed plan=overview-v1\.md/);
 
   const files = readdirSync(join(root, "keel", "review")).sort();
@@ -177,7 +177,7 @@ test("REQ-027/AC-6 the third uncleared round fuses; the report lands in disposit
   const ctx = makeCtx(root);
   writeFileSync(
     join(root, "keel", "issues", "ISS-001.md"),
-    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 0\n```\n",
+    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 1\n```\n",
     "utf8",
   );
   loopState(root, { status: "repairing", blocking_iss: ["ISS-001"], iss_fp: { "ISS-001": "x" } });

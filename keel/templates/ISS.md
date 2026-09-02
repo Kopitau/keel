@@ -6,6 +6,7 @@ defense_kind: ""
 defense_pointer: ""
 feature: ""
 fingerprint: ""
+ac: ""
 source: ""
 recurrence_of: ""
 prior_defense_failure: ""
@@ -20,6 +21,8 @@ date: YYYY-MM-DD
 ## 影响
 
 复现命令：
+
+（会失败的测试或检查命令：缺口在时退出非 0 且输出含测试失败，修好后退出 0；或前言只填 `ac:` 指出没有黑盒测试的验收标准。DEC-191）
 
 ## 待诊断防线
 

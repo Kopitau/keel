@@ -130,6 +130,9 @@ export function runVerify(ctx: Ctx): CmdResult {
   }
 
   const tree = currentTree(ctx);
+  // REQ-006/AC-10: the per-feature summary travels inside the evidence so the
+  // review pack carries it too (CHG-015: the reviewer's third question).
+  const featureCoverage = featureCoverageLines(ctx);
   const actor = {
     harness: process.env.KEEL_HARNESS || (process.env.GITHUB_ACTIONS ? "github-actions" : "local"),
     model: process.env.KEEL_MODEL || process.env.GITHUB_JOB || "unspecified",
@@ -146,6 +149,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     dirty: tree.dirty,
     report_hash: hashReport(xml),
     counts,
+    feature_coverage: featureCoverage,
     req_coverage: coverage,
     stdout_tail_2kb: tail2kb(combined) ||
       `junit passed=${counts.passed} failed=${counts.failed} skipped=${counts.skipped}\n`,
@@ -162,7 +166,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     `evidence: ${join(ctx.records, "evidence", "verify.json")}`,
     // REQ-006/AC-10: the count above means nothing on its own — say what it proved, by feature.
     "coverage by feature:",
-    ...featureCoverageLines(ctx).map((l) => `  ${l}`),
+    ...featureCoverage.map((l) => `  ${l}`),
     "",
   ];
   if (exitCode !== 0) {

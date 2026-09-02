@@ -38,6 +38,8 @@ export type Evidence = {
   dirty: boolean;
   report_hash: string;
   counts: { passed: number; failed: number; skipped: number };
+  /** REQ-006/AC-10 lines (one per feature): which ACs have black-box tests, stand-ins, or nothing. The reviewer reads these (CHG-015). */
+  feature_coverage?: string[];
   req_coverage: { [req: string]: number };
   stdout_tail_2kb: string;
   actor: { harness: string; model: string; session: string };
@@ -112,13 +114,14 @@ export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
     for (const id of ev.review.blocking_iss ?? []) {
       const run = latest.get(id);
       if (!run) gaps.push(`review missing repro run for ${id}`);
-      else if (!run.refused) gaps.push(`${id} repro still succeeds; cannot clear (REQ-027)`);
+      else if (!run.refused) gaps.push(`${id} check still fails; cannot clear (REQ-027)`);
     }
-    // DEC-177 keeps earlier vulnerable runs for audit. Only each ISS's latest
-    // observation decides whether a passed review is actually clear.
+    // DEC-177 keeps earlier failing runs for audit. Only each ISS's latest
+    // observation decides whether a passed review is actually clear (DEC-191:
+    // `refused` means the check now passes — the gap is closed).
     for (const run of latest.values()) {
-      if (run.refused === false || run.exit_code === 0) {
-        gaps.push(`${run.iss} repro exit=${run.exit_code}; not refused`);
+      if (run.refused === false) {
+        gaps.push(`${run.iss} check exit=${run.exit_code}; not cleared`);
       }
     }
   }

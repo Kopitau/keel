@@ -10,15 +10,16 @@ import { test } from "node:test";
 import { makeCtx } from "../tools/gate/ctx.ts";
 import { probeShell, runLoop, runReproCommand, emptyLoop, packBodyHash, writeLoopState, readLoopState } from "../tools/gate/reviewloop.ts";
 
-test("ISS-054 a probe with nested double quotes runs the same on every OS: exit 0 means the hole is present", () => {
+test("ISS-054 a check with nested double quotes runs the same on every OS: the exit code is read faithfully (DEC-191: 0 = passes)", () => {
   assert.ok(probeShell(), "a POSIX sh must be available (hooks already require it, DEC-146)");
-  const probe = 'node -e "const s=\'hole\';process.exit(s.includes(\\"hole\\")?0:1)"';
-  const r = runReproCommand(process.cwd(), probe);
+  const passing = 'node -e "const s=\'ok\';process.exit(s.includes(\\"ok\\")?0:1)"';
+  const r = runReproCommand(process.cwd(), passing);
   assert.equal(r.exit_code, 0, r.stdout);
-  assert.equal(r.refused, false);
-  const refuted = runReproCommand(process.cwd(), 'node -e "process.exit(\\"fixed\\".length > 0 ? 3 : 0)"');
-  assert.equal(refuted.exit_code, 3, refuted.stdout);
-  assert.equal(refuted.refused, true);
+  assert.equal(r.refused, true, "exit 0 = the check passes = the gap is closed");
+  const failing = runReproCommand(process.cwd(), 'node -e "console.log(\\"not ok 1 - gap\\");process.exit(\\"gap\\".length > 0 ? 3 : 0)"');
+  assert.equal(failing.exit_code, 3, failing.stdout);
+  assert.equal(failing.refused, false);
+  assert.equal(failing.failed_test, true);
 });
 
 test("ISS-054 a blocking finding whose probe cannot execute holds the loop in_review; clear refuses until a new round", () => {

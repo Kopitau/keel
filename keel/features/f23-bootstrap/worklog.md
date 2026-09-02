@@ -86,3 +86,7 @@
 - 探针（DEC-182）：修复前树 8878174e8b47… 上注入非 TTY 确认、无开关 → cancelled、退出 0；修复后同一探针加 `--yes` 应用、退出 1。
 - 证据：`tests/chg010-update.test.ts` ISS-069 ×2；真实使用：zhaoxi / fmea-v3 用 `keel update --yes` 升到 0.9.3。
 - 版本 0.9.3：`package.json`、`keel/config.json`、`RELEASE-0.9.3.md`。
+
+## 2026-09-02（0.10.0：checklist.md 进管理清单）
+
+- `keel/review/checklist.md` 加入 `keel init`（layout INIT_COPY）与 `keel update`（MANAGED_FILES）；版本 0.10.0，`RELEASE-0.10.0.md`。两个试点与 zhaoxi F6 工作树用 `keel update --yes` 升级。

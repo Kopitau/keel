@@ -2,7 +2,7 @@
 // heterogeneity rule). What remains: the pack contract, the probe protocol, the fuse,
 // G-done's gap, and the two review axes plus the robustness checklist (REQ-028).
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -43,24 +43,30 @@ function stubEvidence(): Evidence {
   };
 }
 
-test("REQ-028/AC-1 core code is reviewed with the robustness checklist, which demands running the failure cases", () => {
-  const checklist = readFileSync(join(repo, "keel", "review", "robustness.md"), "utf8");
-  for (const item of ["中途失败", "脏数据", "边界"]) assert.ok(checklist.includes(item), item);
+test("REQ-028/AC-1 the reviewer answers three questions from the checklist and runs the tests at most once", () => {
+  const checklist = readFileSync(join(repo, "keel", "review", "checklist.md"), "utf8");
+  for (const item of ["规范与可维护", "功能是否实现", "功能测试是否写了、是否通过", "最多把项目的测试命令跑一次"]) assert.ok(checklist.includes(item), item);
   const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
-  assert.match(skill, /Core code.*robustness\.md/);
-  assert.match(skill, /actually run/i);
+  assert.match(skill, /Standards and maintainability/);
+  assert.match(skill, /Implemented/);
+  assert.match(skill, /Functional tests written and passing/);
+  assert.match(skill, /at most once/);
+  assert.doesNotMatch(skill, /actually run|robustness\.md|requirements\.md/);
+  assert.equal(existsSync(join(repo, "keel", "review", "robustness.md")), false);
+  assert.equal(existsSync(join(repo, "keel", "review", "requirements.md")), false);
 });
 
-test("REQ-028/AC-2 auxiliary code and records get requirements coverage and obvious error paths only", () => {
+test("REQ-028/AC-2 blocking is only unimplemented, untested or unmaintainable, each with evidence", () => {
+  const checklist = readFileSync(join(repo, "keel", "review", "checklist.md"), "utf8");
+  for (const item of ["功能未实现", "没有黑盒测试", "明显不可维护", "`ac`", "`repro`"]) assert.ok(checklist.includes(item), item);
   const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
-  assert.match(skill, /Auxiliary code and records.*requirements\.md/);
-  assert.ok(readFileSync(join(repo, "keel", "review", "requirements.md"), "utf8").length > 0);
+  assert.match(skill, /\*\*Blocking\*\* is only/);
 });
 
 test("REQ-028/AC-3 every review keeps to C-41 findings, and there is no attack-surface lens any more", () => {
   const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
   assert.match(skill, /C-41/);
-  assert.match(skill, /No attack-surface lens/);
+  assert.match(skill, /No edge-case fuzzing, no probe scripts, no mutation runs/);
   assert.doesNotMatch(skill, /attack-surface\.md|heterogeneous|provider family/);
   assert.equal(readdirSync(join(repo, "keel", "review")).includes("attack-surface.md"), false);
 });
@@ -128,7 +134,7 @@ test("REQ-027/AC-4 blocking without a repro command does not open an ISS", () =>
   assert.match(readFileSync(join(dir, "keel", "features", "f07-review", "worklog.md"), "utf8"), /待核实/);
   const filed = fileFindings(
     ctx,
-    [{ title: "real hole", blocking: true, repro: "node -e \"process.exit(0)\"", impact: "blocks delivery" }],
+    [{ title: "real hole", blocking: true, repro: "node -e \"console.log('not ok 1 - gap'); process.exit(1)\"", impact: "blocks delivery" }],
     "keel/features/f07-review/worklog.md",
   );
   assert.equal(filed.iss.length, 1);
@@ -136,9 +142,9 @@ test("REQ-027/AC-4 blocking without a repro command does not open an ISS", () =>
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-027/AC-5 repro that still succeeds cannot clear", () => {
-  assert.equal(canClear([{ iss: "ISS-001", command: "x", exit_code: 0, refused: false }], ["ISS-001"]), false);
-  assert.equal(canClear([{ iss: "ISS-001", command: "x", exit_code: 1, refused: true }], ["ISS-001"]), true);
+test("REQ-027/AC-5 a check that still fails cannot clear", () => {
+  assert.equal(canClear([{ iss: "ISS-001", command: "x", exit_code: 1, refused: false }], ["ISS-001"]), false);
+  assert.equal(canClear([{ iss: "ISS-001", command: "x", exit_code: 0, refused: true }], ["ISS-001"]), true);
   const dir = mkdtempSync(join(tmpdir(), "keel-c8-clr-"));
   mkdirSync(join(dir, "keel", "review"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -150,7 +156,7 @@ test("REQ-027/AC-5 repro that still succeeds cannot clear", () => {
   mkdirSync(join(dir, "keel", "issues"), { recursive: true });
   writeFileSync(
     join(dir, "keel", "issues", "ISS-001.md"),
-    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 0\n```\n",
+    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 1\n```\n",
     "utf8",
   );
   const r = recordClear(ctx, "grok-build", "claude-code");
@@ -193,7 +199,7 @@ test("REQ-027/AC-1 claiming done without a passed loop is a G-done gap", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-027 evidenceGaps flags a passed review whose repro still exits 0", () => {
+test("REQ-027 evidenceGaps flags a passed review whose check still fails", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-c8-ev-"));
   mkdirSync(join(dir, "keel", "evidence"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -203,10 +209,10 @@ test("REQ-027 evidenceGaps flags a passed review whose repro still exits 0", () 
     review: {
       status: "passed",
       blocking_iss: ["ISS-001"],
-      repro_runs: [{ iss: "ISS-001", command: "true", exit_code: 0, refused: false }],
+      repro_runs: [{ iss: "ISS-001", command: "false", exit_code: 1, refused: false }],
     },
   });
   const gaps = evidenceGaps(ctx, readEvidence(ctx));
-  assert.ok(gaps.some((g) => /still succeeds|not refused/.test(g)));
+  assert.ok(gaps.some((g) => /still fails|not cleared/.test(g)));
   rmSync(dir, { recursive: true, force: true });
 });

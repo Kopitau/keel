@@ -127,12 +127,12 @@ test("ISS-023 passed loop binds tree_hash; later edits stale G-done", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("ISS-025 gate loop clear refuses when the repro still exits 0", () => {
+test("ISS-025 gate loop clear refuses when the check still fails (DEC-191)", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-r4-025-live-"));
   keelCfg(dir);
   writeFileSync(
     join(dir, "keel", "issues", "ISS-001.md"),
-    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 0\n```\n",
+    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 1\n```\n",
     "utf8",
   );
   writePackState(dir, {
@@ -148,12 +148,12 @@ test("ISS-025 gate loop clear refuses when the repro still exits 0", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("ISS-025 gate loop clear passes only after the repro is refused", () => {
+test("ISS-025 gate loop clear passes only after the check passes (DEC-191)", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-r4-025-ok-"));
   keelCfg(dir);
   writeFileSync(
     join(dir, "keel", "issues", "ISS-001.md"),
-    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 1\n```\n",
+    "---\nid: ISS-001\nstatus: open\nfingerprint: x\n---\n# t\n\n复现命令：\n\n```\nexit 0\n```\n",
     "utf8",
   );
   writePackState(dir, {

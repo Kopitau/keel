@@ -15,7 +15,8 @@ import { hasFlag, readInstallerVersion } from "./layout.js";
 import { compareSemanticVersions, parseSemanticVersion } from "./migration.js";
 
 const FULLY_MANAGED_DIRS = ["tools/gate", "keel/templates", ".githooks"];
-const MANAGED_FILES = ["CLAUDE.md", ".gitattributes"];
+// CHG-015: the reviewer checklist is keel knowledge, shipped and kept current like the templates.
+const MANAGED_FILES = ["CLAUDE.md", ".gitattributes", "keel/review/checklist.md"];
 const SKILL_ROOTS = [".agents/skills", ".claude/skills"];
 
 function slash(path) {
@@ -104,7 +105,9 @@ function collectSourceTree(source, sourceRel, targetRel, desired) {
 
 function collectDesired(source) {
   const desired = desiredTree();
-  const required = ["package.json", ...FULLY_MANAGED_DIRS, ...MANAGED_FILES, ".agents/skills"];
+  // CHG-015: a managed file an older installer may lack is shipped when present, never required.
+  const optional = ["keel/review/checklist.md"];
+  const required = ["package.json", ...FULLY_MANAGED_DIRS, ...MANAGED_FILES.filter((f) => !optional.includes(f)), ".agents/skills"];
   for (const rel of required) {
     if (!existsSync(fsPath(source, rel))) {
       throw new Error(`installer is incomplete (missing managed source ${rel})`);

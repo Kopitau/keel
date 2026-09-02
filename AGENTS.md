@@ -39,7 +39,7 @@ Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gat
 - Touching a confirmed interface, requirement boundary, unplanned dependency, or test obligation: stop and ask (C-21).
 - Done = evidence (command, exit, tree hash), not a claim (C-33). W3 lands verify.
 - One feature, one branch, one worktree (C-112). Overlapping files → serialize (C-114).
-- After the plan is confirmed the loop is autonomous (DEC-183): implement → test → record → compress the worklog into `summary.md` → next frontier feature. One plan-level review at the end. Stop only for C-21, a fused review, or acceptance.
+- After the plan is confirmed the loop is autonomous (DEC-183): implement → test → record → compress the worklog into `summary.md` → next frontier feature. One plan-level review at the end. The reviewer answers three questions — standards and maintainability, implemented, functional tests written and passing — from the code and the evidence; it does not fuzz, probe or mutate (DEC-191). Stop only for C-21, a fused review, or acceptance.
 - Freezing binds semantics (CHG-011): approvals hash the body; metadata edits are free, a typo fix cites the APR in the worklog, a meaning change is a new version + re-approval.
 - The gate re-hashes every approved artifact (drift = FAIL unless the worklog cites the APR), a current baseline that says confirmed must be APR-bound, and an acceptance APR carries the verify snapshot (DEC-185/186/187, CHG-014).
 

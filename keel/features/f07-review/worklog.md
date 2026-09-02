@@ -112,3 +112,10 @@
 - 未修的 advisory（留待办，已在 findings.md）：旧全文哈希 APR 的元数据改动会被判漂移（DEC-185 已记为已知边界）；AC-13 与父进程分支只有模块级测试；pack 的 `reqs` 只带当前版本而不带在途的 v6。
 - 证据：`node --test` **272/272**；`npx tsc --noEmit` 干净；`gate check --quick` PASS_WITH_WARN。clear 由新的上下文执行，结果记在下一节。
 - clear（新上下文 `claude-code-fresh-subagent-r2`，2026-09-01T08:32Z，树 `22a17ee09e4e`）：ISS-061～067 七条探针全部 exit 1 / refused，`review loop passed`（round 2，advisory 7 条留待办）。
+
+## 2026-09-02（CHG-015 / DEC-191：评审只答三问；0.10.0）
+
+- 用户：「这个子agent审阅好像还是有问题。朝夕项目中依然疯狂在测试。子agent的审阅的功能应该定义为：代码是否规范，尽量简单方便维护。是否实现了相应的功能，以及编写相应的功能测试是否通过了。」(2026-09-02) 审阅七条改法后：「A 可以 B 废掉 C 现在升级」(2026-09-02)。
+- 诊断：zhaoxi F6 工作树停在 0.9.0（每功能评审 + 攻击面）；zhaoxi DEC-013 每轮 160 次突变；keel 0.9.3 仍要求"实际构造边界输入运行"（REQ-028/AC-1）与"未修复树退出 0 的攻击探针"（DEC-182）。
+- 改动：`reviewloop.ts`——Finding 增 `ac` / `kind`；ingest 的凭据判定改为"`repro` 退出非 0 且输出含测试失败"或"`ac` 经 trace 无黑盒测试"，退出 0 / 无测试失败 / 已覆盖 → 待核实；clear 改为退出 0 才清、`ac` 型看 trace；`looksLikeTestFailure`、`acCoverage`；处置表行 `passed / still failing`。`keel/review/checklist.md` 新建，robustness.md / requirements.md 删除；k-review 重写；headless.md 契约同步；ISS 模板 `ac:`；AGENTS / CONTEXT 一句。
+- 证据：`tests/chg015-review-three-questions.test.ts` ×8（REQ-027/AC-4 ×3、AC-5、AC-12；DEC-191 失败标记；REQ-006/AC-10 feature_coverage；REQ-028/AC-3）；旧测试 chg008 / chg010-review-loop / chg011-plan-review / chg014-review-loop 按新约定改写（C-34: ref=DEC-191）。

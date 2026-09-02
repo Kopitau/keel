@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 190
+- count: 191
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -186,7 +186,7 @@
 | DEC-179 | CHG-008、CHG-010 与 requirements v4 合并一次 APR | confirmed | `DEC-179-combined-apr-for-chg008-chg010-v4.md` |
 | DEC-180 | REQ-025 唯一归属 F23，F16 仅作关联 | confirmed | `DEC-180-req025-owned-by-f23-related-f16.md` |
 | DEC-181 | 旧 RES 身份使用外置迁移清单 | superseded | `DEC-181-legacy-res-external-migration-manifest.md` |
-| DEC-182 | 自动评审复现命令的漏洞态与修复态判定 | confirmed | `DEC-182-review-repro-exit-code-contract.md` |
+| DEC-182 | 自动评审复现命令的漏洞态与修复态判定 | superseded | `DEC-182-review-repro-exit-code-contract.md` |
 | DEC-183 | keel 减重：门禁留 8 条骨架、预提交只跑秒级检查、评审改为方案级一轮、记录三合一 | confirmed | `DEC-183-lighten-keel-keep-8-gates-quick-only-hoo.md` |
 | DEC-184 | 评审不设攻击面视角、不强制异构：未参与实现的空白上下文子代理即可 | confirmed | `DEC-184-review-no-attack-lens-fresh-subagent-same-harness.md` |
 | DEC-185 | X-apr 重算每个已批准工件的正文哈希，漂移即 FAIL（waiver 须按 APR 逐条引用） | confirmed | `DEC-185-x-apr-rehashes-approved-artifacts-and-fa.md` |
@@ -195,3 +195,4 @@
 | DEC-188 | 测试命令白名单改为"启动器前缀 + 测试程序 + 允许的参数类"，仍禁 -k 与路径参数 | confirmed | `DEC-188-test-command-allowlist-launcher-prefix-p.md` |
 | DEC-189 | 评审回路：recurrence_of 链共享同一熔断计数；pack 体积预算告警、lockfile 只留摘要、Finding 严格校验并存档原件 | confirmed | `DEC-189-review-loop-recurrence-fingerprints-shar.md` |
 | DEC-190 | 审批提交不再要求人类 git 身份：APR 里有用户原话即可，谁提交都行 | confirmed | `DEC-190-approval-commits-need-the-users-words-no.md` |
+| DEC-191 | 评审只答三问（规范可维护 / 功能实现 / 功能测试写了且通过）；阻塞凭据是失败的测试或缺测试的验收标准，不再是攻击探针 | confirmed | `DEC-191-review-three-questions-evidence-is-a-failing-test.md` |

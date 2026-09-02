@@ -1,7 +1,7 @@
 # changes index (generated)
 
 - generator: gate index
-- count: 14
+- count: 15
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -19,3 +19,4 @@
 | CHG-012 | CHG-012 Cursor 客户端登记为兼容档平台 | approved | `CHG-012-cursor-client-as-compatible-harness.md` |
 | CHG-013 | CHG-013 评审去掉攻击面视角、不强制异构：空白上下文子代理即可 | approved | `CHG-013-review-no-attack-lens-no-mandatory-heterogeneity.md` |
 | CHG-014 | CHG-014 两个试点项目（zhaoxi / fmea-v3）审计回流：钩子、探测、证据、冻结件、评审回路、白名单 | approved | `CHG-014-audit-feedback-from-zhaoxi-and-fmea-v3-p.md` |
+| CHG-015 | CHG-015 评审只答三问：代码规范可维护、功能是否实现、功能测试是否写了且通过 | approved | `CHG-015-review-three-questions.md` |

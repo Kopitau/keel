@@ -48,3 +48,7 @@
 ## 2026-09-01（CHG-014 S6：复发链共享熔断计数）
 
 - 进度：ISS 前言 `recurrence_of` 现在被 `gate loop clear` 读取：链上所有 ISS 共用链根的 fingerprint 作 `rounds_on` 键（DEC-189）。k-log 已要求复发必填 `recurrence_of`，这条字段从"审计线索"变成"机器输入"。评审 Finding 也可直接带 `recurrence_of`，ingest 写入新 ISS。见 F7 worklog 同日节。
+
+## 2026-09-02（CHG-015：ISS 凭据改为失败的测试）
+
+- ISS 模板前言加 `ac:`；「复现命令」说明改为会失败的测试或检查命令（缺口在时非 0 且输出含测试失败，修好后 0），或只填 `ac`；评审回路开 ISS 时写 `probe_result: failing-test | test-missing` 与 `probe_check`。REQ-010 的 ISS 内容条随 v7 改（DEC-191）。

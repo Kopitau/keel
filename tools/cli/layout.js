@@ -7,6 +7,7 @@ export const INIT_COPY = [
   "CLAUDE.md",
   "CONTEXT.md",
   "keel/templates",
+  "keel/review/checklist.md",
   "tools/gate",
   ".githooks",
   ".gitattributes",

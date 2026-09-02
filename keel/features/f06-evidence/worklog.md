@@ -83,3 +83,7 @@
 - 试点清理时 zhaoxi 主干 `gate verify` 报 `passed=5`，node:test 自己汇总 193 条。根因：`parseJunit` 取全文第一个 `tests=` 属性；node:test 每个 describe 一个 `<testsuite>`，根元素无总数。修复：只认根元素属性，否则逐个数 `<testcase>` 减去带 `<failure>`/`<error>`/`<skipped>` 子元素的。
 - 探针（DEC-182）：修复前树 61cdb1e8b7eb… 上 `passed=5 failed=0`、退出 0；修复后同一探针退出 1。
 - 证据：`tests/iss068-junit-suites.test.ts` ×2（node:test 嵌套 suite + 文件级失败；pytest 单 suite 与 vitest 根总数不变）。
+
+## 2026-09-02（CHG-015：证据 JSON 带 feature_coverage）
+
+- `verify.ts` 把 REQ-006/AC-10 的按功能行写进 verify.json（`feature_coverage`），pack 的 `evidence` 随之带上，评审者第三问直接读；`evidenceGaps` 的评审判定改为"检查命令退出 0 = 已清"（DEC-191）。证据：`tests/chg015-review-three-questions.test.ts`（REQ-006/AC-10）。

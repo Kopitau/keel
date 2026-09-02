@@ -60,7 +60,7 @@ function fixture(): string {
   writeFileSync(join(root, "src.txt"), "before\n", "utf8");
   writeFileSync(
     join(root, "probe.js"),
-    "const { existsSync } = require('node:fs');\nprocess.exit(existsSync('fixed.flag') ? 1 : 0);\n",
+    "const { existsSync } = require('node:fs');\nif (!existsSync('fixed.flag')) { console.log('not ok 1 - fixed.flag missing'); process.exit(1); }\nprocess.exit(0);\n",
     "utf8",
   );
   writeFileSync(
@@ -136,7 +136,7 @@ function ingestFixture(
   writeFileSync(join(root, "AGENTS.md"), "# keel\n", "utf8");
   writeFileSync(join(root, "CLAUDE.md"), "@AGENTS.md\n", "utf8");
   if (probeExit !== undefined) {
-    writeFileSync(join(root, "ingest-probe.js"), `process.exit(${probeExit});\n`, "utf8");
+    writeFileSync(join(root, "ingest-probe.js"), `if (${probeExit} !== 0) console.log('not ok 1 - gap');\nprocess.exit(${probeExit});\n`, "utf8");
   }
   writeFileSync(
     join(root, "keel", "templates", "ISS.md"),
@@ -252,13 +252,13 @@ test("REQ-006/AC-3 REQ-006/AC-4 gate verify preserves review history while a cha
   }
 });
 
-test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest opens a blocking ISS only after its attack probe exits 0", () => {
-  const { root, findings } = ingestFixture("vulnerable", {
+test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest opens a blocking ISS only when its check command fails as a test on this tree", () => {
+  const { root, findings } = ingestFixture("failing", {
     title: "reproducible hole",
     blocking: true,
     repro: "node ingest-probe.js",
     impact: "release gate can be bypassed",
-  }, 0);
+  }, 1);
   try {
     const result = runLoop(makeCtx(root), ["ingest", findings, "--reviewer", "claude-code"]);
     assert.equal(result.code, 0, result.stdout + result.stderr);
@@ -271,7 +271,8 @@ test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest opens a blocking ISS only after
     assert.match(issue, /## 现象\s+reproducible hole/);
     assert.match(issue, /## 影响\s+release gate can be bypassed/);
     assert.match(issue, /## 待诊断防线\s+待诊断/);
-    assert.match(issue, /probe_exit_code: 0/);
+    assert.match(issue, /probe_exit_code: 1/);
+    assert.match(issue, /probe_result: failing-test/);
     assert.match(issue, /probe_recorded_at: \d{4}-\d{2}-\d{2}T/);
     assert.match(issue, /probe_tree_hash: [0-9a-f]{40}/);
   } finally {
@@ -279,27 +280,27 @@ test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest opens a blocking ISS only after
   }
 });
 
-test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding whose first attack probe is already nonzero", () => {
-  const { root, findings } = ingestFixture("not-reproduced", {
-    title: "probe already refused",
+test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding whose check command already passes on this tree", () => {
+  const { root, findings } = ingestFixture("passing", {
+    title: "check already passes",
     blocking: true,
     repro: "node ingest-probe.js",
     impact: "release gate can be bypassed",
-  }, 7);
+  }, 0);
   try {
     const result = runLoop(makeCtx(root), ["ingest", findings, "--reviewer", "claude-code"]);
     assert.equal(result.code, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /filed iss=- deferred=1/);
     assert.deepEqual(issueFiles(root), []);
     const worklog = readFileSync(join(root, "keel", "review", "findings.md"), "utf8");
-    assert.match(worklog, /复现探针首次退出 7/);
-    assert.match(worklog, /probe already refused/);
+    assert.match(worklog, /检查命令在本树上通过/);
+    assert.match(worklog, /check already passes/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
-test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding with no attack probe command", () => {
+test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding with no check command and no criterion", () => {
   const { root, findings } = ingestFixture("missing", {
     title: "missing probe",
     blocking: true,
@@ -312,7 +313,7 @@ test("REQ-010/AC-2 REQ-027/AC-4 gate loop ingest defers a blocking finding with 
     assert.match(result.stdout, /filed iss=- deferred=1/);
     assert.deepEqual(issueFiles(root), []);
     const worklog = readFileSync(join(root, "keel", "review", "findings.md"), "utf8");
-    assert.match(worklog, /无复现命令/);
+    assert.match(worklog, /无凭据/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

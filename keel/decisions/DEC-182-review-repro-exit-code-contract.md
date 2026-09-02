@@ -1,7 +1,8 @@
 ---
 id: DEC-182
 title: 自动评审复现命令的漏洞态与修复态判定
-status: confirmed
+status: superseded
+superseded_by: DEC-191
 date: 2026-08-27
 features: [F7, F10, F17]
 research: []

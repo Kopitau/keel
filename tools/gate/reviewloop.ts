@@ -10,9 +10,12 @@
 // rounds.json or fuse-report.md any more: the fuse counters live in the disposition
 // front matter and a fuse report is appended to its body.
 //
-// ISS ingest / clear keep DEC-182: a blocking finding opens an ISS only when its
-// probe exits 0 on the unfixed tree; clear reruns every probe and needs a
-// nonzero exit; every run is appended to the disposition and to evidence.
+// ISS ingest / clear follow DEC-191 (CHG-015): a blocking finding opens an ISS only
+// when its evidence holds on this tree — `repro` is a test or check command that
+// fails now (nonzero, with a test failure in its output) and passes once fixed, or
+// `ac` names a criterion the trace shows has no black-box test. clear reruns every
+// check and needs exit 0 (or a now-covered criterion); every run is appended to the
+// disposition and to evidence. No hand-made probes, no fuzzing (REQ-028 v7).
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -25,6 +28,7 @@ import { git, gitHead, gitWriteTree } from "./git.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { sha256Normalized } from "./hash.ts";
 import { mdFiles } from "./walk.ts";
+import { buildTrace } from "./trace.ts";
 
 export const FUSE_THRESHOLD = 3;
 
@@ -70,7 +74,7 @@ export type LoopState = {
   reviewer_harness: string;
   blocking_iss: string[];
   advisory: string[];
-  /** Blocking findings downgraded to 待核实 (no probe, no impact, or the probe ran and did not exit 0 — DEC-182). */
+  /** Blocking findings downgraded to 待核实 (no evidence, no impact, a check that passes or fails without a test failure, a criterion already covered — DEC-191). */
   deferred: string[];
   /** Blocking findings whose probe could not execute at all (ISS-054): they hold the loop in_review. */
   probe_errors: string[];
@@ -82,8 +86,13 @@ export type LoopState = {
 export type Finding = {
   title: string;
   blocking: boolean;
+  /** DEC-191: a test or check command that fails on this tree and passes once fixed. */
   repro: string;
   impact?: string;
+  /** DEC-191: the acceptance criterion (REQ-nnn/AC-i) the finding fails; alone it means "no black-box test for it". */
+  ac?: string;
+  /** DEC-191: unimplemented | test-missing | test-failing | unmaintainable (informative). */
+  kind?: string;
   pending_defense?: string;
   body?: string;
   fingerprint?: string;
@@ -115,11 +124,14 @@ export function validateFindings(raw: unknown): { ok: true; findings: Finding[] 
     if (typeof f.blocking !== "boolean") {
       errors.push(`${at}${title ? ` (${title.slice(0, 40)})` : ""}: blocking must be true or false (a severity label is not a verdict)`);
     }
-    for (const k of ["repro", "impact", "fingerprint", "pending_defense", "body", "recurrence_of"]) {
+    for (const k of ["repro", "impact", "fingerprint", "pending_defense", "body", "recurrence_of", "ac", "kind"]) {
       if (f[k] !== undefined && typeof f[k] !== "string") errors.push(`${at}: ${k} must be a string`);
     }
     const recurrence = typeof f.recurrence_of === "string" ? f.recurrence_of.trim() : "";
     if (recurrence && !/^ISS-\d+$/.test(recurrence)) errors.push(`${at}: recurrence_of must be an ISS id`);
+    const ac = typeof f.ac === "string" ? f.ac.trim() : "";
+    if (ac && !/^REQ-\d+\/AC-\d+$/.test(ac)) errors.push(`${at}: ac must look like REQ-nnn/AC-i`);
+    const kind = typeof f.kind === "string" ? f.kind.trim() : "";
     const fingerprint = typeof f.fingerprint === "string" ? f.fingerprint.trim() : "";
     out.push({
       title,
@@ -127,6 +139,8 @@ export function validateFindings(raw: unknown): { ok: true; findings: Finding[] 
       repro: typeof f.repro === "string" ? f.repro : "",
       impact: typeof f.impact === "string" ? f.impact : "",
       ...(fingerprint ? { fingerprint } : {}),
+      ...(ac ? { ac } : {}),
+      ...(kind ? { kind } : {}),
       ...(typeof f.pending_defense === "string" ? { pending_defense: f.pending_defense } : {}),
       ...(typeof f.body === "string" ? { body: f.body } : {}),
       ...(recurrence ? { recurrence_of: recurrence } : {}),
@@ -423,43 +437,71 @@ export function fileFindings(
     if (worklogRel) appendWorklog(ctx, worklogRel, line);
   };
   for (const f of findings) {
-    if (f.blocking && !f.repro.trim()) {
+    const command = f.repro.trim();
+    const ac = (f.ac ?? "").trim();
+    if (f.blocking && !command && !ac) {
       deferred.push(f.title);
-      note(`- 待核实（无复现命令，未开 ISS）：${f.title}`);
+      note(`- 待核实（无凭据：既无会失败的测试 / 检查命令，也未指出缺测试的验收标准，未开 ISS）：${f.title}`);
     } else if (f.blocking && !(f.impact ?? "").trim()) {
       deferred.push(f.title);
       note(`- 待核实（无影响说明，未开 ISS）：${f.title}`);
     } else if (f.blocking) {
-      // DEC-182: a blocking repro is a probe. It may open an ISS only
-      // when it actually demonstrates the problem on the current, unfixed tree.
-      const command = f.repro.trim();
+      // DEC-191: the evidence for a blocking finding is a failing test (or a criterion
+      // with no black-box test), verified on the current, unfixed tree — never a
+      // hand-made probe.
       const probeTree = gitWriteTree(ctx);
       const probeRecordedAt = new Date().toISOString();
-      const probe = runReproCommand(ctx.root, command);
-      if (!probe.ran) {
-        // ISS-054: the probe never executed (missing interpreter, shell/quoting failure).
-        // That refutes nothing — it holds the loop in_review until a probe that runs exists.
-        probe_errors.push(f.title);
+      let probeExit = 1;
+      let probeResult = "";
+      let probeCheck = "";
+      if (command) {
+        const probe = runReproCommand(ctx.root, command);
         const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
-        note(
-          `- 待核实（复现探针无法执行，退出 ${probe.exit_code}，回路停在 in_review）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
-        );
-        continue;
-      }
-      if (probe.exit_code !== 0) {
-        deferred.push(f.title);
-        const output = probe.stdout.trim().replace(/\s+/g, " ").slice(-300) || "(empty)";
-        note(
-          `- 待核实（复现探针首次退出 ${probe.exit_code}，未开 ISS）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
-        );
-        continue;
+        if (!probe.ran) {
+          // ISS-054: the command never executed (missing interpreter, shell/quoting failure).
+          // That proves nothing — it holds the loop in_review until a command that runs exists.
+          probe_errors.push(f.title);
+          note(
+            `- 待核实（检查命令无法执行，退出 ${probe.exit_code}，回路停在 in_review）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
+          );
+          continue;
+        }
+        if (probe.exit_code === 0) {
+          deferred.push(f.title);
+          note(`- 待核实（检查命令在本树上通过，退出 0，缺口未被证明，未开 ISS）：${f.title}; command=${command}; tree=${probeTree || "(none)"}`);
+          continue;
+        }
+        if (!probe.failed_test) {
+          deferred.push(f.title);
+          note(
+            `- 待核实（命令退出 ${probe.exit_code} 但输出里没有测试失败——请给出会失败的测试，未开 ISS）：${f.title}; command=${command}; tree=${probeTree || "(none)"}; output=${output}`,
+          );
+          continue;
+        }
+        probeExit = probe.exit_code;
+        probeResult = "failing-test";
+        probeCheck = `command=${command}`;
+      } else {
+        const cov = acCoverage(ctx, ac);
+        if (cov === "unknown") {
+          deferred.push(f.title);
+          note(`- 待核实（${ac} 不在当前需求基线里，未开 ISS）：${f.title}`);
+          continue;
+        }
+        if (cov === "covered") {
+          deferred.push(f.title);
+          note(`- 待核实（trace 显示 ${ac} 已有黑盒测试；请改为指出会失败的测试，未开 ISS）：${f.title}`);
+          continue;
+        }
+        probeResult = cov === "proxy" ? "test-missing (proxy only)" : "test-missing";
+        probeCheck = `ac=${ac}`;
       }
       const fp = findingFingerprint(f);
       const existing = findIssByFingerprint(ctx, fp);
       if (existing) {
         iss.push(existing);
         fps[existing] = fp;
-        note(`- blocking → ${existing}（同指纹已开）：${f.title}; command=${command}`);
+        note(`- blocking → ${existing}（同指纹已开）：${f.title}; ${probeCheck}`);
         continue;
       }
       const created = runNew(ctx, ["iss", f.title]);
@@ -471,6 +513,7 @@ export function fileFindings(
           let body = readFileSync(dest, "utf8");
           body = body.replace(/fingerprint:\s*""/, `fingerprint: "${fp}"`);
           body = body.replace(/source:\s*""/, "source: review-loop");
+          if (ac) body = body.replace(/\nac:\s*""/, `\nac: "${ac}"`);
           if (f.recurrence_of) body = body.replace(/recurrence_of:\s*""/, `recurrence_of: "${f.recurrence_of}"`);
           body = fillIssueSection(body, "现象", f.title);
           body = fillIssueSection(body, "影响", (f.impact ?? "").replace(/\s+/g, " ").slice(0, 2000));
@@ -479,13 +522,15 @@ export function fileFindings(
             "待诊断防线",
             (f.pending_defense ?? "待诊断；未知根因和修复保持空白。").replace(/\s+/g, " ").slice(0, 2000),
           );
-          body = body.replace("复现命令：", `复现命令：\n\n\`\`\`\n${command}\n\`\`\``);
+          if (command) body = body.replace("复现命令：", `复现命令：\n\n\`\`\`\n${command}\n\`\`\``);
+          else body = body.replace("复现命令：", `复现命令：（无；凭据是 ${ac} 没有黑盒测试，见 gate trace）`);
           body +=
             `\n\n## 打开态复现探针\n\n` +
-            `- probe_exit_code: ${probe.exit_code}\n` +
+            `- probe_exit_code: ${probeExit}\n` +
             `- probe_recorded_at: ${probeRecordedAt}\n` +
             `- probe_tree_hash: ${probeTree || "(none)"}\n` +
-            `- probe_result: vulnerable\n`;
+            `- probe_result: ${probeResult}\n` +
+            `- probe_check: ${probeCheck}\n`;
           if (f.body) body += `\n\n${f.body}\n`;
           writeFileSync(dest, body, "utf8");
         }
@@ -493,7 +538,7 @@ export function fileFindings(
         const id = idMatch?.[1] ?? fname;
         iss.push(id);
         fps[id] = fp;
-        note(`- blocking → ${id}：${f.title}; command=${command}`);
+        note(`- blocking → ${id}：${f.title}; ${probeCheck}`);
       }
     } else {
       advisory.push(f.title);
@@ -514,7 +559,7 @@ export function reviewClearGaps(rev: {
     for (const id of rev.blocking_iss ?? []) {
       const run = (rev.repro_runs ?? []).find((r) => r.iss === id);
       if (!run) gaps.push(`no repro run for ${id}`);
-      else if (!run.refused) gaps.push(`${id} repro still succeeds; cannot clear (REQ-027)`);
+      else if (!run.refused) gaps.push(`${id} check still fails; cannot clear (REQ-027)`);
     }
   }
   return gaps;
@@ -701,21 +746,46 @@ export function probeShell(): string | null {
 const PROBE_DID_NOT_RUN =
   /command not found|not recognized as an internal or external command|No such file or directory|SyntaxError|Unterminated string|cannot execute|is not a valid|MODULE_NOT_FOUND|Cannot find module/;
 
+/** DEC-191: a check command counts only when its output shows a test failure, not just a nonzero exit. */
+const TEST_FAILURE_RE =
+  /(^|\s)not ok\b|^#\s*fail\s+[1-9]|ℹ\s*fail\s+[1-9]|\b[1-9]\d*\s+(failed|failing|failures?)\b|(^|\s)(FAIL|FAILED)\b|\bFailed!|\bAssertionError\b|assert(ion)?\s*failed|✖/m;
+
+export function looksLikeTestFailure(output: string): boolean {
+  return TEST_FAILURE_RE.test(output);
+}
+
+/** DEC-191: does the current trace show a black-box test for `REQ-nnn/AC-i`? */
+export function acCoverage(ctx: Ctx, ac: string): "covered" | "proxy" | "missing" | "unknown" {
+  const m = ac.trim().match(/^(REQ-\d+)\/AC-(\d+)$/);
+  if (!m) return "unknown";
+  const row = buildTrace(ctx).rows.find((r) => r.req === m[1]);
+  const i = Number(m[2]);
+  if (!row || i < 1 || i > row.criteria) return "unknown";
+  if (row.uncoveredAc.includes(i)) return "missing";
+  if (row.proxyAc.some((p) => p.ac === i)) return "proxy";
+  return "covered";
+}
+
 export function runReproCommand(
   cwd: string,
   command: string,
-): { exit_code: number; refused: boolean; stdout: string; ran: boolean } {
+): { exit_code: number; refused: boolean; stdout: string; ran: boolean; failed_test: boolean } {
   const sh = probeShell();
+  // A check is usually `node --test …`; run it outside any enclosing test runner's
+  // context (NODE_TEST_* would make the child report as a subtest and exit 0).
+  const env: { [k: string]: string | undefined } = {};
+  for (const [k, v] of Object.entries(process.env)) if (!k.startsWith("NODE_TEST")) env[k] = v;
   const r = sh
-    ? spawnSync(sh, ["-c", command], { encoding: "utf8", cwd, timeout: 60000 })
-    : spawnSync("cmd.exe", ["/c", command], { encoding: "utf8", cwd, timeout: 60000 });
+    ? spawnSync(sh, ["-c", command], { encoding: "utf8", cwd, timeout: 60000, env })
+    : spawnSync("cmd.exe", ["/c", command], { encoding: "utf8", cwd, timeout: 60000, env });
   const exit_code = r.status ?? 1;
   const stdout = (r.stdout || "") + (r.stderr || "");
   // ISS-054: exit 126/127, a spawn error, or an interpreter failure means the probe
   // never tested anything — that is not a refusal.
   const spawnFailed = Boolean((r as { error?: unknown }).error);
   const ran = !spawnFailed && exit_code !== 126 && exit_code !== 127 && !(exit_code !== 0 && PROBE_DID_NOT_RUN.test(stdout));
-  return { exit_code, refused: exit_code !== 0, stdout, ran };
+  // DEC-191: `refused` = the gap is refused (closed) — the check passes.
+  return { exit_code, refused: exit_code === 0, stdout, ran, failed_test: looksLikeTestFailure(stdout) };
 }
 
 export function extractRepro(body: string): string {
@@ -1046,10 +1116,10 @@ export function runLoop(ctx: Ctx, args: string[]): CmdResult {
     const findings: Finding[] = checked.findings;
     const impl = flag(args, "implementer") || st.implementer_harness || "unknown";
     const out = fileFindings(ctx, findings, worklogRel);
-    // DEC-182: a blocking finding without a probe, or whose probe ran and did not
-    // exit 0, is downgraded to 待核实. A probe that could not execute refutes
-    // nothing (ISS-054): it holds the loop in_review until a fresh round supplies a
-    // probe that runs or drops the finding (C-42).
+    // DEC-191: a blocking finding without evidence, whose check passes, fails without
+    // a test failure, or names a criterion that is already covered, is downgraded to
+    // 待核实. A command that could not execute proves nothing (ISS-054): it holds the
+    // loop in_review until a fresh round supplies one that runs or drops the finding (C-42).
     const status: LoopStatus = out.iss.length > 0 ? "repairing" : out.probe_errors.length > 0 ? "in_review" : "passed";
     const next: LoopState = {
       ...st,
@@ -1109,25 +1179,42 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
   const runTree = gitWriteTree(ctx);
   const runs: ReproRun[] = [];
   for (const id of st.blocking_iss) {
-    const cmd = extractRepro(issBody(ctx, id));
-    if (!cmd) {
+    const body = issBody(ctx, id);
+    const cmd = extractRepro(body);
+    if (cmd) {
+      const r = runReproCommand(ctx.root, cmd);
       runs.push({
         iss: id,
-        command: "",
-        exit_code: 0,
-        refused: false,
+        command: cmd,
+        exit_code: r.exit_code,
+        refused: r.exit_code === 0,
         round: runRound,
         recorded_at: recordedAt,
         tree_hash: runTree,
       });
       continue;
     }
-    const r = runReproCommand(ctx.root, cmd);
+    // DEC-191: an ISS whose evidence was "this criterion has no black-box test" clears
+    // when the trace shows one now.
+    const ac = (parseFrontmatter(body).attrs.ac ?? "").trim();
+    if (ac) {
+      const covered = acCoverage(ctx, ac) === "covered";
+      runs.push({
+        iss: id,
+        command: `trace ${ac}`,
+        exit_code: covered ? 0 : 1,
+        refused: covered,
+        round: runRound,
+        recorded_at: recordedAt,
+        tree_hash: runTree,
+      });
+      continue;
+    }
     runs.push({
       iss: id,
-      command: cmd,
-      exit_code: r.exit_code,
-      refused: r.refused,
+      command: "",
+      exit_code: 1,
+      refused: false,
       round: runRound,
       recorded_at: recordedAt,
       tree_hash: runTree,
@@ -1145,7 +1232,7 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
     // DEC-189: recurrences count against the root of their chain.
     (id) => rootFingerprint(ctx, id, st.iss_fp?.[id] ?? id),
   );
-  // Probes that never executed keep the loop open even when every ISS is refused (ISS-054).
+  // Checks that never executed keep the loop open even when every ISS is cleared (ISS-054).
   const next: LoopState =
     bumped.status === "passed" && (st.probe_errors ?? []).length > 0 ? { ...bumped, status: "in_review" } : bumped;
   writeLoopState(ctx, next);
@@ -1154,7 +1241,7 @@ export function recordClear(ctx: Ctx, impl: string, reviewer: string): CmdResult
       ctx,
       next,
       "clear",
-      `${run.iss} \`${run.command || "(no repro command)"}\` exit=${run.exit_code} ${run.refused ? "refused" : "still succeeds"}`,
+      `${run.iss} \`${run.command || "(no repro command)"}\` exit=${run.exit_code} ${run.refused ? "passed" : "still failing"}`,
     );
   }
   appendDisposition(ctx, next, "verdict", `reviewer=${reviewer || st.reviewer_harness || "-"} still_open=${still.join(",") || "-"} → ${next.status}`);

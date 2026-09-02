@@ -128,7 +128,7 @@ test("REQ-027/AC-13 a recurrence chain shares one fuse counter: the third open r
   const iss = (id: string, fp: string, recurrenceOf = ""): void => {
     writeFileSync(
       join(root, "keel", "issues", `${id}-x.md`),
-      `---\nid: ${id}\nstatus: open\nfingerprint: "${fp}"\nrecurrence_of: "${recurrenceOf}"\n---\n\n# ${id}\n\n## 影响\n\n复现命令：\n\n\`\`\`\nexit 0\n\`\`\`\n`,
+      `---\nid: ${id}\nstatus: open\nfingerprint: "${fp}"\nrecurrence_of: "${recurrenceOf}"\n---\n\n# ${id}\n\n## 影响\n\n复现命令：\n\n\`\`\`\nexit 1\n\`\`\`\n`,
       "utf8",
     );
   };
