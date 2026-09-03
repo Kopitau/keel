@@ -34,3 +34,7 @@
 ## 2026-09-01（需求 v6 确认）
 
 - CHG-012 / CHG-013 / CHG-014 由用户 2026-09-01「批准V6和三份变更单。并以我的身份提交。」一次批准，APR-006 绑定三份变更单与 `requirements/v6.md` 正文哈希；v6 `status: confirmed`，`requirements/INDEX.md` current → v6.md；v5 冻结不改。提交按 DEC-190 由 agent 身份完成。
+
+## 2026-09-03（需求 v7 确认）
+
+- CHG-015 由用户 2026-09-02「A 可以 B 废掉 C 现在升级」批准，需求 v7 文本由用户 2026-09-03「批准V7」批准；APR-007 绑定两者正文哈希，v7 `status: confirmed`，`requirements/INDEX.md` current → v7.md；v6 冻结不改。提交按 DEC-190 由 agent 身份完成。

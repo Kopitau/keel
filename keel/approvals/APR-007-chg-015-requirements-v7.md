@@ -1,17 +1,17 @@
 ---
 id: APR-007
-status: draft
-date: 2026-09-02
-approver: ""
-delegated: ""
+status: approved
+date: 2026-09-03
+approver: "kopit <wwillmee@gmail.com>"
+delegated: "「批准V7」(2026-09-03)"
 scope: "变更单 CHG-015 + 需求基线 v7"
 artifacts:
   - path: "keel/changes/CHG-015-review-three-questions.md"
     version: "v1"
-    content_sha256: pending
+    content_sha256: 619dc0e9ed93b1998317ae25d45f141c332877ab884d15614e068ef38c9d18f0
   - path: "keel/requirements/v7.md"
     version: "v7"
-    content_sha256: pending
+    content_sha256: 7485bb5c2fc1948661785fa0e355d55f3e287e0bf4f1af8c51fdbc1408fb4060
 ---
 
 # APR-007 CHG-015（评审三问）+ 需求 v7
@@ -26,7 +26,9 @@ artifacts:
 > 「这个子agent审阅好像还是有问题。朝夕项目中依然疯狂在测试。子agent的审阅的功能应该定义为：代码是否规范，尽量简单方便维护。是否实现了相应的功能，以及编写相应的功能测试是否通过了。」(2026-09-02)
 > A 可以 B 废掉 C 现在升级（2026-09-02，对七条改法与三个问题的答复）
 
-第一句是问题与定义，第二句批准了改法（CHG-015 据此 approved）。**对需求 v7 文本本身的批准原话尚待用户给出**——填入前言 `delegated:` 后再 `gate approve APR-007`；届时 v7 状态改 confirmed、`requirements/INDEX.md` current → v7.md。
+> 批准V7（2026-09-03）
+
+第一句是问题与定义，第二句批准了改法（CHG-015 据此 approved），第三句批准了需求 v7 的文本；已填入前言 `delegated:`，`gate approve APR-007` 绑定哈希，v7 状态 confirmed，`requirements/INDEX.md` current → v7.md。
 
 ## 工件与哈希
 
