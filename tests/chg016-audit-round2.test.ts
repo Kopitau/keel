@@ -272,8 +272,8 @@ test("REQ-028/AC-4 the pack lists keel-managed files by name only, diffs product
   const before = "lockfileVersion: '9.0'\n\nimporters:\n\n  .:\n    dependencies:\n      left-pad:\n        specifier: ^1.0.0\n        version: 1.0.0\n\npackages:\n\n  left-pad@1.0.0:\n    resolution: {integrity: sha512-a}\n";
   const after = before.replace("version: 1.0.0", "version: 1.3.0").replace("left-pad@1.0.0:", "left-pad@1.3.0:") + "\n  right-pad@2.0.0:\n    resolution: {integrity: sha512-b}\n";
   const rows = lockfileDeltas(before, after);
-  assert.ok(rows.some((r) => /~ \. \| dependencies \| left-pad: 1\.0\.0 -> 1\.3\.0/.test(r)), rows.join("\n"));
-  assert.ok(rows.some((r) => /\+ package right-pad@2\.0\.0/.test(r)), rows.join("\n"));
+  assert.ok(rows.some((r) => /~ \. \| dependencies \| left-pad: specifier=\^1\.0\.0; version=1\.0\.0 -> specifier=\^1\.0\.0; version=1\.3\.0/.test(r)), rows.join("\n"));
+  assert.ok(rows.some((r) => /\+ packages \| right-pad@2\.0\.0/.test(r)), rows.join("\n"));
   rmSync(root, { recursive: true, force: true });
 });
 

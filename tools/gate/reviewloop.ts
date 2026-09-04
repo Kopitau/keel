@@ -959,6 +959,12 @@ function pnpmImporterDeps(text: string): Map<string, string> {
   let importer = "";
   let group = "";
   let dep = "";
+  let specifier = "";
+  const flush = (version: string): void => {
+    if (!importer || !group || !dep) return;
+    const value = [specifier && `specifier=${specifier}`, version && `version=${version}`].filter(Boolean).join("; ");
+    out.set(`${importer} | ${group} | ${dep}`, value || "(unspecified)");
+  };
   for (const line of lines) {
     if (/^\S/.test(line)) {
       inImporters = line.startsWith("importers:");
@@ -978,10 +984,16 @@ function pnpmImporterDeps(text: string): Map<string, string> {
     m = line.match(/^ {6}(\S[^:]*):\s*$/);
     if (m) {
       dep = m[1] ?? "";
+      specifier = "";
+      continue;
+    }
+    m = line.match(/^ {8}specifier:\s*(\S.*)$/);
+    if (m) {
+      specifier = m[1] ?? "";
       continue;
     }
     m = line.match(/^ {8}version:\s*(\S.*)$/);
-    if (m && importer && group && dep) out.set(`${importer} | ${group} | ${dep}`, m[1] ?? "");
+    if (m) flush(m[1] ?? "");
   }
   return out;
 }
@@ -1012,8 +1024,8 @@ export function lockfileDeltas(before: string, after: string, cap = 120): string
   for (const [k, v] of a) if (!b.has(k)) rows.push(`  - ${k}: ${v}`);
   const pa = pnpmPackageKeys(before);
   const pb = pnpmPackageKeys(after);
-  for (const k of pb) if (!pa.has(k)) rows.push(`  + package ${k}`);
-  for (const k of pa) if (!pb.has(k)) rows.push(`  - package ${k}`);
+  for (const k of pb) if (!pa.has(k)) rows.push(`  + packages | ${k}`);
+  for (const k of pa) if (!pb.has(k)) rows.push(`  - packages | ${k}`);
   if (rows.length > cap) return [...rows.slice(0, cap), `  … ${rows.length - cap} more`];
   return rows;
 }
@@ -1031,6 +1043,8 @@ function lockfileSummary(ctx: Ctx, paths: string[], base: string): string {
     const text = readFileSync(abs, "utf8");
     rows.push(`- ${rel} sha256=${sha256Normalized(text).slice(0, 16)} lines=${text.split(/\r?\n/).length}`);
     if (deltas && basename(rel) === "pnpm-lock.yaml" && base) {
+      // zhaoxi DEC-028: the full hash authenticates the file the reviewer did not see.
+      rows.push(`  target_sha256: ${sha256Normalized(text)}`);
       const before = git(ctx, ["show", `${base}:${rel.replace(/\\/g, "/")}`]).stdout;
       rows.push(...lockfileDeltas(before, text));
     }
