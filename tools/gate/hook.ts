@@ -7,6 +7,8 @@ import { isForceUpdate, parsePrePushLine } from "./bypass.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
 import { ancestorProcessNames, detectHarness, detectHost, type DetectOptions, type EnvMap } from "./harness.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
+import { evidenceVerdict } from "./evidence.ts";
+import { runVerify } from "./verify.ts";
 
 const DEFAULT_DETECT: DetectOptions = { ancestors: ancestorProcessNames };
 
@@ -177,11 +179,22 @@ function identityTrailers(ctx: Ctx, text: string, env: EnvMap, opts: DetectOptio
 export function runHook(ctx: Ctx, args: string[], env: EnvMap = process.env, opts: DetectOptions = DEFAULT_DETECT): CmdResult {
   const name = args[0] ?? "";
   if (name === "pre-push") return runPrePush(ctx, args.slice(1));
+  if (name === "verify-if-stale") {
+    // ISS-079: the pre-push hook used to rerun the whole suite even when verify.json was
+    // fresh for this very tree. On keel itself that is minutes with the HTTPS connection
+    // already open, and GitHub hangs up before the pack is sent ("write error: Bad file
+    // descriptor"). Fresh, green, tree-bound evidence is the point of verify — reuse it.
+    const v = evidenceVerdict(ctx);
+    if (v.ok && v.via === "verify" && v.ev) {
+      return ok(`verify: evidence fresh for tree ${v.ev.tree_hash.slice(0, 12)}… (passed=${v.ev.counts.passed}); not rerun\n`);
+    }
+    return runVerify(ctx);
+  }
   if (name === "pre-commit-stamp") return writeStamp(ctx);
   if (name === "pre-commit-apr") return runPrecommitApr(ctx);
   if (name !== "prepare-commit-msg") {
     return usage(
-      "usage: gate hook prepare-commit-msg <file> | hook pre-push [refs-file] | hook pre-commit-stamp | hook pre-commit-apr\n",
+      "usage: gate hook prepare-commit-msg <file> | hook pre-push [refs-file] | hook verify-if-stale | hook pre-commit-stamp | hook pre-commit-apr\n",
     );
   }
   const file = args[1] ?? "";

@@ -157,3 +157,7 @@
 ## 2026-09-04（CHG-016：新项目门禁口径）
 
 - G-merge 在无认领 / 无 summary / 无 verify.json 时 SKIP（`anythingBuilt`）；G-plan 对带 REQ-000 的计划 WARN（`templatePlans`）；X-trace 草稿引用 WARN；`confirmedReqCount` 或文件头 confirmed 都算基线已取。证据：REQ-026/AC-5、REQ-006/AC-11。
+
+## 2026-09-04（ISS-079：推送钩子复用新鲜证据）
+
+- 首次推送 GitHub 时钩子重跑全量 verify 把连接拖超时。`gate hook verify-if-stale`：同树新鲜绿证据直接放行，否则才 verify；`.githooks/pre-push` 改调它。证据：`ISS-079 pre-push reuses fresh evidence` 回归测试（v8 已批准冻结，验收条目留到下一版）。

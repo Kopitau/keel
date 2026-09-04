@@ -343,3 +343,23 @@ test("REQ-004/AC-12 k-new ends its round at the approval, k-impl runs k-retro, k
   assert.match(readFileSync(join(repo, "keel", "review", "checklist.md"), "utf8"), /不审 keel 自己的文件/);
   assert.match(readFileSync(join(repo, "CONTEXT.md"), "utf8"), /BRIEF/);
 });
+
+// ---------------------------------------------------------------- ISS-079: pre-push reuses fresh evidence
+
+test("ISS-079 pre-push reuses fresh, green, tree-bound evidence and reruns verify only when it is stale", async () => {
+  const { runHook } = await import("../tools/gate/hook.ts");
+  const { runVerify } = await import("../tools/gate/verify.ts");
+  const root = project("prepush", { git: true });
+  const ctx = makeCtx(root);
+  const first = runHook(ctx, ["verify-if-stale"]);
+  assert.equal(first.code, 0, first.stderr);
+  assert.match(first.stdout, /verify PASS/, "no evidence yet: the suite runs");
+  assert.equal(runVerify(ctx).code, 0);
+  const second = runHook(ctx, ["verify-if-stale"]);
+  assert.equal(second.code, 0, second.stderr);
+  assert.match(second.stdout, /evidence fresh for tree .* not rerun/);
+  w(root, "src.txt", "changed\n");
+  const third = runHook(ctx, ["verify-if-stale"]);
+  assert.match(third.stdout, /verify PASS/, "a changed tree reruns the suite");
+  rmSync(root, { recursive: true, force: true });
+});

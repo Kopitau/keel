@@ -18,6 +18,7 @@
 - 评审包：框架文件（`tools/gate`、`tools/cli`、技能、钩子、模板、清单）只列文件名（`review.self_hosted: true` 的仓库除外）；pnpm 锁文件默认附完整哈希与按 importer / 依赖的版本增量、新增删除的包（zhaoxi DEC-028 收编）；`review.lockfile_summary: "hash"` 可退回只给哈希。
 - 状态行：替身清单折叠为计数；`identities.humans` 为空时点名。
 - 替身标记须有解除条件（点名功能或记录编号），否则 X-trace 单列 WARN。
+- 推送钩子改为 `gate hook verify-if-stale`：这棵树已有新鲜、绿、树哈希一致的 verify.json 就不再重跑测试（长钩子曾把 HTTPS 推送拖到对端挂断，ISS-079）。
 - `gate worktree rm` 在 Windows 上自行重试删除并 `prune`，失败时打印残留路径（ISS-078）。
 - 决策简报：`keel/templates/BRIEF.md` → `keel/decisions/BRIEF-<date>-<slug>.md`，决策索引末尾列出。
 - 技能：k-new 第 5 步在审批提交后结束本轮（开工是用户的下一个决定）；k-impl 收口含 k-retro；k-change 方案级变更在主干（DEC-193）；k-log 的 ISS `source` 词表；k-evidence 说明测试命令之外的脚本不是证据；k-grill 缺口猎取只返回不写文件；k-review / checklist 说明框架文件不在三问范围。
