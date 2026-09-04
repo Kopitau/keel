@@ -6,6 +6,6 @@
 - 刚发生（0.10.0，2026-09-02）：用户「A 可以 B 废掉 C 现在升级」→ CHG-015 / DEC-191 评审只答三问（规范可维护 / 功能实现 / 功能测试写了且通过），阻塞凭据改为会失败的测试或缺黑盒测试的验收标准，`checklist.md` 取代三份旧清单，证据 JSON 带 `feature_coverage`；两个试点与 zhaoxi F6 工作树升到 0.10.0；zhaoxi 废止 DEC-013 突变验证。
 - 刚发生（0.9.3）：清理两个试点仓库时撞到两处卡点并修掉——verify 把 junit 第一个 suite 的数当整场（ISS-068）、`keel update` 没有非交互的 `--yes`（ISS-069）、认领标记让主干永远"脏"（ISS-070）；两仓已升到 0.9.3。
 - 刚发生：2026-09-01 用户「批准V6和三份变更单。并以我的身份提交。」→ APR-006 approved（绑定 CHG-012 / CHG-013 / CHG-014 与 `requirements/v6.md` 正文哈希），requirements current = v6.md；同轮 DEC-190 去掉"审批只能由人类 git 身份提交"（原话即审批，谁提交都行），REQ-006/AC-10 让 `gate verify` / `gate trace` 按功能说明证据。
-- 试点仓库状态（2026-09-02）：三棵树都在 0.10.0（`keel update --yes`）。zhaoxi 主干——verify 201 过 / 2 跳、树干净，DEC-021 废止 DEC-013 突变验证，attack-surface.md 已删；新开 ISS-032（跑 verify 会改写 pnpm-lock.yaml，主干永远脏）→ G-merge 红直到它修好，其余 0 红 3 黄。zhaoxi F6 工作树——升到 0.10.0 并提交（分支上计划 v1 漂移在合入主干前记豁免），Codex 会话的 9 个未提交文件原样保留。fmea-v3——升级已提交，verify 1382 过 / 21 跳；Cursor 会话正在改 F19（10 个未提交文件），树脏是它在工作。
+- 试点仓库状态（2026-09-04 晚）：三棵树 + zhaoxi F2 工作树都在 0.11.0（AGENTS.md 已加 keel 标记）。zhaoxi 主干——verify 320 过 / 2 跳、树干净，全门禁 0 红 3 黄；DEC-065 澄清计划 v2 突变条款失效、`tools/mutation-proof.mjs` 删除；F1 残留工作树目录清理；F2 工作树卡了两天的 45 个重基线草稿已提交（5d239b0），待 APR-009 并按 DEC-193 搬到主干（由 zhaoxi 会话做）。taotie——全门禁 0 红 0 黄（新项目口径生效）。fmea-v3——升级已提交，Cursor 会话仍有未提交改动。两个试点各有若干替身标记没有解除条件，新规则下记 WARN，由各自会话补。
 - 该读：`RELEASE-0.9.3.md`、`keel/issues/ISS-068…070`、`keel/features/f06-evidence/worklog.md`、`f19-parallel/worklog.md`、`f23-bootstrap/worklog.md` 的 2026-09-01 节。
 - 阻塞问题：无。
