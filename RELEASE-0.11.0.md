@@ -15,7 +15,7 @@
 
 - 编号跨工作树与 `keel/*` 分支分配（含未提交文件）；`gate index` 拒绝重复编号（ISS-072）。
 - `gate new … --slug <ascii>`；评审回路开单用 finding 指纹做文件名，`feature:` 与「现象」回填（ISS-076 / ISS-077）；截断的 slug 不再以横线结尾。
-- 评审包：框架文件（`tools/gate`、`tools/cli`、技能、钩子、模板、清单）只列文件名（`review.self_hosted: true` 的仓库除外）；`review.lockfile_summary: "deltas"` 时 pnpm 锁文件附按 importer / 依赖的版本增量（zhaoxi DEC-028 收编）。
+- 评审包：框架文件（`tools/gate`、`tools/cli`、技能、钩子、模板、清单）只列文件名（`review.self_hosted: true` 的仓库除外）；pnpm 锁文件默认附完整哈希与按 importer / 依赖的版本增量、新增删除的包（zhaoxi DEC-028 收编）；`review.lockfile_summary: "hash"` 可退回只给哈希。
 - 状态行：替身清单折叠为计数；`identities.humans` 为空时点名。
 - 替身标记须有解除条件（点名功能或记录编号），否则 X-trace 单列 WARN。
 - `gate worktree rm` 在 Windows 上自行重试删除并 `prune`，失败时打印残留路径（ISS-078）。

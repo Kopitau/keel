@@ -1032,7 +1032,8 @@ export function lockfileDeltas(before: string, after: string, cap = 120): string
 
 function lockfileSummary(ctx: Ctx, paths: string[], base: string): string {
   const review = (ctx.config.review ?? {}) as { lockfile_summary?: unknown };
-  const deltas = review.lockfile_summary === "deltas";
+  // CHG-016: deltas by default (zhaoxi DEC-028); `review.lockfile_summary: "hash"` opts out.
+  const deltas = review.lockfile_summary !== "hash";
   const rows: string[] = [];
   for (const rel of paths) {
     const abs = join(ctx.root, rel);

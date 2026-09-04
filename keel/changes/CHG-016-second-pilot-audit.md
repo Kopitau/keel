@@ -30,7 +30,7 @@ issues: [ISS-071, ISS-072, ISS-073, ISS-074, ISS-075, ISS-076, ISS-077, ISS-078]
 - 更新器：AGENTS.md 只替换 `<!-- keel:begin/end -->` 之间；写 `keel/installed.json`，覆盖前标出 LOCAL PATCH（ISS-073 / ISS-074）。
 - 门禁口径：G-merge 在无认领 / 无 summary / 无 verify.json 时 SKIP；状态行对 proposed 且未绑定的基线说「finish k-new step 5」；带 REQ-000 的计划 G-plan WARN；G-done 在 OVERVIEW 早于最新 summary 时 WARN（ISS-075，第 17 条）。
 - 记录：`gate new --slug`、评审开单用指纹做文件名、`feature:` 与「现象」回填（ISS-076 / ISS-077）；ISS `source` 词表（第 18 条）；决策简报模板与索引（第 14 条）。
-- 评审包：框架文件只列文件名（keel 自身仓库 `review.self_hosted` 例外）；`review.lockfile_summary: deltas`。
+- 评审包：框架文件只列文件名（keel 自身仓库 `review.self_hosted` 例外）；锁文件增量摘要默认开启（`review.lockfile_summary: "hash"` 可关）。
 - 状态行：替身清单折叠为计数；人类身份为空时点名（第 10 条）。
 - 类型：keel 打开 `exactOptionalPropertyTypes`，修 `ctx.ts` / `verify.ts`。
 - 技能：k-new 第 5 步在审批后结束本轮（第 15 条）；k-impl 收口加 k-retro（第 17 条）；k-change 方案级变更在主干（DEC-193）；k-log / k-evidence / k-grill / k-review 各一句。
