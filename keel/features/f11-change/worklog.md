@@ -42,3 +42,7 @@
 ## 2026-09-04（CHG-016 / DEC-193）
 
 - CHG-016 由用户原话批准；DEC-193 方案级变更在主干版本化（k-change 第 7 步）；需求 v8 proposed 待 APR-008。
+
+## 2026-09-04（需求 v8 确认）
+
+- CHG-016 由用户 2026-09-04 的分项答复批准，需求 v8 文本由用户同日「批准V8」批准；APR-008 绑定两者正文哈希，v8 `status: confirmed`，`requirements/INDEX.md` current → v8.md；v7 冻结不改。提交按 DEC-190 由 agent 身份完成。

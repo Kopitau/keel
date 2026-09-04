@@ -1,17 +1,17 @@
 ---
 id: APR-008
-status: draft
+status: approved
 date: 2026-09-04
-approver: ""
-delegated: ""
+approver: "kopit <wwillmee@gmail.com>"
+delegated: "「批准V8」(2026-09-04)"
 scope: "变更单 CHG-016 + 需求基线 v8"
 artifacts:
   - path: "keel/changes/CHG-016-second-pilot-audit.md"
     version: "v1"
-    content_sha256: pending
+    content_sha256: f7e22e2018d555fc2596726b04cf4b438485928778ee7a1f56759bd8d625deff
   - path: "keel/requirements/v8.md"
     version: "v8"
-    content_sha256: pending
+    content_sha256: ee1eca3b0375ac496b9f75ab9c7d16d021d3cda9dac9478a5f16d9ced6ddfb54
 ---
 
 # APR-008 CHG-016（第二轮试点审计）+ 需求 v8
@@ -26,7 +26,9 @@ artifacts:
 > 「你先再扫一遍zhaoxi和taotie文件夹，通过查阅agent对话和有关文件看这段时间框架还有没有需要优化的地方。」(2026-09-04)
 > 「11 不用 12 不用 13不用 14需要15同意 16不用 17可以 18同意 \nC1 A C2A C3 不管 C4 A C5 B」(2026-09-04)
 
-第二句批准了改法（CHG-016 据此 approved）。**对需求 v8 文本本身的批准原话尚待用户给出**——填入前言 `delegated:` 后再 `gate approve APR-008`；届时 v8 状态改 confirmed、`requirements/INDEX.md` current → v8.md。
+> 批准V8（2026-09-04）
+
+第二句批准了改法（CHG-016 据此 approved），第三句批准了需求 v8 的文本；已填入前言 `delegated:`，`gate approve APR-008` 绑定哈希，v8 状态 confirmed，`requirements/INDEX.md` current → v8.md。
 
 ## 工件与哈希
 
