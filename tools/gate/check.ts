@@ -7,7 +7,7 @@ import { formatCheck, type CheckItem, type CmdResult } from "./result.ts";
 import { mdFiles } from "./walk.ts";
 import { evidenceVerdict, readEvidence } from "./evidence.ts";
 import { collectBypassFindings } from "./bypass.ts";
-import { claimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
+import { claimedReqs, draftClaimedReqs, traceWarnings, uncoveredClaimed } from "./trace.ts";
 import { computeFrontier } from "./frontier.ts";
 import {
   completionReviewGaps,
@@ -120,7 +120,8 @@ function gReq(ctx: Ctx): CheckItem {
   }
   let approvedChanges = 0;
   let chainBound = false;
-  if (confirmedReqCount(r.text) > 0) {
+  // CHG-016: the file header is the one marker of a taken baseline; row-level `- **status**: confirmed` still counts.
+  if (confirmedReqCount(r.text) > 0 || declaresConfirmed(declaredStatusOf(r.text))) {
     const chain = inspectRequirementChangeChain(ctx, r.path, r.text);
     if (chain.gaps.length > 0) {
       return fail(
@@ -252,7 +253,59 @@ function gPlan(ctx: Ctx): CheckItem {
       "fix blocked_by in the feature plan front matter — existing feature ids, no self-reference, no cycle (DEC-169)",
     );
   }
+  // CHG-016: a plan that is still the scaffold (req: [REQ-000]) enters the frontier
+  // as if it were planned; say so instead of letting it look like the next feature.
+  const templates = templatePlans(ctx);
+  if (templates.length > 0) {
+    return {
+      ...warn(
+        "G-plan",
+        `template plan(s) still carry REQ-000: ${templates.join(", ")}`,
+        "fill req: and the plan body (k-new step 4) before the feature is treated as planned",
+      ),
+      acknowledged: true,
+    };
+  }
   return pass("G-plan", `unique current ${p.file} / ${r.file}; frontier ${fr.frontier.length}, blocked ${fr.blocked.length}`);
+}
+
+/** CHG-016: a claim, a summary or a verify run — the point where the merge lane starts to matter. */
+function anythingBuilt(ctx: Ctx): boolean {
+  if (existsSync(join(ctx.records, "evidence", "verify.json"))) return true;
+  const feats = join(ctx.records, "features");
+  if (!existsSync(feats)) return false;
+  for (const name of readdirSync(feats)) {
+    if (existsSync(join(feats, name, "summary.md")) || existsSync(join(feats, name, "claim.json"))) return true;
+  }
+  return false;
+}
+
+/** Feature dirs whose newest plan still carries the scaffold's `REQ-000` (CHG-016). */
+function templatePlans(ctx: Ctx): string[] {
+  const feats = join(ctx.records, "features");
+  if (!existsSync(feats)) return [];
+  const out: string[] = [];
+  for (const name of readdirSync(feats).sort()) {
+    const planDir = join(feats, name, "plan");
+    if (!existsSync(planDir)) continue;
+    const files = readdirSync(planDir).filter((p) => p.endsWith(".md")).sort();
+    const latest = files[files.length - 1];
+    if (!latest) continue;
+    if (/^req:.*REQ-000/m.test(readFileSync(join(planDir, latest), "utf8"))) out.push(name);
+  }
+  return out;
+}
+
+/** CHG-016 / REQ-009: OVERVIEW.md older than the newest summary means k-retro was skipped. */
+export function overviewStale(ctx: Ctx, summaries: string[]): string {
+  const overview = join(ctx.records, "OVERVIEW.md");
+  if (summaries.length === 0 || !existsSync(overview)) return "";
+  const ovTime = statSync(overview).mtimeMs;
+  const newest = summaries
+    .map((name) => ({ name, t: statSync(join(ctx.records, "features", name, "summary.md")).mtimeMs }))
+    .sort((a, b) => b.t - a.t)[0];
+  if (!newest || newest.t <= ovTime) return "";
+  return `OVERVIEW.md is older than ${newest.name}/summary.md — the finished feature is not reflected (k-retro, REQ-009)`;
 }
 
 function summarizedFeatureDirs(ctx: Ctx): string[] {
@@ -316,6 +369,10 @@ function gDone(ctx: Ctx): CheckItem {
       acknowledged: true,
     };
   }
+  const stale = overviewStale(ctx, summaries);
+  if (stale) {
+    return { ...warn("G-done", stale, "run k-retro: update OVERVIEW.md (能力清单 / 在途, provisional DECs) after a feature finishes"), acknowledged: true };
+  }
   const evidenceNote = via === "verify" ? "evidence 对账" : `evidence via ${via} (DEC-187)`;
   return pass(
     "G-done",
@@ -374,6 +431,11 @@ function gMerge(ctx: Ctx): CheckItem {
   }
   if (approved === 0) {
     return skip("G-merge", "no approved APR; merge gate applies at merge time (C-45)");
+  }
+  // CHG-016: a fresh project whose baseline was just approved has nothing to merge yet —
+  // no feature claimed or finished, no verify run. Once any of those exists the lane is judged.
+  if (!anythingBuilt(ctx)) {
+    return skip("G-merge", "nothing built yet (no claim, no summary, no verify.json); merge gate applies once a feature is in flight (C-45)");
   }
   const verdict = evidenceVerdict(ctx);
   if (!verdict.ok) {
@@ -472,12 +534,21 @@ function xTrace(ctx: Ctx): CheckItem {
       "add req: [REQ-nnn] to the feature plan front matter (ISS-044); mark black-box acceptance tests REQ-nnn/AC-i (C-32 / ISS-020 / DEC-168)",
     );
   }
-  const { proxies, whitebox } = traceWarnings(ctx, claimed);
-  if (claimed.length === 0 && whitebox.length === 0) {
+  const { proxies, whitebox, proxyNoCondition } = traceWarnings(ctx, claimed);
+  const drafts = draftClaimedReqs(ctx);
+  if (claimed.length === 0 && whitebox.length === 0 && drafts.length === 0) {
     return pass("X-trace", "no claimed-done features (C-32 scope = 验收范围)");
   }
   const notes: string[] = [];
+  // CHG-016: a plan that cites requirements the current baseline does not have is a
+  // change in flight (or a typo) — visible, not a red light that blocks committing the draft.
+  if (drafts.length > 0) {
+    notes.push(`plan cites requirements outside the current baseline (approve the change or fix the id): ${drafts.join(", ")}`);
+  }
   if (proxies.length > 0) notes.push(`proxy coverage, WARN not PASS: ${proxies.join(", ")}`);
+  if (proxyNoCondition.length > 0) {
+    notes.push(`proxy without a release condition (name the feature or record that lands the real test): ${proxyNoCondition.join(", ")}`);
+  }
   if (whitebox.length > 0) notes.push(`white-box names carry AC markers: ${whitebox.join(", ")}`);
   if (notes.length > 0) {
     // The reason is in the test name itself; C-103 does not escalate it (DEC-168).

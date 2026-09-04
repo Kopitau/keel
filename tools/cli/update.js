@@ -9,6 +9,7 @@ import {
   rmdirSync,
   writeFileSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { fail, ok } from "./result.js";
 import { hasFlag, readInstallerVersion } from "./layout.js";
@@ -18,6 +19,56 @@ const FULLY_MANAGED_DIRS = ["tools/gate", "keel/templates", ".githooks"];
 // CHG-015: the reviewer checklist is keel knowledge, shipped and kept current like the templates.
 const MANAGED_FILES = ["CLAUDE.md", ".gitattributes", "keel/review/checklist.md"];
 const SKILL_ROOTS = [".agents/skills", ".claude/skills"];
+// CHG-016: the keel-owned part of a project's AGENTS.md sits between these markers and
+// follows the installer; whatever the project wrote outside them stays.
+const AGENTS_BEGIN = "<!-- keel:begin -->";
+const AGENTS_END = "<!-- keel:end -->";
+
+function keelSection(text) {
+  const a = text.indexOf(AGENTS_BEGIN);
+  const b = text.indexOf(AGENTS_END);
+  if (a < 0 || b < 0 || b < a) return null;
+  return text.slice(a, b + AGENTS_END.length);
+}
+
+function mergedAgentsMd(source, cwd) {
+  const srcPath = fsPath(source, "AGENTS.md");
+  if (!existsSync(srcPath)) return { note: "" };
+  const src = readFileSync(srcPath, "utf8");
+  const srcSection = keelSection(src);
+  if (!srcSection) return { note: "" };
+  const dstPath = fsPath(cwd, "AGENTS.md");
+  if (!existsSync(dstPath)) return { content: src, note: "" };
+  const dst = readFileSync(dstPath, "utf8");
+  const dstSection = keelSection(dst);
+  if (!dstSection) {
+    return {
+      note: "AGENTS.md has no <!-- keel:begin --> / <!-- keel:end --> markers, so its keel section is not updated; wrap the keel part in them to let keel update manage it (CHG-016)",
+    };
+  }
+  return { content: dst.replace(dstSection, srcSection), note: "" };
+}
+
+function sha256Hex(content) {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+/** CHG-016: what this update installs, so the next one can tell a local patch from an upstream change. */
+function manifestFor(version, desired) {
+  const files = {};
+  for (const rel of [...desired.files.keys()].sort()) files[rel] = sha256Hex(desired.files.get(rel).content);
+  return JSON.stringify({ keel_version: version, files }, null, 2) + "\n";
+}
+
+function readManifest(node) {
+  if (!node || node.kind !== "file") return {};
+  try {
+    const parsed = JSON.parse(node.content.toString("utf8"));
+    return parsed && typeof parsed.files === "object" && parsed.files ? parsed.files : {};
+  } catch {
+    return {};
+  }
+}
 
 function slash(path) {
   return path.split("\\").join("/");
@@ -168,6 +219,9 @@ function collectTarget(cwd, desired, configRel, manifestRel) {
   for (const rel of MANAGED_FILES) scanTargetTree(cwd, rel, nodes, true);
   scanTargetTree(cwd, configRel, nodes, true);
   if (manifestRel) scanTargetTree(cwd, manifestRel, nodes, true);
+  for (const rel of desired.files.keys()) {
+    if (!nodes.has(rel) && existsSync(fsPath(cwd, rel))) scanTargetTree(cwd, rel, nodes, true);
+  }
   for (const rel of desired.dirs) {
     if (!nodes.has(rel)) scanTargetTree(cwd, rel, nodes, false);
   }
@@ -304,10 +358,31 @@ export function runUpdate(cwd, source, args, io) {
     const nextConfig = { ...cfg, keel_version: targetVersion };
     addDesiredFile(desired, configRel, JSON.stringify(nextConfig, null, 2) + "\n");
 
-    // CHG-011: no legacy RES manifest any more (DEC-176/181 superseded).
-    const current = collectTarget(cwd, desired, configRel, null);
+    // CHG-016: AGENTS.md keel section follows the installer; project text outside the markers stays.
+    const agents = mergedAgentsMd(source, cwd);
+    if (agents.content !== undefined) addDesiredFile(desired, "AGENTS.md", agents.content);
+    // CHG-016: the install manifest (hashes of every managed file) is itself a managed file.
+    const manifestRel = `${loaded.records}/installed.json`;
+    addDesiredFile(desired, manifestRel, manifestFor(targetVersion, desired));
+    const current = collectTarget(cwd, desired, configRel, manifestRel);
     const operations = makeOperations(desired, current);
-    const preview = formatPreview(sourceVersion, targetVersion, operations);
+    // A managed file that differs from what the last update installed is a local patch:
+    // say so before it is overwritten (zhaoxi patched ctx.ts and reviewloop.ts twice).
+    const installed = readManifest(current.get(manifestRel));
+    for (const op of operations) {
+      if (op.action !== "overwrite" || !installed[op.path]) continue;
+      const have = current.get(op.path);
+      if (have && have.kind === "file" && sha256Hex(have.content) !== installed[op.path]) op.localPatch = true;
+    }
+    let preview = formatPreview(sourceVersion, targetVersion, operations);
+    for (const op of operations) {
+      if (!op.localPatch) continue;
+      preview = preview.replace(
+        `OVERWRITE ${op.path}`,
+        `OVERWRITE ${op.path}  (LOCAL PATCH: differs from the installed copy — your edit is lost on apply; copy it out or file an ISS for keel)`,
+      );
+    }
+    if (agents.note) preview = preview.replace("Proceed? [y/N] ", `note: ${agents.note}\nProceed? [y/N] `);
     if (typeof io?.emitUpdatePreview === "function") io.emitUpdatePreview(preview);
     // ISS-069: an agent session has no terminal to type y into; --yes is the audited way
     // to say it. A piped "y" still does not count (REQ-025/AC-7 keeps stray input out).

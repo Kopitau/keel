@@ -15,10 +15,11 @@ F11. Current requirements and confirmed plans are immutable (C-63/C-24).
 
 1. `node tools/gate/gate.ts new chg <title>`.
 2. Fill: motive → add/modify/delete per item → impact (use `gate trace`) → who must re-test.
-3. User approves (APR, human identity).
+3. User approves (APR on their verbatim words, DEC-190).
 4. Write a **new complete** `requirements/vN+1.md` and/or `plan/overview-vN+1.md` and feature `plan/vN+1.md`. Front matter: replaces, change id, summary. Never patch the old file (C-24/C-66).
 5. `node tools/gate/gate.ts index`.
-6. Mark affected DECs for review; invalidate evidence (`gate verify` will rewrite). Tree-hash mismatch is expected until re-verify (C-65/C-33).
+6. Mark affected DECs for review. Records never move the evidence tree (DEC-192), so verify stays fresh; X-trace reads the new baseline live.
+7. A plan-level change — a new requirements or overview version — is versioned **on the trunk** (or its own `keel/CHG-nnn` branch), never inside a feature worktree; approve it there, then the worktree rebases onto it (DEC-193). Until it is approved, a draft plan that cites new requirements only warns in X-trace; ids are allocated across all worktrees and `keel/*` branches, so nothing collides at merge (CHG-016).
 
 Pure wording with **unchanged acceptance meaning** may be a clarification version (C-67). If the GWT meaning moved, it is not a clarification.
 

@@ -60,7 +60,7 @@ test("REQ-017/AC-5 C-105 Keel-Precommit skipped is a bypass finding", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-017/AC-4 [proxy:GitHub Actions six-grid run evidence not yet recorded] local workflow dropped verify is a gap", () => {
+test("REQ-017/AC-4 [proxy:F24 GitHub Actions six-grid run evidence not yet recorded] local workflow dropped verify is a gap", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-w6-ci-"));
   mkdirSync(join(dir, ".github", "workflows"), { recursive: true });
   writeFileSync(join(dir, ".github", "workflows", "gate.yml"), "name: x\nrun: echo hi\n", "utf8");

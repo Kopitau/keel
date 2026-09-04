@@ -47,3 +47,5 @@ REQ entries land **before** any RES record is written. Research aimed at require
 ## Baseline
 
 One nod on the whole requirements file (C-06). Large/new work: a **different** fresh-context agent — one that did not run this interview — hunts gaps first (missing items, contradictions, ambiguities, verification arrays). Its findings and their disposition are written into the requirements file itself, in a section right after `未决问题`; no separate file, nothing machine-checked (CHG-011). Then the user's one nod → APR (human identity).
+
+Gap hunters (C-06) return findings; the main context is the only writer of the requirements file — two writers on one file lose edits (CHG-016).

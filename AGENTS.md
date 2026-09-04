@@ -1,3 +1,4 @@
+<!-- keel:begin -->
 # keel
 
 keel is a repo-local process layer: numbered Chinese records, English skills, one stdlib-free gate, thin platform bridges. It does not orchestrate the model and does not bind a vendor.
@@ -42,6 +43,7 @@ Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gat
 - After the plan is confirmed the loop is autonomous (DEC-183): implement → test → record → compress the worklog into `summary.md` → next frontier feature. One plan-level review at the end. The reviewer answers three questions — standards and maintainability, implemented, functional tests written and passing — from the code and the evidence; it does not fuzz, probe or mutate (DEC-191). Stop only for C-21, a fused review, or acceptance.
 - Freezing binds semantics (CHG-011): approvals hash the body; metadata edits are free, a typo fix cites the APR in the worklog, a meaning change is a new version + re-approval.
 - The gate re-hashes every approved artifact (drift = FAIL unless the worklog cites the APR), a current baseline that says confirmed must be APR-bound, and an acceptance APR carries the verify snapshot (DEC-185/186/187, CHG-014).
+- Records never move the evidence tree (DEC-192): editing a plan, decision or worklog does not stale verify. A plan-level change is versioned on the trunk (DEC-193). Record ids are allocated across worktrees and `keel/*` branches; a draft plan that cites unbaselined requirements warns, never blocks (CHG-016).
 
 ## Skill catalog (bodies in `.agents/skills/k-*/SKILL.md`; Claude mirror via `gate sync`)
 
@@ -64,3 +66,4 @@ Tier is `enforcement_tier` in the config (this repo: `github`, CODEOWNERS on). O
 - Hash raw disk bytes (DEC-144).
 - Mark an APR `approved` without the user's verbatim words in `delegated:` (DEC-190). Who commits it is not a rule; the words are.
 - Add runtime npm dependencies. New **dev** dependencies need a DEC (DEC-154).
+<!-- keel:end -->

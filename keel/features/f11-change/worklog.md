@@ -38,3 +38,7 @@
 ## 2026-09-03（需求 v7 确认）
 
 - CHG-015 由用户 2026-09-02「A 可以 B 废掉 C 现在升级」批准，需求 v7 文本由用户 2026-09-03「批准V7」批准；APR-007 绑定两者正文哈希，v7 `status: confirmed`，`requirements/INDEX.md` current → v7.md；v6 冻结不改。提交按 DEC-190 由 agent 身份完成。
+
+## 2026-09-04（CHG-016 / DEC-193）
+
+- CHG-016 由用户原话批准；DEC-193 方案级变更在主干版本化（k-change 第 7 步）；需求 v8 proposed 待 APR-008。

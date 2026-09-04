@@ -64,8 +64,7 @@
     ],
     "ci": [
       "linux"
-    ],
-    "deepseek_harness_windows": "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001)."
+    ]
   },
   "optional": {
     "no_mistakes": false,

@@ -63,7 +63,8 @@ function mergeFixture(): { root: string; writeFreshEvidence: () => void } {
 
 test("REQ-008/AC-1 G-merge requires approved APR fresh tree-bound evidence green trace and no open issues", () => {
   const fx = mergeFixture();
-  assert.match(line(runCheck(makeCtx(fx.root), []).stdout, "G-merge"), /^FAIL.*evidence/);
+  // CHG-016: nothing built yet (no claim, summary or verify run) → the lane is not judged
+  assert.match(line(runCheck(makeCtx(fx.root), []).stdout, "G-merge"), /^SKIP.*nothing built/);
   fx.writeFreshEvidence();
   assert.match(line(runCheck(makeCtx(fx.root), []).stdout, "G-merge"), /^PASS/);
   writeFileSync(join(fx.root, "keel", "issues", "ISS-001-x.md"), "---\nid: ISS-001\nstatus: open\n---\n", "utf8");

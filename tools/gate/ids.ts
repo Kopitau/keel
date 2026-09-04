@@ -1,4 +1,5 @@
-import { basename, join } from "node:path";
+import { basename, join, relative } from "node:path";
+import { git } from "./git.ts";
 import { existsSync, readdirSync } from "node:fs";
 import type { Ctx } from "./ctx.ts";
 import { sha256Normalized } from "./hash.ts";
@@ -44,9 +45,53 @@ export function listNumbers(ctx: Ctx, kind: Kind): number[] {
   return nums;
 }
 
-export function nextNumber(ctx: Ctx, kind: Kind): number {
+function recordsRel(ctx: Ctx): string {
+  return relative(ctx.root, ctx.records).split("\\").join("/") || "keel";
+}
+
+/**
+ * CHG-016: numbers already taken anywhere — this tree, every other worktree on disk
+ * (their uncommitted records included) and every `keel/*` branch. Two worktrees that
+ * each allocated DEC-021 / APR-006 / ISS-032 collided at merge in zhaoxi (DEC-033).
+ */
+export function listNumbersEverywhere(ctx: Ctx, kind: Kind): number[] {
   const nums = listNumbers(ctx, kind);
+  const re = KIND_RE[kind];
+  const dirRel = `${recordsRel(ctx)}/${KIND_DIR[kind]}`;
+  const take = (name: string): void => {
+    const m = re.exec(name);
+    if (m) nums.push(Number.parseInt(m[1] ?? "0", 10));
+  };
+  const worktrees = git(ctx, ["worktree", "list", "--porcelain"]).stdout;
+  for (const line of worktrees.split(/\r?\n/)) {
+    const m = line.match(/^worktree (.+)$/);
+    if (!m) continue;
+    const dir = join(m[1]?.trim() ?? "", ...dirRel.split("/"));
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) take(name);
+  }
+  const refs = git(ctx, ["for-each-ref", "--format=%(refname:short)", "refs/heads/keel/"]).stdout;
+  for (const ref of refs.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)) {
+    const ls = git(ctx, ["ls-tree", "--name-only", ref, `${dirRel}/`]).stdout;
+    for (const p of ls.split(/\r?\n/)) take(basename(p.trim()));
+  }
+  return nums;
+}
+
+export function nextNumber(ctx: Ctx, kind: Kind): number {
+  const nums = listNumbersEverywhere(ctx, kind);
   return nums.length === 0 ? 1 : Math.max(...nums) + 1;
+}
+
+/** CHG-016: ids present more than once in this tree (a merge that kept both sides). */
+export function duplicateRecordIds(ctx: Ctx): string[] {
+  const out: string[] = [];
+  for (const kind of ["dec", "res", "iss", "chg", "apr"] as Kind[]) {
+    const seen = new Map<number, number>();
+    for (const n of listNumbers(ctx, kind)) seen.set(n, (seen.get(n) ?? 0) + 1);
+    for (const [n, c] of seen) if (c > 1) out.push(`${kind.toUpperCase()}-${pad3(n)}`);
+  }
+  return out.sort();
 }
 
 export function pad3(n: number): string {
@@ -63,8 +108,9 @@ export function asciiSlug(title: string, fallback: string): string {
     .replace(/[\s_]+/g, "-")
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-{2,}/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40);
+    // CHG-016: cut first, then trim — a slice used to leave "...-withdrawal-.md".
+    .slice(0, 40)
+    .replace(/^-|-$/g, "");
   if (s) return s;
   return `${fallback}-${sha256Normalized(title).slice(0, 8)}`;
 }

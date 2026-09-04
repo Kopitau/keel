@@ -153,3 +153,7 @@
 ## 2026-09-01（评审第 1 轮：ISS-064 / ISS-066）
 
 - 工件路径为目录时 `gate check --quick` 不再崩（按 missing）；交互式提交的空消息给主题预留首行（ISS-058 复发）。见 F7 worklog 同日节。
+
+## 2026-09-04（CHG-016：新项目门禁口径）
+
+- G-merge 在无认领 / 无 summary / 无 verify.json 时 SKIP（`anythingBuilt`）；G-plan 对带 REQ-000 的计划 WARN（`templatePlans`）；X-trace 草稿引用 WARN；`confirmedReqCount` 或文件头 confirmed 都算基线已取。证据：REQ-026/AC-5、REQ-006/AC-11。

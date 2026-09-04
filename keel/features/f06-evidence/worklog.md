@@ -87,3 +87,7 @@
 ## 2026-09-02（CHG-015：证据 JSON 带 feature_coverage）
 
 - `verify.ts` 把 REQ-006/AC-10 的按功能行写进 verify.json（`feature_coverage`），pack 的 `evidence` 随之带上，评审者第三问直接读；`evidenceGaps` 的评审判定改为"检查命令退出 0 = 已清"（DEC-191）。证据：`tests/chg015-review-three-questions.test.ts`（REQ-006/AC-10）。
+
+## 2026-09-04（CHG-016 / DEC-192：证据树只算代码；草稿计划只警告；替身须有解除条件）
+
+- `git.ts`：`gitWriteTree` 去掉整个记录目录再加回 `config.json`；`gitDirty` 同理（ISS-070 的例外被覆盖）。`trace.ts`：`claimPlanFiles` 取有 APR 绑定的最高计划版本；`draftClaimedReqs` 单列基线外的 REQ（REQ-000 除外）；`traceWarnings` 报无解除条件的替身。证据：`tests/chg016-audit-round2.test.ts`（REQ-006/AC-11、AC-12、AC-13）。

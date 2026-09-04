@@ -65,8 +65,6 @@ export function buildCleanConfig(opts) {
       os_matrix: ["windows", "macos", "linux"],
       development: ["windows", "macos"],
       ci: ["linux"],
-      deepseek_harness_windows:
-        "WSL required for its Python SDK/PTY (C-96). Files are readable on Windows. macOS: dsh fully available (CHG-001).",
     },
     optional: { no_mistakes: false, recorder_medium_for_longform: true },
   };
@@ -98,6 +96,10 @@ export function runInit(opts) {
     return fail("keel/config.json already exists; use k-change / k-impl, not keel init\n");
   }
   const notes = [];
+  // CHG-016: gate approve refuses without a named human; say it now, not at the first APR.
+  if (!(opts.humanName && opts.humanEmail)) {
+    notes.push('identities.humans is empty — gate approve will refuse until a human is named: keel init --human "Name <email>", or edit keel/config.json');
+  }
   const legacy = looksLikeLegacyFramework(cwd);
   if (legacy.length > 0) {
     notes.push("legacy traces " + legacy.join(", ") + ": 迁移旧记录请用 k-migrate（F22）");

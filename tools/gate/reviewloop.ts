@@ -78,6 +78,8 @@ export type LoopState = {
   deferred: string[];
   /** Blocking findings whose probe could not execute at all (ISS-054): they hold the loop in_review. */
   probe_errors: string[];
+  /** CHG-016 / ISS-055: every active feature had its summary when this state was written. Records no longer move the tree (DEC-192), so completion is tracked here. */
+  plan_complete?: boolean;
   iss_fp: { [iss: string]: string };
   rounds_on: { [fp: string]: number };
   fuse_threshold: number;
@@ -248,6 +250,27 @@ export function findingFingerprint(f: Finding): string {
   return sha256Normalized(`${f.title}\n${f.repro}`).slice(0, 16);
 }
 
+/** CHG-016: the feature whose newest plan claims `req` (F6 for REQ-060), or "". */
+export function ownerFeatureOf(ctx: Ctx, req: string): string {
+  const feats = join(ctx.records, "features");
+  if (!req || !existsSync(feats)) return "";
+  for (const name of readdirSync(feats).sort()) {
+    const planDir = join(feats, name, "plan");
+    if (!existsSync(planDir)) continue;
+    const files = readdirSync(planDir).filter((p) => p.endsWith(".md")).sort();
+    const latest = files[files.length - 1];
+    if (!latest) continue;
+    const text = readFileSync(join(planDir, latest), "utf8");
+    const reqLine = /^req:\s*(.+)$/m.exec(text)?.[1] ?? "";
+    if (!reqLine.includes(req)) continue;
+    const fid = /^feature:\s*(F\d+)/m.exec(text)?.[1];
+    if (fid) return fid;
+    const m = name.match(/^f0*(\d+)-/);
+    if (m) return `F${m[1]}`;
+  }
+  return "";
+}
+
 function findIssByFingerprint(ctx: Ctx, fp: string): string | null {
   for (const file of mdFiles(join(ctx.records, "issues"), "ISS-")) {
     const { attrs } = parseFrontmatter(readFileSync(file, "utf8"));
@@ -299,6 +322,7 @@ function formatState(state: LoopState): string {
     `blocking_iss: ${JSON.stringify(state.blocking_iss ?? [])}`,
     `advisory: ${JSON.stringify(state.advisory ?? [])}`,
     `deferred: ${JSON.stringify(state.deferred ?? [])}`,
+    `plan_complete: ${state.plan_complete === true}`,
     `probe_errors: ${JSON.stringify(state.probe_errors ?? [])}`,
     `iss_fp: ${JSON.stringify(state.iss_fp ?? {})}`,
     `rounds_on: ${JSON.stringify(state.rounds_on ?? {})}`,
@@ -334,6 +358,7 @@ export function readLoopState(ctx: Ctx): LoopState | null {
       advisory: j<string[]>("advisory", []),
       deferred: j<string[]>("deferred", []),
       probe_errors: j<string[]>("probe_errors", []),
+      ...(attrs.plan_complete !== undefined ? { plan_complete: attrs.plan_complete === "true" } : {}),
       iss_fp: j<{ [iss: string]: string }>("iss_fp", {}),
       rounds_on: j<{ [fp: string]: number }>("rounds_on", {}),
     };
@@ -344,6 +369,8 @@ export function readLoopState(ctx: Ctx): LoopState | null {
 
 /** Rewrites the front matter; the history body below it is never rewritten. */
 export function writeLoopState(ctx: Ctx, state: LoopState): void {
+  // CHG-016 / ISS-055: record whether the plan was complete at this write (DEC-192 keeps summaries out of the tree).
+  state = { ...state, plan_complete: planComplete(ctx) };
   mkdirSync(reviewDir(ctx), { recursive: true });
   const p = dispositionPath(ctx);
   let body = DISPOSITION_BODY;
@@ -504,7 +531,8 @@ export function fileFindings(
         note(`- blocking → ${existing}（同指纹已开）：${f.title}; ${probeCheck}`);
         continue;
       }
-      const created = runNew(ctx, ["iss", f.title]);
+      // CHG-016: the fingerprint names the file (a Chinese title used to become z-<sha8>).
+      const created = runNew(ctx, ["iss", f.title, "--slug", fp]);
       const m = (created.stdout || "").match(/created\s+(ISS-\d+[^\s]*)/);
       const fname = m?.[1];
       if (fname) {
@@ -514,8 +542,12 @@ export function fileFindings(
           body = body.replace(/fingerprint:\s*""/, `fingerprint: "${fp}"`);
           body = body.replace(/source:\s*""/, "source: review-loop");
           if (ac) body = body.replace(/\nac:\s*""/, `\nac: "${ac}"`);
+          // CHG-016: the criterion's owner feature is the ISS's feature (status counts open ISS per feature).
+          const owner = ac ? ownerFeatureOf(ctx, ac.split("/")[0] ?? "") : "";
+          if (owner) body = body.replace(/\nfeature:\s*""/, `\nfeature: "${owner}"`);
           if (f.recurrence_of) body = body.replace(/recurrence_of:\s*""/, `recurrence_of: "${f.recurrence_of}"`);
-          body = fillIssueSection(body, "现象", f.title);
+          // CHG-016: the finding's body is the 现象; the title alone said nothing new.
+          body = fillIssueSection(body, "现象", ((f.body ?? "").trim() || f.title).replace(/\s+/g, " ").slice(0, 2000));
           body = fillIssueSection(body, "影响", (f.impact ?? "").replace(/\s+/g, " ").slice(0, 2000));
           body = fillIssueSection(
             body,
@@ -531,7 +563,6 @@ export function fileFindings(
             `- probe_tree_hash: ${probeTree || "(none)"}\n` +
             `- probe_result: ${probeResult}\n` +
             `- probe_check: ${probeCheck}\n`;
-          if (f.body) body += `\n\n${f.body}\n`;
           writeFileSync(dest, body, "utf8");
         }
         const idMatch = fname.match(/^(ISS-\d+)/);
@@ -625,6 +656,13 @@ export function completionReviewGaps(ctx: Ctx): string[] {
   // work that finished it. Once every active feature has its summary, the review
   // has to have seen this tree.
   if (planComplete(ctx)) {
+    // DEC-192: summaries live outside the evidence tree, so "finished after the pass"
+    // is read from the flag the loop wrote, and code changes from the tree hash.
+    if (loop.plan_complete === false) {
+      return [
+        `plan implemented after the review passed (the pass was taken while features were still in progress); re-pack for a new round (REQ-027/ISS-055)`,
+      ];
+    }
     const tree = gitWriteTree(ctx);
     if (tree && loop.tree_hash !== tree) {
       return [
@@ -880,18 +918,109 @@ function isLockfile(path: string): boolean {
   return LOCKFILES.includes(basename(path.replace(/\\/g, "/")));
 }
 
-const PACK_EXCLUDES = [
-  "--",
-  ".",
-  ":(exclude)keel/review/disposition.md",
-  ":(exclude)keel/review/findings.md",
-  ":(exclude)keel/review/raw",
-  ":(exclude)keel/evidence",
-  ...LOCKFILES.map((name) => `:(exclude,glob)**/${name}`),
-  ...LOCKFILES.map((name) => `:(exclude)${name}`),
-];
+/** CHG-016: keel-managed files are not the product under review; the pack lists them by name only. */
+export const FRAMEWORK_PATHS = ["tools/gate", "tools/cli", ".agents/skills", ".claude/skills", ".githooks", "keel/templates", "keel/review/checklist.md"];
 
-function lockfileSummary(ctx: Ctx, paths: string[]): string {
+function frameworkPath(p: string): boolean {
+  const s = p.replace(/\\/g, "/");
+  return FRAMEWORK_PATHS.some((f) => s === f || s.startsWith(`${f}/`));
+}
+
+/** keel's own repository reviews its gate as product code (config `review.self_hosted`). */
+function selfHosted(ctx: Ctx): boolean {
+  const review = (ctx.config.review ?? {}) as { self_hosted?: unknown };
+  return review.self_hosted === true;
+}
+
+function packExcludes(ctx: Ctx): string[] {
+  return [
+    "--",
+    ".",
+    ":(exclude)keel/review/disposition.md",
+    ":(exclude)keel/review/findings.md",
+    ":(exclude)keel/review/raw",
+    ":(exclude)keel/evidence",
+    ...LOCKFILES.map((name) => `:(exclude,glob)**/${name}`),
+    ...LOCKFILES.map((name) => `:(exclude)${name}`),
+    ...(selfHosted(ctx) ? [] : FRAMEWORK_PATHS.map((p) => `:(exclude)${p}`)),
+  ];
+}
+
+/**
+ * CHG-016 (zhaoxi DEC-028): with config `review.lockfile_summary: "deltas"` a pnpm
+ * lockfile is summarised as the per-importer dependency changes since the base
+ * (added / removed / version moved) plus the package keys that came and went, so a
+ * same-version metadata swap is visible without shipping 160 KB of YAML.
+ */
+function pnpmImporterDeps(text: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  let inImporters = false;
+  let importer = "";
+  let group = "";
+  let dep = "";
+  for (const line of lines) {
+    if (/^\S/.test(line)) {
+      inImporters = line.startsWith("importers:");
+      continue;
+    }
+    if (!inImporters) continue;
+    let m = line.match(/^ {2}(\S[^:]*):\s*$/);
+    if (m) {
+      importer = m[1] ?? "";
+      continue;
+    }
+    m = line.match(/^ {4}([A-Za-z][A-Za-z0-9]*):\s*$/);
+    if (m) {
+      group = m[1] ?? "";
+      continue;
+    }
+    m = line.match(/^ {6}(\S[^:]*):\s*$/);
+    if (m) {
+      dep = m[1] ?? "";
+      continue;
+    }
+    m = line.match(/^ {8}version:\s*(\S.*)$/);
+    if (m && importer && group && dep) out.set(`${importer} | ${group} | ${dep}`, m[1] ?? "");
+  }
+  return out;
+}
+
+function pnpmPackageKeys(text: string): Set<string> {
+  const out = new Set<string>();
+  let inPackages = false;
+  for (const line of text.replace(/\r\n/g, "\n").split("\n")) {
+    if (/^\S/.test(line)) {
+      inPackages = line.startsWith("packages:") || line.startsWith("snapshots:");
+      continue;
+    }
+    if (!inPackages) continue;
+    const m = line.match(/^ {2}(\S[^:]*):\s*$/);
+    if (m) out.add(m[1] ?? "");
+  }
+  return out;
+}
+
+export function lockfileDeltas(before: string, after: string, cap = 120): string[] {
+  const rows: string[] = [];
+  const a = pnpmImporterDeps(before);
+  const b = pnpmImporterDeps(after);
+  for (const [k, v] of b) {
+    if (!a.has(k)) rows.push(`  + ${k}: ${v}`);
+    else if (a.get(k) !== v) rows.push(`  ~ ${k}: ${a.get(k)} -> ${v}`);
+  }
+  for (const [k, v] of a) if (!b.has(k)) rows.push(`  - ${k}: ${v}`);
+  const pa = pnpmPackageKeys(before);
+  const pb = pnpmPackageKeys(after);
+  for (const k of pb) if (!pa.has(k)) rows.push(`  + package ${k}`);
+  for (const k of pa) if (!pb.has(k)) rows.push(`  - package ${k}`);
+  if (rows.length > cap) return [...rows.slice(0, cap), `  … ${rows.length - cap} more`];
+  return rows;
+}
+
+function lockfileSummary(ctx: Ctx, paths: string[], base: string): string {
+  const review = (ctx.config.review ?? {}) as { lockfile_summary?: unknown };
+  const deltas = review.lockfile_summary === "deltas";
   const rows: string[] = [];
   for (const rel of paths) {
     const abs = join(ctx.root, rel);
@@ -901,18 +1030,22 @@ function lockfileSummary(ctx: Ctx, paths: string[]): string {
     }
     const text = readFileSync(abs, "utf8");
     rows.push(`- ${rel} sha256=${sha256Normalized(text).slice(0, 16)} lines=${text.split(/\r?\n/).length}`);
+    if (deltas && basename(rel) === "pnpm-lock.yaml" && base) {
+      const before = git(ctx, ["show", `${base}:${rel.replace(/\\/g, "/")}`]).stdout;
+      rows.push(...lockfileDeltas(before, text));
+    }
   }
   return rows.length > 0 ? `\n# lockfiles (bodies omitted, DEC-189):\n${rows.join("\n")}\n` : "";
 }
 
 export function baseDiff(ctx: Ctx, base: string): string {
-  const body = git(ctx, ["diff", "--diff-filter=d", "-U2", base, ...PACK_EXCLUDES]).stdout;
+  const body = git(ctx, ["diff", "--diff-filter=d", "-U2", base, ...packExcludes(ctx)]).stdout;
   // Untracked files are part of the working tree under review (a new test file not
   // yet `git add`ed must reach the reviewer): show each as a new file.
   const untracked = git(ctx, ["ls-files", "--others", "--exclude-standard"]).stdout
     .split(/\n/)
     .map((l) => l.trim())
-    .filter((p) => p && !LOOP_ARTIFACT_RE.test(p));
+    .filter((p) => p && !LOOP_ARTIFACT_RE.test(p) && (selfHosted(ctx) || !frameworkPath(p)));
   const added = untracked
     .filter((p) => !isLockfile(p))
     .map((p) => git(ctx, ["diff", "--no-index", "-U2", "--", "/dev/null", p]).stdout)
@@ -928,7 +1061,24 @@ export function baseDiff(ctx: Ctx, base: string): string {
     .map((l) => l.trim())
     .filter((p) => p && isLockfile(p));
   const locks = [...new Set([...changedLocks, ...untracked.filter(isLockfile)])];
-  return [body, added].filter(Boolean).join("\n") + tail + lockfileSummary(ctx, locks);
+  // CHG-016: framework files changed alongside the product are listed, not diffed —
+  // the reviewer's three questions are about the product (keel's own repo excepted).
+  let framework = "";
+  if (!selfHosted(ctx)) {
+    const changedFw = git(ctx, ["diff", "--name-only", base, "--", ...FRAMEWORK_PATHS]).stdout
+      .split(/\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const untrackedFw = git(ctx, ["ls-files", "--others", "--exclude-standard"]).stdout
+      .split(/\n/)
+      .map((l) => l.trim())
+      .filter((p) => p && frameworkPath(p));
+    const fw = [...new Set([...changedFw, ...untrackedFw])];
+    if (fw.length > 0) {
+      framework = `\n# framework files changed (keel-managed via keel update, not product code; bodies omitted, CHG-016):\n${fw.map((p) => `- ${p}`).join("\n")}\n`;
+    }
+  }
+  return [body, added].filter(Boolean).join("\n") + tail + lockfileSummary(ctx, locks, base) + framework;
 }
 
 /** The five C-39 inputs: diff since base, the current overview, requirements, evidence, worklog digest. */

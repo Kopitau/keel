@@ -119,3 +119,7 @@
 - 诊断：zhaoxi F6 工作树停在 0.9.0（每功能评审 + 攻击面）；zhaoxi DEC-013 每轮 160 次突变；keel 0.9.3 仍要求"实际构造边界输入运行"（REQ-028/AC-1）与"未修复树退出 0 的攻击探针"（DEC-182）。
 - 改动：`reviewloop.ts`——Finding 增 `ac` / `kind`；ingest 的凭据判定改为"`repro` 退出非 0 且输出含测试失败"或"`ac` 经 trace 无黑盒测试"，退出 0 / 无测试失败 / 已覆盖 → 待核实；clear 改为退出 0 才清、`ac` 型看 trace；`looksLikeTestFailure`、`acCoverage`；处置表行 `passed / still failing`。`keel/review/checklist.md` 新建，robustness.md / requirements.md 删除；k-review 重写；headless.md 契约同步；ISS 模板 `ac:`；AGENTS / CONTEXT 一句。
 - 证据：`tests/chg015-review-three-questions.test.ts` ×8（REQ-027/AC-4 ×3、AC-5、AC-12；DEC-191 失败标记；REQ-006/AC-10 feature_coverage；REQ-028/AC-3）；旧测试 chg008 / chg010-review-loop / chg011-plan-review / chg014-review-loop 按新约定改写（C-34: ref=DEC-191）。
+
+## 2026-09-04（CHG-016：评审包不含框架文件；锁文件增量；评审开单归功能）
+
+- `reviewloop.ts`：`FRAMEWORK_PATHS` 只列文件名（`review.self_hosted` 例外）；`review.lockfile_summary: deltas` 用 `lockfileDeltas` 出 importer / 依赖增量（zhaoxi DEC-028 收编）；开单用指纹做 slug、`ownerFeatureOf` 填 `feature:`、finding 正文进「现象」；`writeLoopState` 记 `plan_complete`，`completionReviewGaps` 据此判断「通过后才完成」（DEC-192 之后 summary 不动树）。证据：REQ-028/AC-4、REQ-010/AC-8；ISS-055 旧测试仍过。

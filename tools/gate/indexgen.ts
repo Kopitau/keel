@@ -3,6 +3,7 @@ import { basename, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
 import { ok, fail, type CmdResult } from "./result.ts";
+import { duplicateRecordIds } from "./ids.ts";
 
 export type CurrentRead = { file: string | null; error: string | null; count: number };
 
@@ -83,7 +84,21 @@ function versionedIndex(
   ].join("\n");
 }
 
+/** CHG-016: user-facing decision briefs live beside the decisions and are listed, not indexed as DEC. */
+function briefSection(ctx: Ctx): string {
+  const dir = join(ctx.records, "decisions");
+  if (!existsSync(dir)) return "";
+  const briefs = readdirSync(dir).filter((n) => n.startsWith("BRIEF-") && n.endsWith(".md")).sort();
+  if (briefs.length === 0) return "";
+  return `\n## briefs (待表态说明, keel/templates/BRIEF.md)\n\n${briefs.map((n) => `- \`${n}\``).join("\n")}\n`;
+}
+
 export function runIndex(ctx: Ctx): CmdResult {
+  // CHG-016: two files with one id (a merge that kept both sides) must not be indexed as if fine.
+  const dups = duplicateRecordIds(ctx);
+  if (dups.length > 0) {
+    return fail(`duplicate record ids: ${dups.join(", ")} — renumber one side (merge collision; gate new now allocates across worktrees and keel/* branches)\n`);
+  }
   try {
     for (const rel of [
       "decisions",
@@ -100,7 +115,7 @@ export function runIndex(ctx: Ctx): CmdResult {
     }
     writeIndex(
       join(ctx.records, "decisions", "INDEX.md"),
-      tableFor(ctx, "decisions", "DEC-", () => []),
+      tableFor(ctx, "decisions", "DEC-", () => []) + briefSection(ctx),
     );
     writeIndex(
       join(ctx.records, "research", "INDEX.md"),

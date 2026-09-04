@@ -24,3 +24,5 @@ Stale evidence (hash mismatch or non-zero exit) fails `X-evidence` / `G-done` / 
 ## Tests
 
 Black-box names carry `REQ-nnn/AC-i`; trace is per acceptance criterion (C-32, DEC-168). Deleting or skipping a test is no longer machine-checked (CHG-011): note the reason in the worklog — X-trace and the plan-level review will see the hole. Core new tests: red then green (C-35). No coverage or mutation gates (C-36).
+
+Only the configured `test_command` produces evidence; a script outside it is a demo, not proof. A `[proxy:…]` note must name what lands the real test — a feature (`F2 管道`), an ISS, a DEC or an interface id — and X-trace warns on a proxy without such a release condition (CHG-016). Records never move the evidence tree (DEC-192): editing a plan, decision or worklog does not stale verify.

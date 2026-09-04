@@ -27,6 +27,7 @@ declare module "node:fs" {
   };
   export function chmodSync(path: string, mode: number | string): void;
   export function rmSync(path: string, opts?: { recursive?: boolean; force?: boolean }): void;
+  export function utimesSync(path: string, atime: Date | number, mtime: Date | number): void;
   export function rmdirSync(path: string): void;
   export function mkdtempSync(prefix: string): string;
   export function cpSync(

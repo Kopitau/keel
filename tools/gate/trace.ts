@@ -4,6 +4,7 @@ import type { Ctx } from "./ctx.ts";
 import { readCurrent } from "./indexgen.ts";
 import { fail, ok, type CmdResult } from "./result.ts";
 import { listFiles, posixRel } from "./walk.ts";
+import { approvalBinding } from "./changechain.ts";
 
 export type TestInventory = { names: string[]; skipped: number };
 
@@ -189,6 +190,24 @@ function planReqs(text: string): string[] {
   return [...new Set((m?.[1] ?? "").match(/REQ-\d{3}/g) ?? [])];
 }
 
+/**
+ * CHG-016: which plan versions define a claimed feature's acceptance scope. The
+ * approved (APR-bound) version is the claim; a newer draft — a change in flight,
+ * such as zhaoxi's plan v3 written for CHG-002 while v2 was the approved one — must
+ * not redefine the scope before it is approved. With no bound version at all (early
+ * local-tier projects) every version counts, as before.
+ */
+export function claimPlanFiles(ctx: Ctx, featureDir: string): string[] {
+  const planDir = join(featureDir, "plan");
+  if (!existsSync(planDir)) return [];
+  const files = readdirSync(planDir)
+    .filter((p) => /^v\d+\.md$/.test(p))
+    .sort((a, b) => Number(a.slice(1, -3)) - Number(b.slice(1, -3)));
+  const bound = files.filter((p) => approvalBinding(ctx, posixRel(ctx.root, join(planDir, p))).boundBy.length > 0);
+  if (bound.length > 0) return [join(planDir, bound[bound.length - 1] ?? "")];
+  return files.map((p) => join(planDir, p));
+}
+
 /** Feature dirs that carry a summary.md: the completion claim (C-32 scope = 验收范围). */
 function claimedFeatures(ctx: Ctx): { name: string; reqs: string[] }[] {
   const feats = join(ctx.records, "features");
@@ -196,14 +215,10 @@ function claimedFeatures(ctx: Ctx): { name: string; reqs: string[] }[] {
   const out: { name: string; reqs: string[] }[] = [];
   for (const name of readdirSync(feats).sort()) {
     if (!existsSync(join(feats, name, "summary.md"))) continue;
-    const planDir = join(feats, name, "plan");
     const reqs: string[] = [];
-    if (existsSync(planDir)) {
-      for (const p of readdirSync(planDir)) {
-        if (!p.endsWith(".md")) continue;
-        for (const id of planReqs(readFileSync(join(planDir, p), "utf8"))) {
-          if (!reqs.includes(id)) reqs.push(id);
-        }
+    for (const p of claimPlanFiles(ctx, join(feats, name))) {
+      for (const id of planReqs(readFileSync(p, "utf8"))) {
+        if (!reqs.includes(id)) reqs.push(id);
       }
     }
     out.push({ name, reqs });
@@ -286,8 +301,11 @@ export function uncoveredClaimed(ctx: Ctx): string[] {
   const missing: string[] = claimedWithoutReq(ctx).map((f) => `${f}: summary.md but plan has no req:`);
   for (const id of claimed) {
     const row = rows.find((r) => r.req === id);
+    // CHG-016: an id the current baseline does not know is a draft reference (or a
+    // typo) — reported by draftClaimedReqs as a WARN, not as an uncovered AC. The
+    // scaffold's REQ-000 is never a draft: it means the plan was not written (ISS-044).
     if (!row) {
-      missing.push(id);
+      if (id === "REQ-000") missing.push(id);
       continue;
     }
     if (row.criteria > 0) {
@@ -304,17 +322,33 @@ export function uncoveredClaimed(ctx: Ctx): string[] {
  * coverage is certified); a white-box name carrying an AC marker is a naming
  * violation wherever it sits.
  */
-export function traceWarnings(ctx: Ctx, claimed: string[]): { proxies: string[]; whitebox: string[] } {
+/** CHG-016: claimed REQ ids the current requirements baseline does not contain. */
+export function draftClaimedReqs(ctx: Ctx): string[] {
+  const { rows } = buildTrace(ctx);
+  return claimedReqs(ctx).filter((id) => id !== "REQ-000" && !rows.some((r) => r.req === id));
+}
+
+/** A `[proxy:…]` note releases itself by naming what lands the real test (DEC-168; CHG-016). */
+const PROXY_RELEASE_RE = /\b(F\d+|REQ-\d+|ISS-\d+|DEC-\d+|CHG-\d+|I-\d+)\b/;
+
+export function traceWarnings(
+  ctx: Ctx,
+  claimed: string[],
+): { proxies: string[]; whitebox: string[]; proxyNoCondition: string[] } {
   const { rows } = buildTrace(ctx);
   const proxies: string[] = [];
   const whitebox: string[] = [];
+  const proxyNoCondition: string[] = [];
   for (const r of rows) {
     if (claimed.includes(r.req)) {
-      for (const p of r.proxyAc) proxies.push(`${r.req}/AC-${p.ac}${p.note ? ` [${p.note}]` : ""}`);
+      for (const p of r.proxyAc) {
+        proxies.push(`${r.req}/AC-${p.ac}${p.note ? ` [${p.note}]` : ""}`);
+        if (!PROXY_RELEASE_RE.test(p.note)) proxyNoCondition.push(`${r.req}/AC-${p.ac}`);
+      }
     }
     for (const w of r.whiteboxAc) whitebox.push(`${r.req}/AC-${w.ac} <- "${w.name}"`);
   }
-  return { proxies, whitebox: [...new Set(whitebox)] };
+  return { proxies, whitebox: [...new Set(whitebox)], proxyNoCondition };
 }
 
 /**

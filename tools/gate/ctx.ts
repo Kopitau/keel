@@ -17,5 +17,9 @@ export function makeCtx(root: string, identity?: Identity): Ctx {
   const name = typeof config.records_dir === "string" ? config.records_dir : "keel";
   const records = join(root, name);
   const cfg = records === guess ? config : loadConfig(records);
-  return { root, records, config: cfg, identity };
+  // CHG-016 (zhaoxi ISS-047): consumers compile this file under exactOptionalPropertyTypes —
+  // an absent property and an explicit undefined are different there.
+  const ctx: Ctx = { root, records, config: cfg };
+  if (identity !== undefined) ctx.identity = identity;
+  return ctx;
 }

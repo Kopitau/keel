@@ -15,6 +15,8 @@ Three questions, from the pack and the code. Read, check the evidence, run the p
 2. **Implemented** — the diff does what the plan's obligations and the REQ entries say, and nothing the plan forbids.
 3. **Functional tests written and passing** — every acceptance criterion in scope has a real black-box test (`REQ-nnn/AC-i` in the name, input only what the requirement names, assertion only what the AC promises); `feature_coverage` in the evidence lists black-box / proxy / missing per feature; skipped or deleted tests carry a worklog reason (C-34).
 
+Framework files (`tools/gate`, `tools/cli`, skills, hooks, `keel/templates`, the checklist) are keel's, maintained by `keel update`; the pack lists them by name only and they are outside the three questions — except in keel's own repository (`review.self_hosted`, CHG-016).
+
 **Blocking** is only: a function not implemented or contradicting its requirement; an AC with no black-box test or a failing one; code plainly unmaintainable. Everything else is advisory. Only what affects correctness or meeting the requirement (C-41). No edge-case fuzzing, no probe scripts, no mutation runs, no re-running the suite round after round.
 
 ## Products (only these two; both append-only)

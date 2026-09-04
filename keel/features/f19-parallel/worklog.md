@@ -30,3 +30,7 @@
 - zhaoxi 主干 F6 在工作树施工，主干上的 `claim.json` 单独让 verify 报脏，G-done / X-evidence 红、F0 的验收快照写不进。修复：`gitDirty` 排除 `<records>/features/*/claim.json`，`gitWriteTree` 从临时索引去掉同一路径（与证据、审批同一待遇）；真实改动与其它未跟踪文件照旧算脏。
 - 探针（DEC-182）：修复前树 a1675cdfb825… 上写入标记后 dirty=true 且树哈希改变（退出 0）；修复后退出 1。
 - 证据：`tests/iss070-claim-not-dirty.test.ts` ×2。
+
+## 2026-09-04（CHG-016：跨工作树编号；worktree rm）
+
+- `ids.ts` `listNumbersEverywhere`：并入其它工作树磁盘目录与 `keel/*` 分支树的最大号；`duplicateRecordIds` 让 `gate index` 拒绝重复编号（zhaoxi 合并撞 DEC-021 / APR-006 / ISS-032）。`worktree.ts` rm 自行重试 + prune（ISS-078）。证据：REQ-019/AC-7。

@@ -154,7 +154,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     stdout_tail_2kb: tail2kb(combined) ||
       `junit passed=${counts.passed} failed=${counts.failed} skipped=${counts.skipped}\n`,
     actor,
-    review: prev?.review,
+    ...(prev?.review ? { review: prev.review } : {}),
   };
   writeEvidence(ctx, ev);
   const lines = [

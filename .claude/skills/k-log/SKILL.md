@@ -26,3 +26,5 @@ Direct dependency or copied code → the `oss:` field of the RES that chose it: 
 An upstream review is read-only: date, upstream URL, old/new version or commit, diff, one conclusion (unchanged / watch / recommend research / recommend change). An update goes through CHG; never bump automatically (C-90).
 
 GPL/AGPL borrowing or modification needs a user DEC **before reuse**, recording license impact, options, and the user's words verbatim (C-92).
+
+`source:` says who found it — `self-check` (the implementer's own check of a feature; not a review), `review-loop` (the plan-level reviewer), `user`, `merge` (a conflict or id collision at merge), `gate` (a check caught it), `audit` (a framework audit of pilot sessions). Pick one of these (CHG-016).

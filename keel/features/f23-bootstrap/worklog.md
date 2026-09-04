@@ -90,3 +90,7 @@
 ## 2026-09-02（0.10.0：checklist.md 进管理清单）
 
 - `keel/review/checklist.md` 加入 `keel init`（layout INIT_COPY）与 `keel update`（MANAGED_FILES）；版本 0.10.0，`RELEASE-0.10.0.md`。两个试点与 zhaoxi F6 工作树用 `keel update --yes` 升级。
+
+## 2026-09-04（0.11.0：更新器管 AGENTS.md 段落与本地补丁）
+
+- `update.js`：AGENTS.md 只替换 `<!-- keel:begin/end -->` 之间；写 `keel/installed.json`；覆盖前标 LOCAL PATCH；`init.js` 去掉平台备注、人类身份为空时提示；keel 自身 AGENTS.md 加标记；tsconfig 开 `exactOptionalPropertyTypes`。版本 0.11.0，`RELEASE-0.11.0.md`。证据：REQ-025/AC-11、AC-12。

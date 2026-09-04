@@ -52,3 +52,7 @@
 ## 2026-09-02（CHG-015：ISS 凭据改为失败的测试）
 
 - ISS 模板前言加 `ac:`；「复现命令」说明改为会失败的测试或检查命令（缺口在时非 0 且输出含测试失败，修好后 0），或只填 `ac`；评审回路开 ISS 时写 `probe_result: failing-test | test-missing` 与 `probe_check`。REQ-010 的 ISS 内容条随 v7 改（DEC-191）。
+
+## 2026-09-04（CHG-016：文件名与来源）
+
+- `gate new --slug`；`asciiSlug` 先截断再去尾横线；ISS `source` 词表（self-check / review-loop / user / merge / gate / audit）。ISS-071～078 记本轮审计。证据：REQ-010/AC-7、AC-8。

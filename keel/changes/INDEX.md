@@ -1,7 +1,7 @@
 # changes index (generated)
 
 - generator: gate index
-- count: 15
+- count: 16
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -20,3 +20,4 @@
 | CHG-013 | CHG-013 评审去掉攻击面视角、不强制异构：空白上下文子代理即可 | approved | `CHG-013-review-no-attack-lens-no-mandatory-heterogeneity.md` |
 | CHG-014 | CHG-014 两个试点项目（zhaoxi / fmea-v3）审计回流：钩子、探测、证据、冻结件、评审回路、白名单 | approved | `CHG-014-audit-feedback-from-zhaoxi-and-fmea-v3-p.md` |
 | CHG-015 | CHG-015 评审只答三问：代码规范可维护、功能是否实现、功能测试是否写了且通过 | approved | `CHG-015-review-three-questions.md` |
+| CHG-016 | CHG-016 第二轮试点审计回流：草稿计划、跨工作树编号、AGENTS.md 随更新、本地补丁可见、新项目门禁口径、证据只算代码 | approved | `CHG-016-second-pilot-audit.md` |

@@ -4,6 +4,8 @@ import { join } from "node:path";
 import process from "node:process";
 import type { Ctx } from "./ctx.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
+import { approvalBinding, declaredStatusOf, declaresConfirmed } from "./changechain.ts";
+import { posixRel } from "./walk.ts";
 import { mdFiles } from "./walk.ts";
 import { ok, type CmdResult } from "./result.ts";
 import { liveClarifications } from "./check.ts";
@@ -17,6 +19,8 @@ import { planComplete } from "./reviewloop.ts";
 export type StatusShape = {
   hasBaseline: boolean;
   hasPlan: boolean;
+  /** CHG-016: the current requirements or overview is drafted (status proposed) but no approved APR binds it. */
+  unapprovedBaseline?: boolean;
   frontier: string[];
   blocked: Frontier["blocked"];
   /** Features with a claim.json and no summary — someone is on them (ISS-065). */
@@ -29,9 +33,26 @@ export type StatusShape = {
  * on. An empty project used to read "no unblocked feature left — plan-level review",
  * which a pilot's model took as "the plan is finished" before any baseline existed.
  */
+/** CHG-016: a current baseline file that says proposed and has no approved APR behind it. */
+function unapproved(ctx: Ctx, dir: string, file: string | null | undefined): boolean {
+  if (!file) return false;
+  const abs = join(ctx.records, dir, file);
+  if (!existsSync(abs)) return false;
+  const status = declaredStatusOf(readFileSync(abs, "utf8"));
+  if (!status || declaresConfirmed(status)) return false;
+  // Only a file that calls itself proposed / draft, in a project that records approvals
+  // (taotie's baseline sat like this for a day while `next:` said "start F1").
+  if (!/^(proposed|draft|提议|草稿)/i.test(status)) return false;
+  if (!existsSync(join(ctx.records, "approvals"))) return false;
+  return approvalBinding(ctx, posixRel(ctx.root, abs)).boundBy.length === 0;
+}
+
 export function nextLine(shape: StatusShape, handoff: string): string {
   if (!shape.hasBaseline) return "no baseline yet — run k-new (interview → research → decisions → unified plan)";
   if (!shape.hasPlan) return "requirements baselined, plan missing — finish k-new step 4 (unified plan + APR), then k-impl";
+  if (shape.unapprovedBaseline) {
+    return "requirements/plan drafted but not approved — finish k-new step 5 (APR on the user's words), then k-impl";
+  }
   if (shape.frontier.length > 0) return `start ${shape.frontier[0]} (frontier); then read ${handoff}`;
   if (shape.planDone) return `all features have summary.md — plan-level review (k-review), then acceptance (k-accept); read ${handoff}`;
   if (shape.claimed.length > 0) {
@@ -53,10 +74,15 @@ function humanLines(ctx: Ctx, shape: StatusShape, handoff: string): string[] {
     fails.length === 0
       ? `yes — quick check green${warns.length > 0 ? ` (${warns.length} warn)` : ""}`
       : `no — ${fails.map((l) => l.replace(/^FAIL /, "")).join("; ")}`;
-  const missing =
-    fails.length === 0 && warns.length === 0
-      ? "nothing"
-      : [...fails, ...warns].map((l) => l.replace(/^(FAIL|WARN) /, "")).join("; ");
+  // CHG-016: the proxy list is gate trace's job; here a count keeps the line readable.
+  const condense = (l: string): string =>
+    l
+      .replace(/^(FAIL|WARN) /, "")
+      .replace(/proxy coverage, WARN not PASS: ([^;]+)/, (_m, list: string) => `proxy coverage: ${list.split(", ").length} AC(s) are stand-ins (gate trace lists them)`);
+  const humans = ((ctx.config.identities ?? {}) as { humans?: unknown[] }).humans ?? [];
+  const humanNote = humans.length === 0 ? "humans: none in config identities.humans — gate approve will refuse (keel init --human)" : "";
+  const items = [...(humanNote ? [humanNote] : []), ...[...fails, ...warns].map(condense)];
+  const missing = items.length === 0 ? "nothing" : items.join("; ");
   return [`commit: ${commit}`, `missing: ${missing}`, `next: ${nextLine(shape, handoff)}`];
 }
 
@@ -139,6 +165,7 @@ export function runStatus(ctx: Ctx): CmdResult {
   const shape: StatusShape = {
     hasBaseline: Boolean(reqCurrent.file) && existsSync(join(ctx.records, "requirements", reqCurrent.file ?? "")),
     hasPlan: Boolean(planCurrent.file) && existsSync(join(ctx.records, "plan", planCurrent.file ?? "")),
+    unapprovedBaseline: unapproved(ctx, "requirements", reqCurrent.file) || unapproved(ctx, "plan", planCurrent.file),
     frontier: fr.frontier,
     blocked: fr.blocked,
     claimed: fr.claimed,

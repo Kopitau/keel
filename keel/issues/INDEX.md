@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 70
+- count: 78
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -75,3 +75,11 @@
 | ISS-068 | ISS-068 verify 把 junit 里第一个 `<testsuite>` 的 `tests=` 当成整场计数（zhaoxi 193 条只数到 5） | closed | `ISS-068-verify-counts-one-junit-suite-as-the-run.md` |
 | ISS-069 | ISS-069 `keel update` 只在交互终端里接受确认，agent 会话无法替人更新 | closed | `ISS-069-keel-update-needs-a-tty-to-say-yes.md` |
 | ISS-070 | ISS-070 只要有功能被认领，主干就永远"脏"：`claim.json` 被当成未提交改动 | closed | `ISS-070-a-claimed-feature-keeps-the-trunk-dirty.md` |
+| ISS-071 | ISS-071 追溯把未批准的计划草稿当成已认领范围，草稿引用新需求就报红、提交被拒 | closed | `ISS-071-draft-plan-version-blocks-commits.md` |
+| ISS-072 | ISS-072 并行工作树各自分配记录编号，合并时 DEC / APR / ISS 三组编号相撞 | closed | `ISS-072-record-ids-collide-across-worktrees.md` |
+| ISS-073 | ISS-073 keel update 不管项目根的 AGENTS.md，试点的规则文件停在初始化那天 | closed | `ISS-073-agents-md-frozen-at-init.md` |
+| ISS-074 | ISS-074 受管的门禁代码被试点本地修改（两个真 bug），下次更新会静默覆盖 | closed | `ISS-074-gate-files-patched-locally-and-lost.md` |
+| ISS-075 | ISS-075 新项目一批准基线，全量门禁就红、状态行提前说开工、模板计划也当作已规划 | closed | `ISS-075-fresh-project-verdicts.md` |
+| ISS-076 | ISS-076 中文标题的记录文件名退化成哈希，截断还会留下尾横线 | closed | `ISS-076-chinese-titles-become-hash-filenames.md` |
+| ISS-077 | ISS-077 评审回路开的问题单不归功能、「现象」只是标题复读 | closed | `ISS-077-review-iss-without-feature-or-body.md` |
+| ISS-078 | ISS-078 Windows 上 gate worktree rm 删不干净目录，残留至今 | closed | `ISS-078-worktree-rm-leaves-directory.md` |

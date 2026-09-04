@@ -1,7 +1,7 @@
 # approvals index (generated)
 
 - generator: gate index
-- count: 7
+- count: 8
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -12,3 +12,4 @@
 | APR-005 | APR-005 需求 v5 与统一规划 overview-v4 整体确认 | approved | `APR-005-requirements-v5-overview-v4.md` |
 | APR-006 | APR-006 CHG-012 Cursor 客户端 + CHG-013 评审去攻击面 + CHG-014 审计回流 + 需求 v6 | approved | `APR-006-chg-012-cursor-requirements-v6.md` |
 | APR-007 | APR-007 CHG-015（评审三问）+ 需求 v7 | approved | `APR-007-chg-015-requirements-v7.md` |
+| APR-008 | APR-008 CHG-016（第二轮试点审计）+ 需求 v8 | draft | `APR-008-chg-016-requirements-v8.md` |

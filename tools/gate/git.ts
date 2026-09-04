@@ -43,14 +43,16 @@ function recordsRel(ctx: Ctx): string {
   return relative(ctx.root, ctx.records).split("\\").join("/") || "keel";
 }
 
-/** Paths that never count as a change to the code (ISS-070): the claim marker
- *  `gate worktree` leaves on the trunk while a feature is being built. */
-function claimPathspec(ctx: Ctx): string {
-  return `:(exclude)${recordsRel(ctx)}/features/*/claim.json`;
-}
-
+/**
+ * DEC-192 (CHG-016): "dirty" means uncommitted CODE. The records dir — plans, research,
+ * decisions, worklogs, claims, approvals, review products — is written all day and
+ * never changes what the tests proved; only the test-command config inside it does.
+ */
 export function gitDirty(ctx: Ctx): boolean {
-  return git(ctx, ["status", "--porcelain", "--", ".", claimPathspec(ctx)]).stdout !== "";
+  const records = recordsRel(ctx);
+  const code = git(ctx, ["status", "--porcelain", "--", ".", `:(exclude)${records}`]).stdout;
+  const config = git(ctx, ["status", "--porcelain", "--", `${records}/config.json`]).stdout;
+  return code !== "" || config !== "";
 }
 
 /** Real git directory (worktree-safe). `.git` may be a file. */
@@ -125,18 +127,13 @@ export function gitWriteTree(ctx: Ctx): string {
     // hashes live in its body — so approving must not invalidate the verify it
     // freezes. Drop them from the temporary index whether tracked or not.
     const records = recordsRel(ctx);
-    const exclude = [
-      `${records}/evidence`,
-      `${records}/review/pack.json`,
-      `${records}/review/disposition.md`,
-      `${records}/review/findings.md`,
-      `${records}/review/raw`,
-      `${records}/approvals`,
-      // ISS-070: a claim marker is not code; releasing it must not stale the evidence.
-      `${records}/features/*/claim.json`,
-    ];
-    for (const rel of exclude) {
-      git(ctx, ["rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", rel], env);
+    // DEC-192 (CHG-016): the evidence tree is the code tree. The whole records dir is
+    // dropped from the temporary index — a plan, decision, worklog or approval edit
+    // never stales verify; X-trace reads the current baseline live anyway. The
+    // test-command config is the one record that does change what verify means.
+    git(ctx, ["rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", records], env);
+    if (existsSync(join(ctx.root, ...records.split("/"), "config.json"))) {
+      git(ctx, ["add", "-f", "--", `${records}/config.json`], env);
     }
     const r = git(ctx, ["write-tree"], env);
     return r.status === 0 ? r.stdout : "";

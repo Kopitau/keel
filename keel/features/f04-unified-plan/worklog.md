@@ -23,3 +23,7 @@
 
 - 进度：G-plan（quick）对当前 overview 的前言 `status`（含 confirmed / approved / 已确认 / 已批准）要求 approved APR 直接绑定且哈希匹配：无 APR → FAIL（DEC-186）；漂移 → WARN 带 `waivers`（`gate-warn: G-plan ref=APR-nnn`）。所有 approved APR 引用的 `plan/overview-vN.md` 与 `features/*/plan/vN.md` 也在 G-plan 里重算：缺失 FAIL、漂移 WARN→FAIL（DEC-185）。zhaoxi 那种"9 份计划原地改一周无告警"下次 pre-commit 就会红。
 - 证据：`tests/chg014-frozen-artifacts.test.ts` `REQ-004/AC-11`（功能计划原地改 → quick FAIL → waiver 后 WARN；overview 声明已确认而 APR 仍 draft → FAIL 并给出 DEC-186 指引）。
+
+## 2026-09-04（CHG-016：决策简报；k-new 在审批后收口）
+
+- `keel/templates/BRIEF.md`；`gate index` 在决策索引末尾列 BRIEF；k-new 第 5 步：审批提交后本轮结束，开工是用户的下一个决定（taotie 曾在审批后被自主回路直接推进实施）。证据：REQ-004/AC-11、AC-12。

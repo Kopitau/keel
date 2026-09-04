@@ -1,7 +1,7 @@
 # decisions index (generated)
 
 - generator: gate index
-- count: 191
+- count: 193
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -196,3 +196,5 @@
 | DEC-189 | 评审回路：recurrence_of 链共享同一熔断计数；pack 体积预算告警、lockfile 只留摘要、Finding 严格校验并存档原件 | confirmed | `DEC-189-review-loop-recurrence-fingerprints-shar.md` |
 | DEC-190 | 审批提交不再要求人类 git 身份：APR 里有用户原话即可，谁提交都行 | confirmed | `DEC-190-approval-commits-need-the-users-words-no.md` |
 | DEC-191 | 评审只答三问（规范可维护 / 功能实现 / 功能测试写了且通过）；阻塞凭据是失败的测试或缺测试的验收标准，不再是攻击探针 | confirmed | `DEC-191-review-three-questions-evidence-is-a-failing-test.md` |
+| DEC-192 | 证据的树哈希只算代码：记录目录（除 config.json）不进树哈希、不算脏 | confirmed | `DEC-192-evidence-tree-is-the-code-tree.md` |
+| DEC-193 | 方案级变更（新需求版本 / 新总览版本）在主干或独立分支版本化，不在功能工作树里做 | confirmed | `DEC-193-plan-level-change-on-the-trunk.md` |

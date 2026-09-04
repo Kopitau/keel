@@ -44,11 +44,17 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
     );
   }
   const kind = kindRaw as Kind;
-  const title = args.slice(1).join(" ").trim() || "untitled";
+  // CHG-016: `--slug <ascii>` names the file when the title is Chinese (the review
+  // loop passes the finding's fingerprint); without it a non-ASCII title fell back to z-<sha8>.
+  const rest = args.slice(1);
+  const si = rest.indexOf("--slug");
+  const slugOverride = si >= 0 ? (rest[si + 1] ?? "").trim() : "";
+  if (si >= 0) rest.splice(si, 2);
+  const title = rest.join(" ").trim() || "untitled";
   const n = nextNumber(ctx, kind);
   const date = today();
   if (kind === "feature") {
-    const slug = asciiSlug(title, "feature");
+    const slug = asciiSlug(slugOverride || title, "feature");
     const dirName = `f${pad2(n)}-${slug}`;
     const dir = join(ctx.records, "features", dirName);
     if (existsSync(dir)) return fail(`already exists: ${dir}\n`);
@@ -64,7 +70,7 @@ export function runNew(ctx: Ctx, args: string[]): CmdResult {
   }
   const prefix = kind.toUpperCase();
   const idFull = `${prefix}-${pad3(n)}`;
-  const slug = asciiSlug(title, "z");
+  const slug = asciiSlug(slugOverride || title, "z");
   const dirMap: { [k: string]: string } = {
     dec: "decisions",
     res: "research",

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { Ctx } from "./ctx.ts";
 import { git, gitIdentity } from "./git.ts";
@@ -34,8 +34,20 @@ export function runWorktree(ctx: Ctx, args: string[]): CmdResult {
   const claimPath = join(featureDir, "claim.json");
   if (sub === "rm") {
     const r = git(ctx, ["worktree", "remove", "--force", wt]);
-    if (r.status !== 0 && existsSync(wt)) {
-      return fail(`worktree rm failed: ${r.stderr || r.stdout}\n`);
+    if (existsSync(wt)) {
+      // CHG-016: Windows often keeps a handle on a just-written file; git gives up with
+      // "Directory not empty" and leaves the tree behind. Retry the removal ourselves.
+      for (let attempt = 0; attempt < 5 && existsSync(wt); attempt++) {
+        try {
+          rmSync(wt, { recursive: true, force: true });
+        } catch {
+          // try again
+        }
+      }
+      git(ctx, ["worktree", "prune"]);
+    }
+    if (existsSync(wt)) {
+      return fail(`worktree rm failed: ${r.stderr || r.stdout}\nleftover directory: ${wt} — close programs holding it, delete it, then run: git worktree prune\n`);
     }
     if (existsSync(claimPath)) unlinkSync(claimPath);
     return ok(`removed worktree ${wt}\nreleased claim F${n}\n`);

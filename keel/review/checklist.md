@@ -21,4 +21,5 @@
 - 不构造空 / 超长 / 非 ASCII / 极值输入去跑；
 - 不写攻击探针、不找攻击面；
 - 不做突变验证；
-- 不改代码、不改测试（C-39 / C-41）。
+- 不改代码、不改测试（C-39 / C-41）；
+- 不审 keel 自己的文件（`tools/gate`、`tools/cli`、技能、钩子、模板、本清单）——它们由 `keel update` 维护，pack 里只列文件名；keel 自身仓库除外（config `review.self_hosted`，CHG-016）。
