@@ -1,5 +1,5 @@
 interface:
   display_name: "k-decide"
-  short_description: "Use when starting k-decide, recording a technical decision, presenting options to the user, or writing a DEC file."
+  short_description: "Use when recording a consequential durable technical trade-off or an actual user decision."
 policy:
   allow_implicit_invocation: true

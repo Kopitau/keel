@@ -1,5 +1,5 @@
 interface:
   display_name: "k-retro"
-  short_description: "Use when starting k-retro, a feature just finished (tests green, evidence on disk), a summary must be written, OVERVIEW updated, or provisional decisions and lesson candidates closed."
+  short_description: "Use when summarizing a completed feature or meaningful iteration for future work."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

@@ -1,28 +1,29 @@
 ---
 name: k-handoff
-description: Use when starting k-handoff, ending a session, context is nearly full, or a feature just finished and keel/handoff.md must point the next context at the right files. Do not rely on platform chat transcripts.
+description: Use when ending a session or preserving active work across context loss. Do not let stale records override the current user request.
 ---
 
 # k-handoff
 
-F12. Records are the only handoff medium (C-73). The worklog is the process record; the handoff is a pointer (CHG-011).
+F12. Repo records provide portable continuity without requiring a platform session file. The live user request and relevant prior authorization remain valid.
 
-## Write `keel/handoff.md` — at most 10 lines
+## Write `keel/handoff.md`
 
-- Next step (one line, imperative).
-- Files to read, repository paths only: current overview, the feature plan + worklog (or its summary), open ISS if any.
-- One line of blocking questions, if any.
+Keep it short enough to scan, usually about ten lines:
 
-Nothing else: no narrative, no history — that lives in `worklog.md` / `summary.md`. Rewrite the file in place each time; it is a pointer, not a record. The reply that ends the session ends, like every round, with a plain-language wrap-up (what was done, where things stand, what is left) and a `下一步：` paragraph naming the same action the handoff names; ids only in parentheses after the sentence (REQ-012/AC-6).
+- Current goal and authorized scope, with any still-applicable user decision.
+- What was completed and the next in-scope action, or explicitly no remaining implementation.
+- Relevant files: current plan, worklog/summary, evidence and open issue if needed.
+- The exact blocker or missing decision, only when there is one.
 
-## When
+History belongs in the worklog/summary. The handoff is a living pointer; rewrite it when the state materially changes, not for every tool call. The closing reply and handoff must agree on the next action.
 
-Context nearly full, session end, or a feature finished (after compressing its worklog into `summary.md`). If you skip it, the next agent rebuilds from the worklogs (C-75).
+If a handoff is missing, the next agent rebuilds from the relevant worklogs and available task context; do not restart completed work or require a new authorization merely because the session changed.
 
-## Cross-harness recovery (C-73)
+## Recovery
 
-A new harness runs `node tools/gate/gate.ts status`, reads the handoff path it prints, then the current feature plan + worklog (or summary); never a platform session file. Record the drill as manual evidence in the feature worklog: harness name and version, date, the three paths read, the next step recovered, the tree hash.
+`gate status` → handoff → relevant plan + worklog/summary. `next:` describes structural repository state, not the user's intent or verified completion. Read `OVERVIEW.md` only when broader context is needed; do not bulk-load records.
 
-## Next session
+For an actual cross-harness recovery test, record the harness/version, date, paths read, recovered next step and tree hash in the feature worklog. Do not claim that test from merely checking this text.
 
-`gate status` → handoff → plan + worklog (C-27/C-72). Do not bulk-load `keel/` (C-120). The status `next:` line is the truth about the stage — `run k-new` (no baseline), `finish k-new step 4` (no plan), `start Fnn`, or `k-review then k-accept` — and the `keel:` line says whether a newer installer is waiting (`run keel update`).
+End a work-closing reply with `下一步：`, one useful action or no action needed. Do not manufacture a new approval question.

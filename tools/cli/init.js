@@ -66,7 +66,7 @@ export function buildCleanConfig(opts) {
       development: ["windows", "macos"],
       ci: ["linux"],
     },
-    optional: { no_mistakes: false, recorder_medium_for_longform: true },
+    optional: { no_mistakes: false, recorder_medium_for_longform: false },
   };
   return JSON.stringify(body, null, 2) + "\n";
 }
@@ -134,7 +134,7 @@ export function runInit(opts) {
   git(cwd, ["add", "-A"]);
   git(cwd, ["update-index", "--chmod=+x", "--"].concat(EXEC_REQUIRED));
   const chk = projectCheck(cwd);
-  notes.push("profiles.active is unset until the unified plan picks a test profile");
+  notes.push("profiles.active is unset; configure the actual project's test command before verification");
   const out = ["keel init " + (opts.name || basename(cwd))]
     .concat(notes.map(function (n) {
       return "note: " + n;

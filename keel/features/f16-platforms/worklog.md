@@ -1,5 +1,18 @@
 # worklog — F16 f16-platforms
 
+## 2026-09-05（CHG-017 / Astra 指令优化）
+
+- 用户目标：需求准确、功能有用、调研当前且成熟的方案、代码简洁、功能验证、方便迭代、说明通俗。范围授权只记录在 APR-009/CHG-017；需求 v9 与规划 v5 是 working，不虚构人工确认或验收。
+- 审阅与修改：RES-909 记录 16 类冲突。根 AGENTS 统一持续授权和澄清边界，16 技能按任务规模执行；去掉反复确认、阶段停工、强制 medium、问题配额与突变义务。旧 DESIGN/需求/计划保留；README/CONTEXT/设计 v2/模板对齐。
+- F12：status 的 next 改成结构导航，优先尊重已认领工作，不把旧 summary 缺失当作新任务；草稿提醒复用授权。
+- F16/F21/F23：普通技能允许自然发现；探测只检查合法 name/description，不强制重复技能名和英文套话；sync 生成镜像，默认不强制降档，无新依赖。
+- 测试义务变更（C-34）：更新 chg008-review、chg010-branch-policy/config/handoff/merge、chg011-plan-review/review-round2、chg014-docs/status/review-fixes、chg015-review-three-questions、chg016-audit-round2、dec168-test-kinds、dec170-openai-yaml、p2-rework、w1-skeleton 中锁定已被替换措辞的断言；保留这些文件的现有机器行为回归。文档检查只证明具体文档不变量，不冒充模型行为；REQ-004 收口测试由误标 AC-12 改正为 AC-13。
+- 验证过程：初轮 279 过、29 红，主要是旧措辞/旧版本/旧调用分类；定向回归随后 60 过、2 红（测试把 CLI 的绝对 handoff 路径误当相对路径），已修正该测试。新增发现/元数据配置与 CLI 范围导航回归；完整验证与独立审阅结果在后续条目记录。
+- 独立审阅：空白上下文 instruction_review 只读当前 diff、需求/规划、证据与日志摘要，检查六种实际任务情境；指出 REQ-026 状态措辞和评审把所有 AC 当黑盒两类残留，已对齐需求/清单/技能/测试。两次增量复核确认无未解决问题；不是旧方案 loop 已通过，也不是模型 live 行为实验。
+- F6 验证发现：ISS-080 固定时间戳回归稳定复现索引副本缓存问题，修前退出 1、修后退出 0；仅保留临时索引时间，用户暂存区不变。原有哈希断言未删除或放宽，独立增量审阅无新增问题。
+- 本轮功能证据：完整 gate verify 退出 0，312 过 / 0 失败，代码树 d4ab1e47cfed7a3f290cd998b9a9c5e1a1d43669。F12 的 CLI 导航、F16 的发现/分类/sync、F23 的安装更新、F6 的证据/哈希和既有评审/审批功能回归通过；文档检查仅说明一致性，未声明全部历史功能的验收都完成。
+- 补充检查：tsc、git diff --check、16 技能元数据/正文/镜像一致性与 README 本地链接均通过；npm pack --dry-run 成功。官方 quick_validate 缺本机 PyYAML，未为此安装依赖，使用已有 Node 元数据/同步测试复核。准备保存独立本地提交后记录干净树的正式证据。
+
 ## 2026-08-28（P2 / headless 配方结构）
 
 - 进度：`keel/review/headless.md` 覆盖 config 中五个 primary 与 Pi compatible；逐家绑定官方来源、命令、输入、输出、成功判据和 fail-closed 规则。

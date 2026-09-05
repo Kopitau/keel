@@ -99,9 +99,8 @@ export function skillTriggerGaps(root: string): string[] {
     }
     const { attrs } = parseFrontmatter(readFileSync(file, "utf8"));
     const desc = attrs.description ?? "";
-    if (!desc.includes(name)) gaps.push(`${name}: description lacks token ${name}`);
-    if (!/^use when\b/i.test(desc)) gaps.push(`${name}: description lacks Use when`);
-    if (!/\bdo not\b/i.test(desc)) gaps.push(`${name}: description lacks negative Do not`);
+    if (attrs.name !== name) gaps.push(`${name}: frontmatter name must match directory`);
+    if (!desc.trim()) gaps.push(`${name}: description is empty`);
   }
   return gaps;
 }

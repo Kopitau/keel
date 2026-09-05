@@ -5,7 +5,7 @@
   "records_dir": "keel",
   "enforcement_tier": "github",
   "wave": "R5-rework",
-  "keel_version": "0.11.0",
+  "keel_version": "0.12.0",
   "_comment_tier": "github | gitee | local. 2026-08-25 配置远端 github.com/Kopitau/keel（私有）后升到 github 档：分支保护 + required check + 审批目录 CODEOWNERS。权威执法在 CI 复算（C-45/C-104）。",
   "profiles": {
     "_comment": "Test profiles (C-126/C-128). Gate verify (W3) selects by touched paths.",
@@ -44,19 +44,19 @@
     }
   },
   "identities": {
-    "_comment": "Humans submit APR (C-107). Agent names must not appear as APR commit authors. Fill humans after git identity is known.",
+    "_comment": "APR records applicable user words and scope (DEC-190); the commit author does not prove approval.",
     "humans": [
       {
         "name": "kopit",
         "email": "wwillmee@gmail.com",
-        "note": "Human APR/CHG approver (C-107). 2026-08-24."
+        "note": "Configured human approver; use only with applicable actual user authorization."
       }
     ],
     "agents": [
       {
         "name": "keel-agent",
         "email": "agent@keel.local",
-        "note": "W1 local git identity for non-APR commits. Not allowed to land APR."
+        "note": "Agent commit identity; may record an APR backed by applicable user words."
       }
     ]
   },
@@ -88,7 +88,7 @@
   },
   "optional": {
     "no_mistakes": false,
-    "recorder_medium_for_longform": true
+    "recorder_medium_for_longform": false
   },
   "review": {
     "self_hosted": true,

@@ -181,7 +181,7 @@ test("REQ-026/AC-5 G-merge stays SKIP until something is built; status says the 
   assert.match(line(full, "G-plan"), /^WARN.*template plan.*f02-scaffold/, full);
   // the overview is still proposed and unbound → next: does not say "start F1"
   w(root, "keel/plan/overview-v1.md", "---\nplan_version: v1\nstatus: proposed\n---\n\n# p\n\n## 接口与耦合\n\n| ID | 从 → 到 |\n| I-01 | A → B |\n");
-  assert.match(status(root).split("\n").find((l) => l.startsWith("next: ")) ?? "", /^next: requirements\/plan drafted but not approved — finish k-new step 5/);
+  assert.match(status(root).split("\n").find((l) => l.startsWith("next: ")) ?? "", /^next: requirements\/plan drafted — .*reuse applicable authorization/);
   // a claim starts the merge lane
   w(root, "keel/features/f01-login/claim.json", "{}\n");
   assert.doesNotMatch(line(runCheck(ctx, []).stdout, "G-merge"), /^SKIP/);
@@ -330,18 +330,13 @@ test("REQ-025/AC-12 keel init no longer copies keel's platform note into the pro
 
 // ---------------------------------------------------------------- skills and docs
 
-test("REQ-004/AC-12 k-new ends its round at the approval, k-impl runs k-retro, k-change keeps plan-level changes on the trunk, k-log names ISS sources", () => {
+test("REQ-004/AC-13 documentary contract distinguishes plan-only delivery from authorized implementation", () => {
   const skill = (n: string) => readFileSync(join(repo, ".agents", "skills", n, "SKILL.md"), "utf8");
-  assert.match(skill("k-new"), /This round ends here/);
-  assert.match(skill("k-new"), /BRIEF/);
-  assert.match(skill("k-impl"), /k-retro/);
-  assert.match(skill("k-change"), /on the trunk/);
-  assert.match(skill("k-log"), /self-check/);
-  assert.match(skill("k-evidence"), /release condition/);
-  assert.match(skill("k-grill"), /only writer/);
-  assert.match(skill("k-review"), /Framework files/);
-  assert.match(readFileSync(join(repo, "keel", "review", "checklist.md"), "utf8"), /不审 keel 自己的文件/);
-  assert.match(readFileSync(join(repo, "CONTEXT.md"), "utf8"), /BRIEF/);
+  assert.match(skill("k-new"), /If the request is plan-only/);
+  assert.match(skill("k-new"), /continue with k-impl in this turn/);
+  assert.doesNotMatch(skill("k-new"), /This round ends here/);
+  assert.match(skill("k-change"), /Existing authorization applies/);
+  assert.match(skill("k-log"), /source:.*who found it/);
 });
 
 // ---------------------------------------------------------------- ISS-079: pre-push reuses fresh evidence

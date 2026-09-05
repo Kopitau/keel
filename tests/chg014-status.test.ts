@@ -51,27 +51,48 @@ function project(tag: string, stage: "empty" | "baseline" | "planned" | "done"):
   return root;
 }
 
-test("ISS-060 an empty project's next line says run k-new and never mentions a plan-level review", () => {
+test("ISS-060 an empty project's next line describes the missing baseline without assigning a new project", () => {
   const root = project("empty", "empty");
   const next = lineOf(status(root), "next");
-  assert.match(next, /^next: no baseline yet — run k-new/);
+  assert.match(next, /^next: no baseline yet — read /);
+  assert.ok(next.includes(join(root, "keel", "handoff.md")));
   assert.doesNotMatch(next, /review|acceptance/);
   rmSync(root, { recursive: true, force: true });
 });
 
-test("REQ-012/AC-5 next: says finish k-new step 4 with a baseline but no plan, start the frontier feature with a plan, and k-review then k-accept once every feature has its summary", () => {
+test("REQ-012/AC-5 next describes missing plans, frontier and summaries without inferring task authority or completion", () => {
   const baseline = project("baseline", "baseline");
-  assert.match(lineOf(status(baseline), "next"), /^next: requirements baselined, plan missing — finish k-new step 4/);
+  assert.match(lineOf(status(baseline), "next"), /^next: requirements present, plan missing — read /);
   rmSync(baseline, { recursive: true, force: true });
   const planned = project("planned", "planned");
-  assert.match(lineOf(status(planned), "next"), /^next: start F1 \(frontier\); then read /);
+  assert.match(lineOf(status(planned), "next"), /^next: recorded frontier: F1 — read /);
   rmSync(planned, { recursive: true, force: true });
   const done = project("done", "done");
-  assert.match(lineOf(status(done), "next"), /^next: all features have summary\.md — plan-level review \(k-review\), then acceptance \(k-accept\)/);
+  assert.match(lineOf(status(done), "next"), /^next: all features have summary\.md — read .*check evidence/);
   rmSync(done, { recursive: true, force: true });
   const handoff = "keel/handoff.md";
-  assert.match(nextLine({ hasBaseline: true, hasPlan: true, frontier: [], blocked: [{ id: "F2", by: ["F1"] }], claimed: [], planDone: false }, handoff), /waiting on blockers: F2 \(by F1\)/);
+  assert.match(nextLine({ hasBaseline: true, hasPlan: true, frontier: [], blocked: [{ id: "F2", by: ["F1"] }], claimed: [], planDone: false }, handoff), /recorded blockers: F2 \(by F1\)/);
   assert.match(nextLine({ hasBaseline: true, hasPlan: true, frontier: [], blocked: [], claimed: [], planDone: false }, handoff), /no feature planned yet/);
+});
+
+test("REQ-012/AC-5 CLI prioritizes existing claims over unrelated frontier and drafts do not demand repeat authorization", () => {
+  const root = project("scope", "planned");
+  try {
+    writeFileSync(join(root, "keel", "features", "f01-x", "claim.json"), "{}\n", "utf8");
+    mkdirSync(join(root, "keel", "features", "f02-y", "plan"), { recursive: true });
+    writeFileSync(join(root, "keel", "features", "f02-y", "plan", "v1.md"), "---\nfeature: F2\nslug: f02-y\nplan_version: v1\nreq: [REQ-001]\nblocked_by: []\n---\n# F2\n", "utf8");
+    const claimed = status(root);
+    assert.match(lineOf(claimed, "next"), /^next: claimed and in progress: F1/);
+    assert.doesNotMatch(lineOf(claimed, "next"), /start F2|release the claim/);
+    assert.match(claimed, /^frontier:.*F2/m);
+    mkdirSync(join(root, "keel", "approvals"));
+    const drafted = lineOf(status(root), "next");
+    assert.match(drafted, /requirements\/plan drafted/);
+    assert.match(drafted, /reuse applicable authorization/);
+    assert.doesNotMatch(drafted, /finish k-new step 5|must.*approv/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("REQ-025/AC-10 gate status prints the project keel_version next to the installer's and says run keel update when the installer is newer", () => {

@@ -162,7 +162,7 @@ test("ISS-064 an approved artifact path that is a directory is reported as missi
 test("ISS-065 next: names claimed features instead of 'no feature planned yet'", () => {
   const h = "keel/handoff.md";
   const base = { hasBaseline: true, hasPlan: true, frontier: [] as string[], blocked: [] as { id: string; by: string[] }[], planDone: false };
-  assert.match(nextLine({ ...base, claimed: ["F1"] }, h), /^claimed and in progress: F1 — continue in its worktree or release the claim/);
+  assert.match(nextLine({ ...base, claimed: ["F1"] }, h), /^claimed and in progress: F1 — read keel\/handoff.md/);
   assert.match(nextLine({ ...base, claimed: ["F1"], blocked: [{ id: "F2", by: ["F1"] }] }, h), /^claimed and in progress: F1/);
   assert.match(nextLine({ ...base, claimed: [] }, h), /no feature planned yet/);
   const root = project("iss065");

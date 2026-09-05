@@ -1,5 +1,5 @@
 interface:
   display_name: "k-impl"
-  short_description: "Use when starting k-impl, implementing a confirmed feature, claiming a feature branch, or entering the autonomous implementation zone."
+  short_description: "Use when implementing an authorized feature or change through functional verification."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

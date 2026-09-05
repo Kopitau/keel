@@ -1,69 +1,54 @@
 <!-- keel:begin -->
 # keel
 
-keel is a repo-local process layer: numbered Chinese records, English skills, one stdlib-free gate, thin platform bridges. It does not orchestrate the model and does not bind a vendor.
+keel keeps requirements, decisions and evidence beside the code. It is not a model orchestrator. Prefer capable-model judgment over procedural detail.
 
-## Session start (three jumps)
+## Working contract
 
-1. Run `tools/gate/gate.sh status` (macOS/Linux) or `tools/gate/gate.ps1 status` (Windows). Direct: `node tools/gate/gate.ts status`.
-2. Read the handoff path it prints (see CONTEXT.md for the records-dir name).
-3. Read the current feature plan + worklog named there.
+Serve these outcomes: anchor the user's need; identify the smallest useful feature; research a current, mature solution; write clear code; verify behavior; keep iteration and extension straightforward; explain the result plainly.
 
-Then follow its navigation. Read more if you need it. Do **not** bulk-load the records directory.
+- The current user request defines the task. Relevant earlier requirements and authorization remain valid until changed or revoked. A request to build, fix or optimize includes implementation and proportionate verification; a request only to review, diagnose or plan does not.
+- User instructions take precedence over this file and skills. Within repo guidance, this working contract resolves conflicts; current requirements and plans supply project-specific scope. Historical DESIGN / DEC / CHG text is context, not another active checklist. Do not restart a completed phase because an older record says to.
+- Continue through the authorized outcome, not just the next document. Routine, reversible implementation choices are yours. Do not ask again for permission already given, and do not treat skill discovery, a plan or an approval as permission for unrelated external actions.
+- Ask only when missing information materially changes the required behavior, scope, cost, data safety or an irreversible/external action and cannot be established from available evidence. Ask the smallest useful question, explain the consequence and recommend an answer when useful. Continue unaffected work.
+- A safe, reversible assumption may be stated and used. Never invent a user requirement, approval, research result, test result or acceptance.
 
-## Turn end
+## Start and navigate
 
-A reply that closes a round of work ends with a wrap-up a person can follow without reading code: (1) what was done and why it matters, in plain sentences; (2) where things stand now — what is green, what is red, what that means; (3) what is left or risky; (4) a final paragraph that starts with `下一步：` — the one action you recommend next and, if anything, the single decision only the user can make. Ids and gate names (REQ-nnn, DEC-nnn, ISS-nnn, X-apr, tree hashes) may follow a plain sentence in parentheses; they never replace it. Evidence is reported **by feature** — which feature's acceptance criteria now have passing black-box tests, which are stand-ins, which are missing (`gate trace` / `gate verify` print that summary) — never as a bare test count. Short is not the goal, clear is. Never end on a status dump, a table, or an open list of options (REQ-012/AC-6, CHG-014).
+At a new session or after losing context, run `tools/gate/gate.sh status` (Windows: `tools/gate/gate.ps1 status`; direct: `node tools/gate/gate.ts status`). Read its handoff, then only the current task's plan and worklog/summary. Do not repeat these reads every turn or bulk-load records.
 
-Node **≥22.18.0** is required (DEC-150); launchers refuse older versions. `gate check --quick` (4 checks, seconds) runs in the pre-commit hook; `gate check` (8 checks) before claiming done, review and merge; CI reruns it (C-100).
+`gate status` is an index, not a task assignment. A frontier or missing summary does not authorize starting historical work; reconcile it with the user's request and handoff. If navigation is stale, inspect the relevant code and correct the handoff.
 
-## Map
+## Work at the right scale
 
-| Need | Where |
-|---|---|
-| Terms | `CONTEXT.md` |
-| Config | records dir `/config.json` |
-| Skills (W4) | `.agents/skills/k-*/SKILL.md` — catalog below; bodies on demand |
-| Design norms | `DESIGN.md` §5 (confirmed). §8–9 are advisory. |
-| Gate | `tools/gate/gate.ts` (`status` `check` `new` `index` `trace` `sync` `worktree` `approve` `hash` `verify` `loop` `triggers` `review`) |
-| Platform limits | `tools/gate/platform-limits.md` |
-| Claude Code bridge | `CLAUDE.md` is exactly `@AGENTS.md` |
+- Small, clear changes need a short scope and a meaningful check, not a new project ceremony. Larger work needs a concise requirement → feature → technical approach → implementation plan. Reuse decisions and ask only for unresolved material choices; do not collect separate confirmations for each document.
+- Research consequential technology choices with current primary sources: compatibility, maintenance, production maturity, costs and relevant advances. Prefer the existing stack when it meets the need. Record significant findings in RES; a narrow check can live in the worklog. Do not manufacture alternatives or dependencies.
+- Implement → test → fix → record a useful summary → continue the next in-scope slice. Do not stop just because a skill, feature or planning phase ended; do not expand to unrelated frontier features.
+- Verify observable behavior at the public interface. Test the changed feature and relevant integration/failure paths; scale effort to risk. A wording change needs review, not a test per sentence. Use fresh passing evidence for an unchanged code tree; rerun after relevant changes.
+- Stop when the requested outcome is delivered, the user pauses/changes it, or a concrete blocker needs new information/authority. If blocked, report the exact missing piece and completed unaffected work. A failed attempt calls for a better diagnosis, not an automatic stop or a new permanent gate.
 
-## Confirmed rules (do not silently change)
+## Records and safety
 
-- Only user-confirmed content counts. Uncovered choices: recommend + rationale + alternative, confirm, write a DEC. Do not decide alone (C-03/C-15).
-- Confirmed artifacts are immutable. Iterate = new version file + reindex (C-24/C-63).
-- Intelligence and the feature come first. Do not save tokens by making either worse (C-69).
-- English: this file, skills, field names, script output. Chinese: record bodies, easy to read (C-124/C-09).
-- Gate = Node + TypeScript, run `.ts` directly, Node builtins only at runtime (DEC-149/151). Authority is CI rerun, not hooks (C-100).
-- Hashes run on normalized text: UTF-8, no BOM, LF (DEC-144). Paths use the runtime API (DEC-145).
-- Touching a confirmed interface, requirement boundary, unplanned dependency, or test obligation: stop and ask (C-21).
-- Done = evidence (command, exit, tree hash), not a claim (C-33). W3 lands verify.
-- One feature, one branch, one worktree (C-112). Overlapping files → serialize (C-114).
-- After the plan is confirmed the loop is autonomous (DEC-183): implement → test → record → compress the worklog into `summary.md` → next frontier feature. One plan-level review at the end. The reviewer answers three questions — standards and maintainability, implemented, functional tests written and passing — from the code and the evidence; it does not fuzz, probe or mutate (DEC-191). Stop only for C-21, a fused review, or acceptance.
-- Freezing binds semantics (CHG-011): approvals hash the body; metadata edits are free, a typo fix cites the APR in the worklog, a meaning change is a new version + re-approval.
-- The gate re-hashes every approved artifact (drift = FAIL unless the worklog cites the APR), a current baseline that says confirmed must be APR-bound, and an acceptance APR carries the verify snapshot (DEC-185/186/187, CHG-014).
-- Records never move the evidence tree (DEC-192): editing a plan, decision or worklog does not stale verify. A plan-level change is versioned on the trunk (DEC-193). Record ids are allocated across worktrees and `keel/*` branches; a draft plan that cites unbaselined requirements warns, never blocks (CHG-016).
+`CONTEXT.md` maps the records. Skills add task-specific mechanics, not additional authorization barriers.
 
-## Skill catalog (bodies in `.agents/skills/k-*/SKILL.md`; Claude mirror via `gate sync`)
+- Preserve confirmed history: a semantic change gets a new version and a short CHG; metadata and genuine typo fixes may be edited with the existing APR reference. An explicit request to change a rule authorizes that change's implementation, not a claim that the user has accepted its unseen result.
+- Record authorization once, in scope, using the user's verbatim words. Never mark a proposed artifact or an APR approved without applicable user authorization; formal acceptance and merge remain distinct actions, but already-authorized actions need no repeat question.
+- Write a DEC only for a consequential, durable trade-off; ordinary implementation choices need no decision file. Records explain work, not generate it. No issue, lesson, alternative or document quotas.
+- In parallel work, use one feature per branch/worktree and serialize overlapping files. Solo work may stay on the current branch; use isolation when it is useful. Preserve unrelated user changes.
+- For keel itself: Node ≥22.18.0; TypeScript runs directly with Node builtins only at runtime. No runtime npm dependencies. A new dev dependency must have a concrete need and a recorded trade-off; adding one is not a prerequisite for this workflow. OS matrix: Windows + macOS (dev) + Linux (CI).
+- Hash normalized UTF-8 / no BOM / LF. Approved-artifact integrity and actual functional evidence remain required. Records do not move the evidence tree. Do not hand-edit verification JSON or bypass a failing check.
 
-User: `k-init` `k-migrate` `k-new` `k-impl` `k-bugfix` `k-change` `k-review` `k-accept` `k-retro` `k-handoff` `k-status`
+## Skills and checks
 
-Model: `k-grill` `k-research` `k-decide` `k-evidence` `k-log`
+Load a matching skill when its workflow helps the task; do not chain the entire catalog. Implementation, research and verification can be selected naturally. Existing explicit-entry skills remain `k-init`, `k-migrate`, `k-accept`; invocation is not authorization.
 
-Load the matching skill before that work. Do not invent platform-private process commands.
+`gate check --quick` runs in pre-commit. Before delivering code, review or merge, use `gate verify` and the full `gate check`; reuse their passing evidence if the relevant tree and requirements are unchanged. CI reruns checks and is authoritative for CI claims. A local pass is not a claim that remote CI or manual acceptance happened.
 
-## Enforcement
+Other commands: `gate new`, `index`, `trace`, `sync`, `worktree`, `approve`, `hash`, `loop`, `review`. Do not invent platform-private process commands. Skills live in `.agents/skills/k-*/SKILL.md`; `gate sync` generates the Claude mirror. `CLAUDE.md` is exactly `@AGENTS.md`.
 
-L0 this file (advisory) → L1 platform hooks → L2 `.githooks/` → **L3 CI rerun of gate (authority)** → L4 human APR.
+## Hand off clearly
 
-Tier is `enforcement_tier` in the config (this repo: `github`, CODEOWNERS on). OS matrix: Windows + macOS (dev) + Linux (CI) (DEC-143). Label: deters mistakes, not malice (C-48/C-111).
+Explain what changed and why, which requested features have passing functional evidence, and what remains unverified or blocked. Separate implementation complete, local checks passed, remote delivery and user acceptance. Do not substitute gate names or a bare test count for meaning.
 
-## Do not
-
-- Auto-inject records into context (C-120).
-- Rewrite confirmed files in place.
-- Hash raw disk bytes (DEC-144).
-- Mark an APR `approved` without the user's verbatim words in `delegated:` (DEC-190). Who commits it is not a rule; the words are.
-- Add runtime npm dependencies. New **dev** dependencies need a DEC (DEC-154).
+A work-closing reply ends with a paragraph beginning `下一步：`: one useful next action, or state that no action is required. Ask for a decision only if it is genuinely still missing. Keep records in Chinese; skill bodies, field names and script output in English.
 <!-- keel:end -->

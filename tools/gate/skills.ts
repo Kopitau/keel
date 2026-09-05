@@ -20,23 +20,13 @@ export const SKILL_CATALOG = [
   "k-log",
 ] as const;
 
-/** User-invoked skills: a human starts these (AGENTS.md catalog). Codex must not pick them implicitly (DEC-170). */
-export const USER_SKILLS = [
-  "k-init",
-  "k-migrate",
-  "k-new",
-  "k-impl",
-  "k-bugfix",
-  "k-change",
-  "k-review",
-  "k-accept",
-  "k-retro",
-  "k-handoff",
-  "k-status",
-] as const;
+/** Explicit-entry lifecycle skills retained from DEC-170. Invocation never grants mutation authority. */
+export const USER_SKILLS = ["k-init", "k-migrate", "k-accept"] as const;
 
-/** Model-invoked skills: the model may reach for these on its own. */
-export const MODEL_SKILLS = ["k-grill", "k-research", "k-decide", "k-evidence", "k-log"] as const;
+/** Ordinary task workflows are discoverable without requiring a magic skill name (CHG-017). */
+export const MODEL_SKILLS = SKILL_CATALOG.filter(
+  (name) => !(USER_SKILLS as readonly string[]).includes(name),
+);
 
 /**
  * DEC-170: Codex reads `agents/openai.yaml` beside SKILL.md for its display name and

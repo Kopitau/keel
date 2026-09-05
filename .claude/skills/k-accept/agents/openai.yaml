@@ -1,5 +1,5 @@
 interface:
   display_name: "k-accept"
-  short_description: "Use when starting k-accept, presenting a feature for human acceptance, or drafting an APR after review."
+  short_description: "Use when presenting completed work for human acceptance or recording an actual approval."
 policy:
   allow_implicit_invocation: false

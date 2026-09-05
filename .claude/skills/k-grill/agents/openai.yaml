@@ -1,5 +1,5 @@
 interface:
   display_name: "k-grill"
-  short_description: "Use when starting k-grill, interviewing the user for requirements, asking clarifying questions with recommended answers, or writing REQ entries."
+  short_description: "Use when turning a user need into testable requirements or resolving consequential ambiguity."
 policy:
   allow_implicit_invocation: true

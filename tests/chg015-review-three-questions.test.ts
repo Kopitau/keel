@@ -158,7 +158,7 @@ test("REQ-006/AC-10 verify.json carries the per-feature coverage lines the revie
 
 test("REQ-028/AC-3 the checklist lists what the reviewer does not do, and the old lists are gone", () => {
   const checklist = readFileSync(join(repo, "keel", "review", "checklist.md"), "utf8");
-  for (const item of ["不构造", "不写攻击探针", "不做突变验证", "不改代码"]) assert.ok(checklist.includes(item), item);
+  for (const item of ["只检查与需求及实际风险相关", "不写攻击探针", "不做突变验证", "不改代码"]) assert.ok(checklist.includes(item), item);
   assert.equal(existsSync(join(repo, "keel", "review", "robustness.md")), false);
   assert.equal(existsSync(join(repo, "keel", "review", "requirements.md")), false);
 });

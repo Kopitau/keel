@@ -56,9 +56,9 @@ test("REQ-028/AC-1 the reviewer answers three questions from the checklist and r
   assert.equal(existsSync(join(repo, "keel", "review", "requirements.md")), false);
 });
 
-test("REQ-028/AC-2 blocking is only unimplemented, untested or unmaintainable, each with evidence", () => {
+test("REQ-028/AC-2 documentary checklist requires appropriate evidence rather than black-box tests for every artifact", () => {
   const checklist = readFileSync(join(repo, "keel", "review", "checklist.md"), "utf8");
-  for (const item of ["功能未实现", "没有黑盒测试", "明显不可维护", "`ac`", "`repro`"]) assert.ok(checklist.includes(item), item);
+  for (const item of ["功能未实现", "verification 类型", "auto", "machine-doc", "manual", "`ac`", "`repro`"]) assert.ok(checklist.includes(item), item);
   const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
   assert.match(skill, /\*\*Blocking\*\* is only/);
 });
@@ -66,7 +66,7 @@ test("REQ-028/AC-2 blocking is only unimplemented, untested or unmaintainable, e
 test("REQ-028/AC-3 every review keeps to C-41 findings, and there is no attack-surface lens any more", () => {
   const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
   assert.match(skill, /C-41/);
-  assert.match(skill, /No edge-case fuzzing, no probe scripts, no mutation runs/);
+  assert.match(skill, /No unsolicited fuzzing campaign/);
   assert.doesNotMatch(skill, /attack-surface\.md|heterogeneous|provider family/);
   assert.equal(readdirSync(join(repo, "keel", "review")).includes("attack-surface.md"), false);
 });

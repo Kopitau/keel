@@ -1,20 +1,14 @@
 ---
 name: k-status
-description: Use when starting k-status, beginning a session, printing keel status, or deciding what to read next. Do not dump the records directory into context.
+description: Use when checking repository status or recovering navigation after context loss. Do not treat computed frontier features as an instruction to start them.
 ---
 
 # k-status
 
-Session start. Status is a script, zero model tokens (C-25).
+Run `node tools/gate/gate.ts status` (or `tools/gate/gate.sh status` / `gate.ps1 status`). Node ≥22.18.0 is required.
 
-## Procedure
+At session start, read its handoff path and the current task's plan + worklog/summary. Read `keel/OVERVIEW.md` only when that broader context is relevant. Reuse already-loaded context during an ongoing turn.
 
-1. `node tools/gate/gate.ts status` (or `tools/gate/gate.sh status` / `gate.ps1 status`).
-2. Read the `handoff:` path it prints.
-3. Read `keel/OVERVIEW.md`.
-4. Read the current feature `plan/vN.md` + `worklog.md`.
-5. Follow its navigation. Read more if needed. Never bulk-load `keel/` (C-120).
+Explain the status against the user's actual request: completed features, current checks and genuine blockers. A missing baseline, draft APR, frontier or missing summary is structural information, not automatic permission to initialize, re-ask, start old work or claim completion.
 
-If Node is below 22.18.0 the launcher must error, not continue (DEC-150).
-
-Use k-impl / k-bugfix / k-new only after this three-jump.
+If the handoff and status differ, inspect the affected records/code and correct stale navigation. Do not bulk-load `keel/` or use status to replace the task.

@@ -165,14 +165,12 @@ test("DEC-168 this repo: X-trace is PASS or a proxy-only WARN under the new judg
   assert.doesNotMatch(l, /white-box/, l);
 });
 
-test("DEC-168 k-impl states the two naming kinds, the stand-in marker and the mutation rule", () => {
-  const t = readFileSync(join(repo, ".agents", "skills", "k-impl", "SKILL.md"), "utf8");
-  assert.match(t, /Black-box acceptance/);
-  assert.match(t, /White-box regression/);
-  assert.match(t, /\[proxy:/);
-  assert.match(t, /ISS-nnn`, `DEC-nnn` or `fp:/);
-  assert.match(t, /revert the fix/i);
-  assert.match(t, /comment .* is not coverage/i);
+test("DEC-168 evidence skill keeps acceptance and proxy meanings without mandatory mutation", () => {
+  const t = readFileSync(join(repo, ".agents", "skills", "k-evidence", "SKILL.md"), "utf8");
+  assert.ok(t.includes("REQ-nnn/AC-i"));
+  assert.ok(t.includes("[proxy:"));
+  assert.match(t, /Proxy is WARN, not PASS/);
+  assert.doesNotMatch(t, /must revert the fix|must.*mutation validation/i);
 });
 
 // --- REQ-017 black-box acceptance (replacing the r2-rework placeholders) -------

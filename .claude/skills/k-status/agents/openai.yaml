@@ -1,5 +1,5 @@
 interface:
   display_name: "k-status"
-  short_description: "Use when starting k-status, beginning a session, printing keel status, or deciding what to read next."
+  short_description: "Use when checking repository status or recovering navigation after context loss."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

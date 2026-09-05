@@ -57,7 +57,7 @@ export function runVerify(ctx: Ctx): CmdResult {
     return {
       code: 1,
       stdout: "verify FAIL\nprofiles.active is unset\n",
-      stderr: "configure a test command when the unified plan is confirmed (REQ-025); will not silently pass\n",
+      stderr: "configure the actual project's test command before verification (REQ-025); will not silently pass\n",
     };
   }
   const profile = activeProfile(ctx.config);

@@ -1,27 +1,20 @@
 ---
 name: k-bugfix
-description: Use when starting k-bugfix, fixing a bug, reproducing a failure, or adding a regression test. Do not use for feature work or requirement changes.
+description: Use when diagnosing and fixing an authorized defect with regression evidence. Do not expand a diagnosis-only request into implementation.
 ---
 
 # k-bugfix
 
-F10. No reproduction → do not fix; only gather data (C-60).
+F10. Establish the cause from a reproducible failure or concrete code/log evidence. AGENTS.md governs scope and persistence.
 
-## First
+Inspect the relevant issue and behavior. A trivial defect can use the worklog; use `gate new iss <title>` when an issue needs durable tracking. Record the actual symptom and evidence, not a fabricated repro.
 
-`node tools/gate/gate.ts status`. Open or create an ISS (`gate new iss <title>`). Write the **repro command** in the issue.
+1. Reproduce when feasible. If environment-dependent, narrow the cause with logs, code and checks; explain what could not be reproduced.
+2. Add a meaningful regression at the public interface when practical. Prefer evidence that fails before the fix and passes after, without reverting unrelated user work or adding mutation infrastructure.
+3. Make the smallest coherent fix, run relevant tests, and investigate unexpected failures.
+4. After repeated failed attempts, change the hypothesis or gather different evidence. Stop only for a concrete need for user input/authority, not an arbitrary attempt count. An existing formal review fuse remains a real gate.
+5. Record root cause, fix, validation and relevant remaining limits. Close an ISS with the existing schema's defense kind/pointer, or justified wontfix.
 
-## Procedure
+For recurrence, retain the original fingerprint/`recurrence_of` and explain why the earlier remedy failed. Choose a proportionate improvement; do not automatically escalate a regression test into a hook, gate or permanent instruction.
 
-1. Reproduce. Record the command, hypotheses, and each check in the worklog (C-60).
-2. Write a regression test that **fails without the patch and passes with it** (C-35). Red evidence for core bugs.
-3. Minimal fix. Do not expand into a feature.
-4. If the same fingerprint already has a defense, explain why it failed and step one level up the ladder (C-61).
-5. Three failed fix attempts → stop and escalate architecture; do not keep guessing (C-60).
-6. Close the ISS with the defense kind + pointer to a real file (C-62). Prefer: regression test, then lint, then gate/hook, then a short rule, then a DEC, else explicit wontfix + reason (C-59).
-
-Same fingerprint, same feature, ≥3 times → tag `#经验候选` for k-log / F13 (C-61/C-78).
-
-## Done
-
-ISS has repro, root cause, fix, why-not-caught, and a defense pointer that exists on disk. `gate verify` includes the new test.
+Use k-evidence at delivery. If the user only requested diagnosis, report the evidence-backed cause and proposed remedy without applying it.

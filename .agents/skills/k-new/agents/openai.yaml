@@ -1,5 +1,5 @@
 interface:
   display_name: "k-new"
-  short_description: "Use when starting k-new, opening a new feature through interview research design and unified plan, or the user wants the main keel flow from requirements to a confirmed plan."
+  short_description: "Use when planning a new project or feature from a user need."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

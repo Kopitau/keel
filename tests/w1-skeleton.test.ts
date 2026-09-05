@@ -68,13 +68,16 @@ test("REQ-004 plan INDEX has a unique current pointer", () => {
   assert.match(body, /^# 统一实施规划总览 v\d+/);
 });
 
-test("REQ-011 requirements INDEX has one current pointer and it is v8 (APR-008)", () => {
+test("REQ-011 requirements INDEX has one resolvable current version and preserves the prior baseline", () => {
   const text = readFileSync(join(root, "keel", "requirements", "INDEX.md"), "utf8");
   const currents = text.split(/\n/).filter((ln) => ln.startsWith("- current:"));
-  assert.deepEqual(currents, ["- current: v8.md"]);
-  const body = readFileSync(join(root, "keel", "requirements", "v8.md"), "utf8");
+  assert.equal(currents.length, 1);
+  const current = currents[0]?.slice("- current: ".length) ?? "";
+  assert.match(current, /^v\d+\.md$/);
+  const body = readFileSync(join(root, "keel", "requirements", current), "utf8");
   assert.ok(body.includes("## REQ-025"));
-  assert.match(body, /^- status: confirmed/m);
+  assert.match(body, /^- status: working/m);
+  assert.match(readFileSync(join(root, "keel", "requirements", "v8.md"), "utf8"), /^- status: confirmed/m);
 });
 
 test("REQ-012 gate status prints handoff path", () => {

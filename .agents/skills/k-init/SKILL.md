@@ -5,11 +5,11 @@ description: Use when starting k-init, initializing a new keel project, scaffold
 
 # k-init
 
-Scaffold a consumer project so keel records, gate, and the AGENTS map exist. Prefer the installer: `keel init` (DEC-157). Facts from the repo: do not ask. Decisions: batch questions with a recommended answer each (C-02/C-03).
+Scaffold a consumer project so records, gate and the AGENTS map exist. Prefer `keel init` (DEC-157). Inspect facts first; use AGENTS.md's clarification boundary for genuinely missing choices.
 
 ## First
 
-`node tools/gate/gate.ts status` if this is already a keel repo. If `keel/config.json` exists, stop and use k-change / k-impl instead.
+`node tools/gate/gate.ts status` if this is already a keel repo. If `keel/config.json` exists, do not initialize again; continue the actual task with the existing configuration.
 
 ## Copy (do not invent a second layout)
 
@@ -22,14 +22,11 @@ Scaffold a consumer project so keel records, gate, and the AGENTS map exist. Pre
 
 It sets hook exec bits. Gate is Node ≥22.18.0, run `.ts` directly (DEC-149/150).
 
-## Questions (one round; test profile is **not** asked here)
+## Configuration (inspect first; ask only for material missing choices)
 
-1. Project name? Recommend the directory name.
-2. Enforcement tier: `github` / `gitee` / `local`? Recommend based on whether a GitHub remote exists. Local = deters mistakes, not malice.
-3. Human git name + email for APR (C-107)?
-4. Keep the five primary platforms (C-96)?
+Use the repository name, remote, known git identity and existing platform choices when available. A remote alone does not prove branch protection. Ask only for a needed unresolved choice; do not make these facts a mandatory questionnaire. Never invent an approver. Local = deters mistakes, not malice.
 
-`profiles.active` is `unset` until F4 (the unified plan) picks a test profile from the code being implemented. Non-interactive:
+Set the test profile from the actual project's test command when known; otherwise leave `profiles.active` unset until it is known. Do not wait for a separate planning ceremony. Non-interactive:
 
 ```
 keel init --name <dir> --tier local --human "Name <email>"
@@ -44,4 +41,4 @@ node tools/gate/gate.ts check --quick
 
 ## Done
 
-Config parses; `check --quick` is green with G-req/G-plan SKIP on a vacuum project (DEC-158). Do not confirm a requirements baseline here — that is k-new / k-grill.
+Config parses; `check --quick` is green with G-req/G-plan SKIP on a vacuum project (DEC-158). Do not invent a confirmed baseline. If the user's task also includes implementation, continue after scaffolding.

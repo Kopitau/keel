@@ -1,26 +1,22 @@
 ---
 name: k-decide
-description: Use when starting k-decide, recording a technical decision, presenting options to the user, or writing a DEC file. Do not mark a decision confirmed yourself.
+description: Use when recording a consequential durable technical trade-off or an actual user decision. Do not turn routine implementation choices into approval requests.
 ---
 
 # k-decide
 
-F3. One decision, one file (C-13). `node tools/gate/gate.ts new dec <title>`.
+F3. Separate deciding how to implement from deciding what the user wants. AGENTS.md supplies the boundary.
 
-## Body
+A DEC is useful when a choice is hard to reverse, would surprise someone without context, and involves a real trade-off. Otherwise implement within scope; record a non-obvious choice briefly in the worklog if it helps the next maintainer. Do not create a DEC for every user answer.
 
-Machine header: id, title, status, date, features, research, adr flag.
+## Record a durable decision
 
-Chinese body: question → options → recommendation → **user’s words verbatim** → impact.
+`node tools/gate/gate.ts new dec <title>`
 
-Status: `proposed` → `confirmed` / `provisional` (reason + review trigger) / `deferred`. Overturn → `superseded` pointing at the new DEC (C-14).
-Never roll a terminal state back (`confirmed` → `proposed`, anything away from `superseded`); status moves are a skill rule, not a gate check (CHG-011).
+Use `keel/templates/DEC.md`: problem, genuine options, recommendation and rationale, consequences and review trigger. Link research when the choice depends on external evidence. Do not manufacture alternatives or request confirmation of low-level choices.
 
-Write in the same round as the user’s answer (C-15). Do not batch confirmations to the session end.
-Same-round manual evidence names the DEC id and date, preserves the user’s words verbatim, and leaves a worklog/record pointer to that DEC.
+A material choice reserved to the user needs a concise question. Reuse an applicable previous answer: record its date and verbatim words once, with the scope it authorizes. Do not mark a decision confirmed yourself or invent a quote.
 
-## ADR mark
+An agent-selected implementation choice is not a user-confirmed DEC. When a durable choice is reasonably provisional within authorization, label it proposed/provisional, explain reversibility and the condition for revisiting it. Do not present an already-settled decision as unresolved merely because it was not in this file.
 
-If all three hold — hard to reverse, surprising without context, a real trade-off — set `adr: true` and add consequences + review terms. No second ADR directory (C-16).
-
-Only the three-threshold case gets a DEC; every other implementation choice is one worklog line (C-17, CHG-011). Touching a confirmed boundary: stop (C-21).
+Only revisit when a changed requirement or new evidence matters. Status counts and old proposed records are navigation, not instructions to reopen all past choices.

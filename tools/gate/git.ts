@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, unlinkSync } from "node:fs";
+import { copyFileSync, existsSync, statSync, unlinkSync, utimesSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
@@ -120,7 +120,13 @@ export function gitWriteTree(ctx: Ctx): string {
   const env = { GIT_INDEX_FILE: tmp };
   try {
     const headIdx = join(dir, "index");
-    if (existsSync(headIdx)) copyFileSync(headIdx, tmp);
+    if (existsSync(headIdx)) {
+      copyFileSync(headIdx, tmp);
+      // A fresh copy timestamp disables Git's racy-clean content check (ISS-080).
+      // Round down so the copy is never newer than its source index.
+      const indexTime = Math.floor(statSync(headIdx).mtimeMs / 1000);
+      utimesSync(tmp, indexTime, indexTime);
+    }
     git(ctx, ["add", "-A"], env);
     // Evidence, the review loop's own products and the approvals never move the
     // tree they bind (C-33 / CHG-011 / DEC-187): an APR attests a tree — its own

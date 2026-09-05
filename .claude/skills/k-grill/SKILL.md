@@ -1,51 +1,28 @@
 ---
 name: k-grill
-description: Use when starting k-grill, interviewing the user for requirements, asking clarifying questions with recommended answers, or writing REQ entries. Do not guess. Do not ask facts you can look up.
+description: Use when turning a user need into testable requirements or resolving consequential ambiguity. Do not repeat answered questions or turn a clear request into an interview.
 ---
 
 # k-grill
 
-F1. Default: **batch every currently askable question** in one round, numbered, each with a recommended answer. Dependent questions wait. The user may switch to one-at-a-time (C-02).
+F1. Anchor the need before optimizing its implementation. Apply AGENTS.md's authorization and clarification rules.
 
-## Facts vs decisions (C-03)
+## Discover the actual feature
 
-- Code, docs, network → you look it up. Do not ask.
-- Trade-offs → user. Always attach your recommendation.
+Read the user's request and relevant existing requirements, code and usage evidence. Separate the desired outcome from a suggested implementation. Identify who uses it, the observable result, necessary constraints and what is out of scope. Do not ask facts you can inspect.
 
-## How a question must be written (C-02)
+For a small change, a short scope in the worklog is enough. For a new project or substantial feature, write REQ entries in `keel/requirements/vN.md`: id, source, description, acceptance, bounds/counterexamples and non-goals. Write Given/When/Then where helpful; a simple checklist is fine.
 
-A question the user can only nod at is not a question. Each numbered item:
+## Clarify only what matters
 
-1. **Is an interrogative sentence and ends with `?`.** The question carries the choice; the recommendation is an attachment, never the substitute.
-2. **Defines every term the first time it appears** — one clause is enough. If the user has to ask "what is X", the item was unusable.
-3. **Names what each option costs**, not just which one you prefer.
+Ask when plausible answers would materially change behavior, scope, cost, safety or an irreversible action. Group only independent blocking questions; use a recommendation with its consequence when useful. No fixed question count, punctuation test or exhaustive questionnaire.
 
-Wrong — an assertion wearing a number, nothing to disagree with except wholesale:
+Reuse prior answers and authorization. State safe reversible assumptions and proceed. A blocking uncertainty is `[NEEDS-CLARIFICATION: specific question]` on the affected branch in 未决问题, not a reason to stop unrelated work. Do not invent preferences or call assumptions confirmed.
 
-> Q13 Domain model. Recommended: one item belongs to exactly one domain + one subdomain. Alternative: many-to-many.
+Research may run before all details are settled when it helps establish feasibility or explain a choice. Do not force a finished requirement document before learning whether the feature is possible.
 
-Right — the choice is in the question, the term is explained, both costs are visible:
+## Close
 
-> Q13 Can one item belong to several domains at once? ("Domain" = the top-level bucket in the sidebar.)
-> Recommended: exactly one domain + one subdomain — keeps the sidebar count honest and the query single-join.
-> Alternative: many-to-many — needed if you file the same paper under two research lines, but every count becomes ambiguous and the UI needs a primary-domain rule anyway.
+Summarize the need, smallest useful feature, acceptance and boundaries in plain language. If the user already asked for implementation and material choices are resolved, continue to it. For plan-only work, return the plan. Ask for one consolidated decision only when an unresolved choice actually requires it.
 
-Self-check before sending a batch: **count the `?`**. Fewer question marks than numbered items means some items are assertions. Rewrite them.
-
-## Writing REQs (C-04/C-07)
-
-`gate new` is not used for REQ rows; they live in `keel/requirements/vN.md`:
-
-id, status, source, feature (owner F), must (必需 / 想要 / 建议), description, acceptance (GWT primary; short checklists allowed), verification, bounds and counterexamples, non-goals.
-
-Fuzzy → `[NEEDS-CLARIFICATION: concrete question]`. Unresolved forks go in the `未决问题` section, not only in chat (C-05).
-
-## Order: requirements before research (C-04/C-05)
-
-REQ entries land **before** any RES record is written. Research aimed at requirements that exist only in the chat log is aimed at your own reading of them.
-
-## Baseline
-
-One nod on the whole requirements file (C-06). Large/new work: a **different** fresh-context agent — one that did not run this interview — hunts gaps first (missing items, contradictions, ambiguities, verification arrays). Its findings and their disposition are written into the requirements file itself, in a section right after `未决问题`; no separate file, nothing machine-checked (CHG-011). Then the user's one nod → APR (human identity).
-
-Gap hunters (C-06) return findings; the main context is the only writer of the requirements file — two writers on one file lose edits (CHG-016).
+For a complex or consequential scope, an independent gap check can help; it is not mandatory for every baseline and cannot manufacture another approval round. Record useful findings with the requirements, not in another process layer.

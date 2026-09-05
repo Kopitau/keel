@@ -20,11 +20,11 @@ test("REQ-021/AC-1 root instructions and skills are English while record templat
   assert.match(dec, /## 问题/);
 });
 
-test("REQ-021/AC-2 CONTEXT is a lazy glossary with banned near-synonyms", () => {
+test("REQ-021/AC-2 CONTEXT is an on-demand glossary, not a second workflow", () => {
   const context = read("CONTEXT.md");
-  assert.match(context, /Only terms and banned near-synonyms/);
-  assert.match(context, /Lazy file/i);
-  assert.match(context, /## Banned near-synonyms/);
+  assert.match(context, /glossary, read on demand/);
+  assert.match(context, /records_dir/);
+  assert.match(context, /does not add another workflow/);
 });
 
 test("REQ-021/AC-3 this repository uses node test plus tsc noEmit and clean configs retain consumer profiles", () => {

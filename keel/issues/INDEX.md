@@ -1,7 +1,7 @@
 # issues index (generated)
 
 - generator: gate index
-- count: 79
+- count: 80
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -84,3 +84,4 @@
 | ISS-077 | ISS-077 评审回路开的问题单不归功能、「现象」只是标题复读 | closed | `ISS-077-review-iss-without-feature-or-body.md` |
 | ISS-078 | ISS-078 Windows 上 gate worktree rm 删不干净目录，残留至今 | closed | `ISS-078-worktree-rm-leaves-directory.md` |
 | ISS-079 | ISS-079 推送钩子在证据已经新鲜时仍重跑全量验证，HTTPS 推送因此超时断开 | closed | `ISS-079-pre-push-reruns-fresh-verify-and-times-out-the-push.md` |
+| ISS-080 | ISS-080 临时索引时间戳导致源码变化漏检 | closed | `ISS-080-git-index-copy-time.md` |

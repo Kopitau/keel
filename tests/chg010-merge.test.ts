@@ -87,14 +87,16 @@ test("REQ-008/AC-3 local tier documents hooks full gate hash-bound APR merge rec
   assert.match(doc, /本地档/);
   assert.match(doc, /hooks/);
   assert.match(doc, /verify[\s\S]*check/);
-  assert.match(doc, /APR.*人类身份/);
+  assert.match(doc, /APR.*用户原话和授权范围/);
   assert.match(doc, /防呆不防恶/);
 });
 
-test("REQ-008/AC-4 no-mistakes is optional and the merge flow remains complete when it is false", () => {
+test("REQ-008/AC-4 no-mistakes is optional and the merge gate still works without it", () => {
   const config = JSON.parse(readFileSync(join(repo, "keel", "config.json"), "utf8")) as { optional?: { no_mistakes?: unknown } };
   assert.equal(config.optional?.no_mistakes, false);
-  assert.match(readFileSync(join(repo, "AGENTS.md"), "utf8"), /Gate = Node \+ TypeScript/);
+  const fx = mergeFixture();
+  fx.writeFreshEvidence();
+  assert.match(line(runCheck(makeCtx(fx.root), []).stdout, "G-merge"), /^PASS/);
 });
 
 test("REQ-008/AC-5 a changed tree after prior integration invalidates old evidence and forces rerun", () => {

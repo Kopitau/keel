@@ -1,34 +1,28 @@
 ---
 name: k-research
-description: Use when starting k-research, writing a RES report, comparing implementation options, or researching before a technical decision. Do not claim research was done without a file.
+description: Use when validating a consequential technical approach against current evidence. Do not make every implementation detail a research project.
 ---
 
 # k-research
 
-F2. Declare the depth you picked (C-08):
+F2. Choose a solution that is sufficiently current, mature and well suited to the actual feature. Research depth follows uncertainty and cost of being wrong.
 
-- **Deep** — new architecture, key dependency, data model, security, public API, cross-platform, high uncertainty: 2–3 candidates, primary sources, seek counterexamples, spike if needed.
-- **Standard** — local evidence + official docs + ≥1 alternative.
-- **Local** — no web, but write the rationale.
+## Investigate
 
-Offline is not a skip: use dated, sourced offline material or stop (C-12).
+Start with the repository's versions, architecture and prior relevant decisions. For changing external facts, use current primary sources: official documentation, releases, compatibility and security notices, maintained source code. Check meaningful advances without equating newest with best.
 
-## File (C-09)
+Compare alternatives only when there is a real unresolved choice. Explain compatibility, maintenance, functional fit, operational complexity, cost and a relevant limitation. A straightforward extension of a proven stack may need only a targeted check; do not fabricate a three-candidate comparison.
 
-`node tools/gate/gate.ts new res <title>` then fill, in plain Chinese:
+Offline evidence needs a source, version/date and local path. If it cannot support a consequential selection, defer that selection, state what is missing and continue unaffected work. Do not claim freshness from memory.
 
-question → search scope → candidate comparison → evidence (citation + access date; mark `[未核实]`) → conclusion (decision / why / alternatives) → remaining uncertainty.
+Independent questions may be delegated when useful and permitted. The parent checks relevant evidence and conclusions, not just an INDEX or another agent's confidence. No mandatory delegation or separate report per trivial query.
 
-Cite; do not paste whole pages (C-69). The substance is your responsibility — nothing machine-checks it (CHG-011); a filename is not research.
+## Record enough to reuse
 
-## Parallel research (RES-904 §4)
+For a consequential choice, `node tools/gate/gate.ts new res <title>`. Keep Chinese prose concise: question/scope, sources with access dates, relevant alternatives, recommendation and rationale, limitations and remaining uncertainty.
 
-Two or more questions that do not depend on each other → one fresh-context subagent per question, at the same time. Each subagent runs `gate new res`, writes its own file, and returns only the RES id. The parent reads `keel/research/INDEX.md`, not the bodies (C-120). Sequential research in the main context spends the interview's context on reading.
+A small lookup may be recorded with its source and conclusion in the worklog. Do not claim research was done without a retrievable record. A major DEC links that evidence; any deliberate research limitation is explicit.
 
-## Sources (标准 / 深度)
+When reusing open source, record `oss:` with name, exact version/commit and license; include the reuse point and meaningful local differences. No additional OSS file is needed.
 
-Facts come from primary sources: official docs, source code, specs, the vendor's own pages. Secondary write-ups (blog posts, summaries, forum answers) only for dates and outside opinion — and say so next to the citation. Quote short; paraphrase in your own structure (C-69).
-
-## Open source (C-11)
-
-Chose a library or copied code → fill the RES `oss:` field: name, exact version or commit, license, reuse point. No separate OSS file (CHG-011). Major DECs must point at a RES **or** a written exemption (C-10).
+Then proceed with the supported approach within existing authorization. Ask only for a consequential trade-off belonging to the user.

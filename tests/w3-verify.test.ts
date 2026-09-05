@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -123,6 +124,31 @@ test("REQ-006 tree hash ignores evidence and moves when source changes", () => {
   assert.ok(a !== c);
   assert.equal(evidenceFresh(ctx, { tree_hash: a, exit_code: 0 } as Evidence), false);
   rmSync(dir, { recursive: true, force: true });
+});
+
+test("ISS-080 copied-index timing must not hide a same-size source change", () => {
+  const dir = miniGitRepo();
+  try {
+    // Model a coarse stat cache without relying on test scheduling or sleeps.
+    git(dir, ["config", "core.trustctime", "false"]);
+    git(dir, ["config", "core.checkStat", "minimal"]);
+    const source = join(dir, "src.txt");
+    const index = join(dir, ".git", "index");
+    const fileTime = Math.floor(Date.now() / 1000) - 20;
+    utimesSync(source, fileTime, fileTime);
+    git(dir, ["add", "--", "src.txt"]);
+    utimesSync(index, fileTime - 1, fileTime - 1);
+    const savedIndex = readFileSync(index);
+    const ctx = makeCtx(dir);
+    const before = gitWriteTree(ctx);
+    writeFileSync(source, "b\n", "utf8");
+    utimesSync(source, fileTime, fileTime);
+    assert.notEqual(gitWriteTree(ctx), before, "changed content must invalidate evidence despite matching cached stat");
+    assert.equal(evidenceFresh(ctx, { tree_hash: before, exit_code: 0 } as Evidence), false);
+    assert.deepEqual(readFileSync(index), savedIndex, "hashing must not mutate the user's staging index");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("REQ-006 gate verify writes evidence with required keys", () => {

@@ -35,9 +35,9 @@ test("REQ-019/AC-1 status and k-impl state the confirmed trunk recommend and par
     assert.match(status, /new major feature.*recommend worktree/i);
     assert.match(status, /parallel.*C-112/i);
     const skill = readFileSync(join(process.cwd(), ".agents", "skills", "k-impl", "SKILL.md"), "utf8");
-    assert.match(skill, /Daily \/ solo local work: trunk is allowed/);
-    assert.match(skill, /New major feature: recommend/);
-    assert.match(skill, /Second feature in parallel, or a second person: \*\*must\*\*/);
+    assert.match(skill, /Daily solo work may stay on the current branch/);
+    assert.match(skill, /worktree is recommended/);
+    assert.match(skill, /second concurrent feature must use a separate worktree/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

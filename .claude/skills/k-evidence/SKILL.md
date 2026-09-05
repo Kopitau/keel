@@ -1,28 +1,32 @@
 ---
 name: k-evidence
-description: Use when starting k-evidence, claiming work is done, running gate verify, checking tree hashes, or building the REQ-to-test trace. Do not treat a chat claim as completion.
+description: Use when verifying feature completion or checking evidence freshness. Do not confuse a successful local check with user acceptance or remote delivery.
 ---
 
 # k-evidence
 
-F6. Done = command + exit + tree hash, not a sentence (C-33).
+F6. Report what ran, its exit and the relevant tree hash; do not substitute a chat claim for evidence.
 
-## Commands
+## Check at the right scale
+
+During implementation run focused checks for the changed behavior and relevant integration/failure paths. Before code delivery use:
 
 ```
 node tools/gate/gate.ts verify
 node tools/gate/gate.ts trace
-node tools/gate/gate.ts check --quick   # 4 checks, seconds; what the hook runs
-node tools/gate/gate.ts check           # 8 checks; before claiming done, review, merge
-node tools/gate/gate.ts hash <file>     # body hash — what an APR binds
+node tools/gate/gate.ts check
 ```
 
-`verify` reruns tests (and `tsc --noEmit` when present) and writes `keel/evidence/verify.json`. That directory is **excluded** from the tree hash so the JSON cannot invalidate itself.
+`verify` runs the configured test command and typecheck when configured, and writes `keel/evidence/verify.json`; never edit it by hand. Only that configured full command produces formal gate evidence. Targeted checks help diagnosis but do not replace it.
 
-Stale evidence (hash mismatch or non-zero exit) fails `X-evidence` / `G-done` / `G-merge` in the full check; `--quick` never judges evidence, so a dirty daily tree stays green (CHG-011). Re-run verify before claiming done, before the plan-level review and before merge; do not edit the JSON by hand. On the local tier the gate also accepts an approved APR whose `evidence_*` snapshot names the current tree (DEC-187) — that is how a merged feature stays proven after its worktree is deleted. `test_command` is a shape: launcher prefix + pytest / `vitest run` / jest / `node --test` + marker or report arguments; `-k`, paths and name patterns are refused (DEC-188).
+Reuse a passing result when its code tree and relevant requirements are unchanged; do not rerun the full suite separately for completion, review and merge. Rerun after meaningful code/config/test changes. Record-only edits do not move the evidence tree (DEC-192), but changed acceptance still needs trace/review. A dirty-tree or stale-review check is a delivery-state issue to report accurately, not permission to conceal it.
 
-## Tests
+## Explain coverage honestly
 
-Black-box names carry `REQ-nnn/AC-i`; trace is per acceptance criterion (C-32, DEC-168). Deleting or skipping a test is no longer machine-checked (CHG-011): note the reason in the worklog — X-trace and the plan-level review will see the hole. Core new tests: red then green (C-35). No coverage or mutation gates (C-36).
+Black-box acceptance tests name `REQ-nnn/AC-i` and assert the promised behavior through the appropriate public interface. Core regressions should show the defect when practical; no blanket red-first, coverage or mutation gate. A documentation consistency check proves its narrow invariant, not that a model or person will behave correctly.
 
-Only the configured `test_command` produces evidence; a script outside it is a demo, not proof. A `[proxy:…]` note must name what lands the real test — a feature (`F2 管道`), an ISS, a DEC or an interface id — and X-trace warns on a proxy without such a release condition (CHG-016). Records never move the evidence tree (DEC-192): editing a plan, decision or worklog does not stale verify.
+Scale tests to risk; do not add a test for every sentence or mirror implementation branches mechanically. When replacing or removing a test, record the superseded obligation and preserve meaningful coverage.
+
+A `[proxy:<release condition>]` must name the real environment, feature, issue or interface needed to replace it. Proxy is WARN, not PASS. Report by feature: real functional evidence, documentary checks, stand-ins and missing checks. Distinguish implementation complete, local validation, remote CI and user acceptance.
+
+`gate check --quick` is the pre-commit check, not the full gate. `gate hash <file>` hashes an approval body. Local APR evidence snapshots remain supported; never fabricate one.

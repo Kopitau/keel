@@ -308,42 +308,35 @@ test("REQ-016/AC-9 gate sync generates agents/openai.yaml for every catalog skil
     assert.ok(existsSync(yaml), `${name}: openai.yaml generated`);
     assert.equal(readFileSync(join(root, ".claude", "skills", name, "agents", "openai.yaml"), "utf8"), readFileSync(yaml, "utf8"));
   }
-  assert.match(readFileSync(join(root, ".agents", "skills", "k-status", "agents", "openai.yaml"), "utf8"), /allow_implicit_invocation:\s*false/);
+  assert.match(readFileSync(join(root, ".agents", "skills", "k-status", "agents", "openai.yaml"), "utf8"), /allow_implicit_invocation:\s*true/);
   assert.match(readFileSync(join(root, ".agents", "skills", "k-log", "agents", "openai.yaml"), "utf8"), /allow_implicit_invocation:\s*true/);
   assert.deepEqual(readdirSync(join(root, ".claude", "skills")).sort(), ["k-log", "k-status"]);
   rmSync(root, { recursive: true, force: true });
 });
 
-test("REQ-004/AC-10 the root map and k-impl state the autonomous loop and its only three stops", () => {
+test("REQ-004/AC-10 documentary contract scopes continuation to authorized work, not historical frontier", () => {
   const agents = readFileSync(join(repo, "AGENTS.md"), "utf8");
-  assert.match(agents, /After the plan is confirmed the loop is autonomous \(DEC-183\)/);
-  assert.match(agents, /Stop only for C-21, a fused review, or acceptance/);
   const impl = readFileSync(join(repo, ".agents", "skills", "k-impl", "SKILL.md"), "utf8");
-  assert.match(impl, /Keep going \(DEC-183\)/);
-  assert.match(impl, /compress the worklog into `summary\.md`/);
-  assert.match(impl, /next frontier feature/);
-  assert.match(impl, /Stop only for C-21, a fused review, or final acceptance/);
-  assert.doesNotMatch(impl, /One slice per session/);
+  // A document invariant, not a model-behavior test.
+  assert.match(agents, /Relevant earlier requirements and authorization remain valid/);
+  assert.match(impl, /next in-scope slice/);
+  assert.doesNotMatch(agents + impl, /Stop only for C-21|One slice per session/);
 });
 
-test("REQ-009/AC-1 summary is written once when the feature finishes, with the worklog compressed into it", () => {
+test("REQ-009/AC-1 the summary template allows evidence-backed iteration and preserves raw worklog", () => {
   const template = readFileSync(join(repo, "keel", "templates", "summary.md"), "utf8");
-  assert.match(template, /功能完成时写一次/);
-  assert.match(template, /worklog 压缩进来/);
-  const retro = readFileSync(join(repo, ".agents", "skills", "k-retro", "SKILL.md"), "utf8");
-  assert.match(retro, /Trigger: the feature is finished/);
-  assert.match(retro, /Compress the worklog into it/);
-  assert.match(retro, /Merge is not the trigger/);
+  assert.match(template, /重要迭代后更新/);
+  assert.match(template, /保留原始 worklog/);
+  assert.doesNotMatch(template, /完成时写一次/);
 });
 
 test("REQ-002/AC-4 a chosen open-source component is registered in the RES oss field, never in a separate OSS file", () => {
   const res = readFileSync(join(repo, "keel", "templates", "RES.md"), "utf8");
   assert.match(res, /^oss: \[\]$/m);
   assert.doesNotMatch(res, /oss_none|gate new oss/);
-  assert.match(res, /不建 OSS 文件/);
   const research = readFileSync(join(repo, ".agents", "skills", "k-research", "SKILL.md"), "utf8");
-  assert.match(research, /fill the RES `oss:` field/);
-  assert.match(research, /No separate OSS file/);
+  assert.match(research, /record `oss:`/);
+  assert.match(research, /No additional OSS file/);
   assert.equal(existsSync(join(repo, "keel", "templates", "OSS.md")), false);
 });
 

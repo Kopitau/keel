@@ -207,12 +207,12 @@ test("REQ-027/AC-10 a passed review whose tree moved is a WARN, never silently g
 
 test("REQ-007/AC-6 k-impl and k-review say a finished feature moves on; the review loop runs once per plan", () => {
   const impl = readFileSync(join(repo, ".agents", "skills", "k-impl", "SKILL.md"), "utf8");
-  assert.match(impl, /once per plan/);
+  assert.match(impl, /review once after its in-scope features/);
   assert.doesNotMatch(impl, /Claiming done starts the review loop/);
   const review = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
   assert.match(review, /disposition\.md/);
   assert.match(review, /findings\.md/);
-  assert.match(review, /finished feature does not trigger a review/);
+  assert.match(review, /not per slice/);
 });
 
 test("REQ-027/AC-2 a pack taken since a base lists deleted files by name only and keeps the five keys", () => {

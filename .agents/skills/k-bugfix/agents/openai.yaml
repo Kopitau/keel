@@ -1,5 +1,5 @@
 interface:
   display_name: "k-bugfix"
-  short_description: "Use when starting k-bugfix, fixing a bug, reproducing a failure, or adding a regression test."
+  short_description: "Use when diagnosing and fixing an authorized defect with regression evidence."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

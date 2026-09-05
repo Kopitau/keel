@@ -1,7 +1,7 @@
 # research index (generated)
 
 - generator: gate index
-- count: 16
+- count: 17
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -21,3 +21,4 @@
 | RES-906 | Claude Code 与 Codex CLI 非交互评审配方 |  | `RES-906-claude-code-codex-cli.md` |
 | RES-907 | DeepSeek Harness 与 Pi headless 评审调用配方 |  | `RES-907-deepseek-harness-pi-headless.md` |
 | RES-908 | Cursor 兼容：AGENTS.md 与 .agents/skills 发现规则与 agent CLI |  | `RES-908-cursor-agentsmd-agentsskills-agent-cli.md` |
+| RES-909 | Astra 指令冲突审阅与优化依据 |  | `RES-909-astra-instructions.md` |

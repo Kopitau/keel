@@ -1,42 +1,23 @@
 # keel — 项目总览
 
-活文档，复盘时原地更新（C-54）。开场必读。
+按需阅读的活文档；当前工作契约见 AGENTS.md，设计解释见 DESIGN-v2.md。
 
 ## 项目是什么
 
-keel 是装进仓库的跨 Agent 开发流程层：带稳定编号的中文记录 + 英文技能 + 零运行时依赖的门禁 + 平台薄桥。不是 CLI 产品，不接管编排，不绑定厂商。
+keel 把需求、技术依据、功能计划与证据放进代码仓库，让强模型在已授权范围内持续交付。它不接管模型编排。运行时 Node + TypeScript + 内置库，开发用 TypeScript；没有新增依赖。
 
-本仓库是框架自身（F23 自举）。消费项目稍后用 tag + 复制文件接入。
+## 当前版本和范围
 
-## 整体技术路线图
+本轮 0.12.0 / CHG-017：审阅并优化自主性、澄清与完成指令。需求 current=v9.md、规划 current=overview-v5.md；两者标 working，新细节未宣称用户确认。APR-009 只记录用户明确给出的优化范围授权。旧 v8/v4 与原 DESIGN 保留。
 
-确认规范在 `DESIGN.md` §5（C-01~C-154，含 CHG-001）。实施按 `keel/plan/overview-v2.md`：W1 骨架（Node+TS）→ W2 gate → W3 证据/CI 三平台矩阵 → W4 技能 → W5 五平台实测 → W6 试点校准。
+F12 状态导航、F16 技能发现/元数据/镜像及相关指令已优化，F6 索引时间戳缺陷已修复；完整验证 312 过 / 0 失败，独立审阅及增量复核无未解决问题。记录在 features/f16-platforms/worklog.md；发现与依据在 research/RES-909-astra-instructions.md。此结论限于本轮改动，不是全部历史功能的人工验收。
 
-权威执法在 CI 复算；本仓目前是 **本地档**。OS 矩阵：Windows + macOS + Linux（DEC-143）。
+## 状态与证据边界
 
-## 能力清单
+历史 F1–F24 的计划与证据仍在；缺少 summary 不等于本轮有权重新开工，也不能用已有摘要推断功能全部通过。正式 gate 仍检查真实证据、追溯和审批完整性。
 
-| 功能 | 状态 | 总结 |
-|---|---|---|
-| F17 | W1–W6 已实现（本地档） | `features/f17-gate/summary.md` |
-| F1–F16, F18–F23 | 规范已确认；记录已迁入 | 尚未有 `summary.md` |
-| F24 | 规范已确认（CHG-001）；哈希/启动器/CI 矩阵 | 尚未有 `summary.md` |
+本仓配置为 github 档。Node ≥22.18.0；Windows/macOS 开发、Linux CI。配置不是远程保护已启用的证明；REQ-017/AC-4 六格 GitHub Actions 仍是替身，平台 live 触发与长期模型效果不能从文档测试推断。
 
-## 在途功能
+## 历史与风险
 
-版本 0.11.0（2026-09-04；CHG-016 第二轮试点审计，见 `RELEASE-0.11.0.md`）。requirements **current = v8.md**（APR-008，2026-09-04 用户「批准V8」）；v7 冻结不改。0.10.0（2026-09-02）评审三问见 `RELEASE-0.10.0.md`。requirements **current = v7.md**（APR-007，2026-09-03 用户「批准V7」）；v6 冻结不改。0.9.3（2026-09-01）补丁见 `RELEASE-0.9.3.md`。requirements **current = v6.md**（APR-006，2026-09-01 用户原话一次批准，绑定 CHG-012 Cursor 兼容档、CHG-013 评审去攻击面 / 不强制异构、CHG-014 zhaoxi / fmea-v3 审计回流：DEC-185～190、ISS-058～067 已闭环）；v5 冻结不改。规划 current = overview-v4.md（APR-005）。
-
-CHG-014 八个切片已全部落地并提交（S0 记录 → S1 钩子/探测 → S3 冻结件与基线复核 → S4 证据快照 → S5 白名单 → S6 评审回路 → S2 status → S7 文档技能 → S8 发布）；每个切片有红绿测试与 worklog 节，证据见 `RELEASE-0.9.2.md` 与各功能 worklog 2026-09-01 节。
-
-## 风险与暂定
-
-- 暂定决策计数：0
-- 人类身份已配 kopit <wwillmee@gmail.com>；APR-001 仍 draft（bootstrap）；APR-006 approved（DEC-190：审批凭用户原话，agent 身份提交）
-- Codex Desktop 的 `CODEX_*` 变量已实测（2026-09-01 用户回报）并入回归测试；父进程名兜底保留给不导出标记的 harness
-- 本仓 10 个 DEC（APR-002 ×5、APR-003 ×5）在 CHG-011 复核时正文被追加，X-apr 以 F3 worklog 的两行 waiver 放行（DEC-185）
-- REQ-017/AC-4 GitHub Actions 六格真实运行仍为 proxy
-- §8/9 未进 C 记录
-
-## 主要外部依赖
-
-gate **运行时**零第三方依赖（DEC-154）。开发/CI 唯一白名单 devDependency：typescript（OSS-002）。pytest 曾用于第一次 W1，已退役（OSS-001）。映射表引用 Trellis（AGPL-3.0-only，不复制代码）与 Superpowers（MIT，不复制技能正文）。
+历史发布与决定见对应 RELEASE 和编号记录，不在总览堆叠多个“当前版本”。既有 APR-002/003 语义漂移警告已有 F3 worklog 记录，本轮不改历史正文。用户验收、本地通过与远端交付分别报告。

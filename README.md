@@ -1,23 +1,90 @@
 # keel
 
-A repo-local process layer for multi-agent development: numbered Chinese records, English skills, one Node+TS gate (no runtime dependencies), thin harness bridges.
+让强模型围绕真实需求把功能做完，而不是围绕流程不断请示。
 
-This repository is the framework itself. Design norms: `DESIGN.md`. Living picture: `keel/OVERVIEW.md`.
+keel 把需求、方案、代码证据和交接说明保留在项目里。它适合 GPT-6 Astra 这类能力强、会认真遵循指令的模型：给清晰目标、必要边界和可验证的结果，普通实现由模型判断。它不是模型调度器，不需要增加运行时 npm 依赖。
 
-Requires **Node ≥ 22.18.0**.
+## 工作方式
 
-```text
+1. **锚定需求**：先搞清用户要解决什么，以及怎样才算有效。已经回答的问题不重问；可以查清的事实自己查。
+2. **确定功能**：找到真正解决问题的最小有用功能，写清边界和验收。小改动不必重新立项。
+3. **研究方案**：重要选型查当前一手资料，兼顾相关新进展与生产成熟度；已有技术栈能满足需求时优先沿用。
+4. **实现代码**：简洁、常规、职责清楚。为已知需求留好边界，不为猜测中的未来搭框架。
+5. **验证功能**：从用户能观察到的接口测试结果，并验证相关集成与失败路径。不用测试数量、字符串匹配或“看起来没问题”代替功能证据。
+6. **方便迭代**：需求变了就保留旧版、更新受影响部分；不为每次小修创建完整流程。
+7. **说明清楚**：告诉使用者怎么运行、做了什么、哪些已验证、还缺什么，以及下一步。
+
+这不是七次审批。用户说“帮我优化并实现”，模型应在授权范围内持续完成；说“只审阅”则不改代码。只有真正影响需求、范围、成本、数据安全或不可逆操作的缺失信息才需要澄清。
+
+## 安装到本机
+
+需要 Node.js ≥22.18.0。在本仓库目录运行：
+
+```sh
+npm ci
+npm install -g .
+keel --version
+```
+
+这里的 `npm ci` 安装开发用 TypeScript；运行 gate 只使用 Node 内置库。全局 `keel` 是安装器，项目里的 gate 才是检查入口。
+
+在需要使用 keel 的项目目录初始化，例如：
+
+```sh
+keel init --name my-app --tier local --human "姓名 <邮箱>"
+keel doctor
 node tools/gate/gate.ts status
-npm test
-npm run typecheck
 ```
 
-Install into another project (after `npm i -g file:<this-repo>` or a git URL):
+请替换示例身份，不要照抄。已有 keel 的项目使用 `keel update`，不要重新初始化；已经明确授权非交互更新时可用 `keel update --yes`。更新会保留并提示本地补丁；不要无视有意义的差异。
 
-```text
-keel init --name myapp --tier local --human "Name <email>"
+## 日常怎么用
+
+直接描述结果即可，例如：
+
+- “给导出功能加日期范围筛选，保留原格式，并验证空结果和跨月范围。”
+- “只审阅登录流程的错误处理，先不要改。”
+- “按前面确认的方案继续实现，不用重复问已确认的问题。”
+
+新会话按 `status → handoff → 当前任务的计划和日志/总结` 恢复。状态里的 frontier 只是记录推导出的候选项，不会覆盖当前请求，也不意味着旧功能必须重做。
+
+常用检查：
+
+```sh
+node tools/gate/gate.ts check --quick
+node tools/gate/gate.ts verify
+node tools/gate/gate.ts trace
+node tools/gate/gate.ts check
 ```
 
-Windows: `tools/gate/gate.ps1 status`. macOS/Linux: `tools/gate/gate.sh status`.
+开发时跑相关测试；交付代码前跑正式验证与完整检查。同一代码树已有通过的证据，就不必为了“完成、评审、合并”分别重跑全套。代码、配置、测试或验收发生相关变化后重新验证相应部分。
 
-Enforcement tier today: **local** (no remotes yet). OS matrix: Windows + macOS + Linux.
+`verify` 记录命令、退出状态、代码树和按功能的证据；`trace` 说明哪些验收有真实测试、哪些只是替身、哪些缺失。文档一致性测试只能证明文档结构，不能证明模型在真实任务中一定遵守。
+
+## 文件该看哪里
+
+| 需要 | 入口 |
+|---|---|
+| 模型当前应怎样工作 | [AGENTS.md](AGENTS.md) |
+| 设计原则和自主性边界 | [DESIGN-v2.md](DESIGN-v2.md) |
+| 术语 | [CONTEXT.md](CONTEXT.md) |
+| 当前任务与下一步 | [keel/handoff.md](keel/handoff.md) |
+| 需求与规划版本 | `keel/requirements/INDEX.md`、`keel/plan/INDEX.md` |
+| 具体技能 | `.agents/skills/k-*/SKILL.md` |
+| 本轮审阅发现与依据 | [RES-909](keel/research/RES-909-astra-instructions.md) |
+
+技能按任务选择，不要串行执行整个目录。初始化、迁移、正式验收保留原有显式入口；规划、实现、修复、调研和验证可自然发现。技能被调用不等于获得修改外部系统的权限。
+
+## 完成和批准不是一回事
+
+“实现完成”“本地验证通过”“GitHub 已推送/CI 通过”“用户验收”分别报告。不能从其中一项推断另一项。
+
+授权长期有效但有范围。用户已授权优化，可以实施并记录；不能把新写出的需求全文标成“用户已经审阅确认”。历史确认件保持原样，语义更新另出版本。已经授权的验收/合并动作无需重复提问，未授权的动作不能顺带执行。
+
+Git hooks 提供本地防误操作；实际 CI 重跑才支持 CI 通过的声明。本仓库配置 GitHub 档，不代表远程保护已经配置完成。
+
+## 本轮取舍
+
+没有增加编排器、权限状态机、模型调用层或新依赖。保留现有 Node + TypeScript gate，重点清理相互矛盾的指令，并修正状态提示和技能调用配置。
+
+针对 Astra 的调整依据是 [OpenAI 官方模型指南](https://developers.openai.com/api/docs/guides/latest-model#prompting-best-practices)：明确持续授权与完成条件、审计技能冲突、按风险控制验证。这里没有声称测得某个模型的成功率；需要在后续真实任务中继续观察效果。

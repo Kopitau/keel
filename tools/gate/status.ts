@@ -29,8 +29,8 @@ export type StatusShape = {
 };
 
 /**
- * ISS-060 / REQ-012 AC-5: the `next:` line is the one sentence a fresh session acts
- * on. An empty project used to read "no unblocked feature left — plan-level review",
+ * ISS-060 / REQ-012 AC-5: the `next:` line describes repository state for a fresh
+ * session; it cannot infer the current task. An empty project used to read "no unblocked feature left — plan-level review",
  * which a pilot's model took as "the plan is finished" before any baseline existed.
  */
 /** CHG-016: a current baseline file that says proposed and has no approved APR behind it. */
@@ -47,22 +47,26 @@ function unapproved(ctx: Ctx, dir: string, file: string | null | undefined): boo
   return approvalBinding(ctx, posixRel(ctx.root, abs)).boundBy.length === 0;
 }
 
+/** Structural hints only: user intent and prior authorization are not encoded in summary files. */
 export function nextLine(shape: StatusShape, handoff: string): string {
-  if (!shape.hasBaseline) return "no baseline yet — run k-new (interview → research → decisions → unified plan)";
-  if (!shape.hasPlan) return "requirements baselined, plan missing — finish k-new step 4 (unified plan + APR), then k-impl";
+  const context = `read ${handoff} and follow the current user request`;
+  if (!shape.hasBaseline) return `no baseline yet — ${context}; use k-new if planning is in scope`;
+  if (!shape.hasPlan) return `requirements present, plan missing — ${context}; plan only the requested work`;
   if (shape.unapprovedBaseline) {
-    return "requirements/plan drafted but not approved — finish k-new step 5 (APR on the user's words), then k-impl";
+    return `requirements/plan drafted — ${context}; reuse applicable authorization; ask only for a missing material decision`;
   }
-  if (shape.frontier.length > 0) return `start ${shape.frontier[0]} (frontier); then read ${handoff}`;
-  if (shape.planDone) return `all features have summary.md — plan-level review (k-review), then acceptance (k-accept); read ${handoff}`;
   if (shape.claimed.length > 0) {
-    return `claimed and in progress: ${shape.claimed.join(", ")} — continue in its worktree or release the claim (gate worktree rm); read ${handoff}`;
+    return `claimed and in progress: ${shape.claimed.join(", ")} — ${context}; respect existing worktree ownership`;
   }
+  if (shape.frontier.length > 0) {
+    return `recorded frontier: ${shape.frontier.join(", ")} — ${context}; missing summaries are not new task assignments`;
+  }
+  if (shape.planDone) return `all features have summary.md — ${context}; check evidence, not summary presence, before claiming completion`;
   if (shape.blocked.length > 0) {
     const waiting = shape.blocked.map((b) => `${b.id} (by ${b.by.join(", ")})`).join("; ");
-    return `no unblocked feature — waiting on blockers: ${waiting}; read ${handoff}`;
+    return `recorded blockers: ${waiting} — ${context}; continue unaffected in-scope work`;
   }
-  return `no feature planned yet — add feature plans (k-new step 4); read ${handoff}`;
+  return `no feature planned yet — ${context}; do not invent a new task`;
 }
 
 /** CHG-011: the first three lines answer the only three questions a session has. */

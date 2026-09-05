@@ -1,5 +1,5 @@
 interface:
   display_name: "k-change"
-  short_description: "Use when starting k-change, changing confirmed requirements or the unified plan, filing a CHG, or adding a feature mid-implementation."
+  short_description: "Use when an authorized change alters frozen requirements or plans."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

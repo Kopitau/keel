@@ -1,6 +1,6 @@
 // DEC-170: Codex reads `agents/openai.yaml` beside a SKILL.md for its display name
 // and whether the model may invoke the skill implicitly. keel's user skills
-// (k-init, k-accept, k-change, …) must be explicit-only there; model skills may be
+// (k-init, k-migrate, k-accept) must be explicit-only there; model skills may be
 // implicit. `gate sync` generates the file; X-skills checks it. (RES-904 §7)
 import assert from "node:assert/strict";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -29,7 +29,9 @@ test("DEC-170 every k-* skill is classified exactly once as user-invoked or mode
   const all = [...USER_SKILLS, ...MODEL_SKILLS].sort();
   assert.deepEqual(all, [...SKILL_CATALOG].sort());
   assert.equal(new Set(all).size, all.length);
-  assert.ok(USER_SKILLS.includes("k-accept") && USER_SKILLS.includes("k-change") && USER_SKILLS.includes("k-init"));
+  assert.deepEqual(USER_SKILLS, ["k-init", "k-migrate", "k-accept"]);
+  for (const name of ["k-new", "k-impl", "k-bugfix", "k-change", "k-review", "k-status"] as const) assert.ok(MODEL_SKILLS.includes(name), name);
+  assert.match(openaiYamlFor("unknown-skill", "Unknown."), /allow_implicit_invocation: false/);
   assert.ok(MODEL_SKILLS.includes("k-grill") && MODEL_SKILLS.includes("k-research"));
 });
 

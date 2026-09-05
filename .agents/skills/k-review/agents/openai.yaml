@@ -1,5 +1,5 @@
 interface:
   display_name: "k-review"
-  short_description: "Use when starting k-review — the whole confirmed plan is implemented and the plan-level review loop must run — or when re-reviewing after a repair round."
+  short_description: "Use when reviewing implementation quality and functional evidence or running a formal plan review."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

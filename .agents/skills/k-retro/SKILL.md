@@ -1,32 +1,24 @@
 ---
 name: k-retro
-description: Use when starting k-retro, a feature just finished (tests green, evidence on disk), a summary must be written, OVERVIEW updated, or provisional decisions and lesson candidates closed. Do not skip the summary to mark a feature complete.
+description: Use when summarizing a completed feature or meaningful iteration for future work. Do not invent issues, decisions or lessons to fill a template.
 ---
 
 # k-retro
 
-F9. Trigger: the feature is finished — its tests pass and `gate verify` evidence is on disk — or a manual project retro (C-51, CHG-011). Merge is not the trigger; after a merge only update OVERVIEW's in-flight state.
+F9. Preserve the useful outcome, not another ceremony. A small change may need only a worklog entry; a feature completion claim needs its evidence-backed summary.
 
-## Feature summary (`keel/features/<slug>/summary.md`) — once
+## Feature summary
 
-Fixed sections, Chinese, no cost notes (C-52):
+Use `keel/features/<slug>/summary.md` and `keel/templates/summary.md` when the feature is actually complete. Update it for later iterations; do not freeze a living summary forever.
 
-1. What / why (against REQs)
-2. Technical route (architecture, data flow, why) citing DEC/RES
-3. Key decisions and rejected options
-4. Test and evidence pointers
-5. Debt and known limits
+Explain what/why, the technical route, significant decisions, functional evidence and known limits. Cite DEC/RES when they exist. Omit empty discussion; rejected alternatives and cost notes are not quotas.
 
-Compress the worklog into it: the summary carries what the next context needs; the worklog stays as the raw process record and is not read again (DEC-183). Writing `summary.md` is the completion claim G-done judges (C-56).
+Compress the worklog's useful conclusions into the summary while preserving the raw worklog. Later sessions start from the summary and inspect earlier entries only when needed. A summary is a completion claim G-done checks, not proof on its own.
 
-## OVERVIEW
+## Close relevant loose ends
 
-Update `keel/OVERVIEW.md` in place (living doc, C-54): what the project is, route, capability list, in-flight work, risks, provisional count.
+Update `keel/OVERVIEW.md` if project capabilities or in-flight work changed. Close verified ISS or mark justified wontfix; revisit a provisional DEC only when its trigger occurs. Do not confirm decisions on the user's behalf.
 
-## Close-out (C-55)
+For an existing `#经验候选`, append a bounded lesson or rejection to its worklog line (`→ 经验：` / `→ 弃`). No LES files and no requirement to find a lesson in every change.
 
-- Provisional DECs: confirm / supersede / refresh the trigger.
-- ISS of this feature: closed, or wontfix with a reason.
-- `#经验候选` lines in the worklog: verify and append on the same line `→ 经验：<phenomenon / lesson / bounds>` or `→ 弃 <reason>`. This arrow is the one sanctioned in-place worklog amendment (C-20 still bans rewriting anything else). No LES files, nothing machine-checked (CHG-011).
-
-Then k-handoff (≤10 lines) and the next frontier feature from `gate status`.
+Update k-handoff when continuity requires it, then continue only the next slice authorized by the current task. A historical frontier is not a backlog assignment.

@@ -72,21 +72,18 @@ test("REQ-024 P2-6 DEC-148 LF fixture has a golden digest", () => {
   assert.equal(disk, sha256Normalized("keel-dec148-fixture\r\n"));
 });
 
-test("REQ-016 P2-1 skill bodies are executable protocols not DESIGN dumps", () => {
+test("REQ-016 P2-1 skill files have names and usable descriptions without prescribing prose structure", () => {
   for (const name of SKILL_CATALOG) {
     const text = readFileSync(join(repo, ".agents", "skills", name, "SKILL.md"), "utf8");
-    assert.match(text, /^---\nname: /);
-    assert.ok(/^## /m.test(text), `${name} needs a heading`);
-    assert.ok(
-      /\bnode tools\/gate\b/.test(text) || /^\d+\.\s/m.test(text) || /^- /m.test(text),
-      `${name} needs steps or a gate command`,
-    );
+    assert.ok(text.startsWith("---\nname: " + name + "\n"));
+    assert.match(text, /^description: .+$/m);
+    assert.ok(text.split("---")[2]?.trim(), name + " body is empty");
   }
 });
 
 test("REQ-002 RES template has required sections", () => {
   const t = readFileSync(join(repo, "keel", "templates", "RES.md"), "utf8");
-  for (const h of ["调研问题", "检索范围", "候选对比", "逐项证据", "结论", "剩余不确定性"]) {
+  for (const h of ["调研问题", "检索范围", "逐项证据", "结论", "剩余不确定性"]) {
     assert.ok(t.includes(`## ${h}`), h);
   }
 });
@@ -131,9 +128,9 @@ test("REQ-008 G-merge stays skip without an approved APR", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("REQ-009 summary template has the five retro sections", () => {
+test("REQ-009 summary template retains outcome, route, evidence and limits", () => {
   const t = readFileSync(join(repo, "keel", "templates", "summary.md"), "utf8");
-  for (const h of ["做了什么 / 为什么", "技术路线说明", "关键决策与被否方案", "测试与证据指针", "遗留债务与已知限制"]) {
+  for (const h of ["做了什么 / 为什么", "技术路线说明", "测试与证据指针", "遗留债务与已知限制"]) {
     assert.ok(t.includes(`## ${h}`), h);
   }
 });
