@@ -10,6 +10,8 @@
 - 定向复核：更新/发现/镜像/发布组通过，tsc 退出 0；官方技能校验缺 PyYAML，未增装依赖，已有元数据与镜像检查通过。补充代码围栏示例边界回归，修前 11 过 / 2 失败，修后通过，避免把项目文档里的示例当成受管内容。
 - taotie 实际迁移：先读完整 AGENTS.md，确认全文是旧框架指令后替换为当前受管段；`keel update --yes` 实际退出 0、applied 0.12.1、pending=none。重复执行退出 0、NO FILE CHANGES / already up to date；quick 检查无失败或提醒。
 - 项目保护：迁移前快照 200 个文件，只有 AGENTS.md、两份 k-impl、keel/config.json 和 installed.json 共 5 项框架内容变化，其余 195 个文件哈希不变；真实暂存区哈希前后相同。未修改 taotie 业务需求、设计、代码、测试配置，也未提交其原有未提交改动。
+- 完成交付：实施提交 c3f367f58c146f6c236285de3a151752f77805b2，分支 codex/safe-framework-update；干净树 gate verify 退出 0，317 过 / 0 失败 / 0 跳过，tree=d42a8e163c73f2695969c6fe46411fcceff70abd，dirty=false。F23 更新确认/取消、部分完成退出码、重复运行、框架边界与项目文本保护及既有集成回归通过；真实 bin 命令的部分完成返回 2 也已验证。
+- 完整 check 退出 0、无失败，仍有远程 CI 替身和既有 APR-002/003 历史变动两类提醒；打包 dry-run 成功。本轮是实施者自检，不冒充独立评审或远程 CI。taotie config 的前后内容只有 keel_version 改变；本机安装器和该项目均为 0.12.1，当前修复未推送 GitHub。
 
 ## 2026-08-21
 
