@@ -1,5 +1,16 @@
 # worklog — F23 f23-bootstrap
 
+## 2026-09-06（CHG-018 / 框架指令安全更新）
+
+- 已授权：用户允许 agent 修改 keel 相关部分、保留项目本身内容；只做更新器与指令迁移，不替 taotie 开发业务或提交已有改动。v9 / overview-v5 是 working，直接纳入这次反馈；旧确认版本不动。
+- 诊断：--yes 生效但仍显示确认问题；旧 AGENTS.md 无标记被跳过，工具版本却显示 applied。taotie 的现有 AGENTS.md 全文是旧框架指令，未含项目业务条款。
+- 红绿：补上公共 CLI 回归，修前 8 过 / 5 失败（/private/tmp/keel-update-red.log）；修后更新与相关集成组 28 过 / 0 失败，tsc 退出 0。覆盖缺失/歧义边界保持原文、部分完成退出 2、项目前后文 CRLF/中文/空格字节保留、字面量替换、agent 补边界后完成、重复更新无写入及源错误零写入。
+- C-34: ref=CHG-018 将旧无标记提示断言改为 PENDING，--yes 不再应出现交互问题；保留原有功能断言。新 AC-13 覆盖部分完成；agent-prepared 测试只证明接口和字节保护，不冒称模型语义判断已自动测试。
+- 按 skill-creator 精简现有 k-impl 的升级指导，不加技能、依赖或模型调用。后续记录完整验证、taotie 文件保护与交付结果。
+- 定向复核：更新/发现/镜像/发布组通过，tsc 退出 0；官方技能校验缺 PyYAML，未增装依赖，已有元数据与镜像检查通过。补充代码围栏示例边界回归，修前 11 过 / 2 失败，修后通过，避免把项目文档里的示例当成受管内容。
+- taotie 实际迁移：先读完整 AGENTS.md，确认全文是旧框架指令后替换为当前受管段；`keel update --yes` 实际退出 0、applied 0.12.1、pending=none。重复执行退出 0、NO FILE CHANGES / already up to date；quick 检查无失败或提醒。
+- 项目保护：迁移前快照 200 个文件，只有 AGENTS.md、两份 k-impl、keel/config.json 和 installed.json 共 5 项框架内容变化，其余 195 个文件哈希不变；真实暂存区哈希前后相同。未修改 taotie 业务需求、设计、代码、测试配置，也未提交其原有未提交改动。
+
 ## 2026-08-21
 
 - 进度：W1 开工。切片：把 features/decisions/research/DESIGN 迁入 keel 记录并保留编号映射

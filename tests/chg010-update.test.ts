@@ -290,6 +290,7 @@ test("ISS-069 keel update --yes applies the previewed operations when no termina
     assert.equal(result.code, 0, result.stderr);
     assert.match(result.stdout, /keel update preview 0\.7\.0 -> 0\.8\.0/);
     assert.match(result.stdout, /keel update applied 0\.8\.0 \(--yes\)/);
+    assert.doesNotMatch(result.stdout, /Proceed\? \[y\/N\]/);
     assert.equal(readFileSync(join(root, "tools", "gate", "new.txt"), "utf8"), "brand new\n");
     assert.equal(existsSync(join(root, "tools", "gate", "stale.txt")), false);
     const cfg = JSON.parse(readFileSync(join(root, "keel", "config.json"), "utf8")) as { keel_version?: string };
@@ -309,5 +310,141 @@ test("ISS-069 without --yes a non-terminal session is told about the flag and no
     assert.equal(existsSync(join(root, "tools", "gate", "new.txt")), false);
   } finally {
     cleanup(root, source);
+  }
+});
+
+const currentAgents = "<!-- keel:begin -->\n# keel\nCurrent framework rules.\n<!-- keel:end -->";
+
+test("REQ-025/AC-13 missing or ambiguous AGENTS boundaries preserve project bytes and report an incomplete update", () => {
+  const source = sourceFixture();
+  put(source, "AGENTS.md", currentAgents + "\n");
+  const cases = [
+    "# Project rules\r\nKeep this business constraint.\r\n",
+    "# keel\nOld framework rules.\n\n## Project rules\nKeep this business constraint.\n",
+    "<!-- keel:begin -->\nUnclosed block with project text.\n",
+    currentAgents + "\nProject rule between blocks.\n" + currentAgents,
+    "<!-- keel:end -->\nProject rule.\n<!-- keel:begin -->",
+    "Examples: `<!-- keel:begin -->` and `<!-- keel:end -->`.\nProject rules.\n",
+    "# Project documentation\n```md\n" + currentAgents + "\n```\nKeep this example.\n",
+    "# Project documentation\n~~~~md\n" + currentAgents + "\n~~~~\nKeep this example.\n",
+  ];
+  try {
+    for (const original of cases) {
+      const root = projectFixture();
+      try {
+        put(root, "AGENTS.md", original);
+        const result = runCli(["update", "--yes"], { cwd: root, source });
+        assert.equal(result.code, 2, result.stdout + result.stderr);
+        assert.match(result.stdout, /keel update partially applied 0\.8\.0/);
+        assert.match(result.stdout, /PENDING AGENTS\.md/);
+        assert.match(result.stdout, /agent action:/);
+        assert.ok(result.stdout.includes(join(source, "AGENTS.md")));
+        assert.doesNotMatch(result.stdout, /^keel update applied /m);
+        assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), original);
+        assert.equal(readFileSync(join(root, "user/data.txt"), "utf8"), "never touch me\n");
+        assert.equal(readFileSync(join(root, "tools/gate/keep.txt"), "utf8"), "new gate\n");
+        const config = JSON.parse(readFileSync(join(root, "keel/config.json"), "utf8"));
+        assert.equal(config.keel_version, "0.8.0", "version records the installed tools, not complete instruction migration");
+        const before = snapshot(root);
+        const repeat = runCli(["update", "--yes"], { cwd: root, source });
+        assert.equal(repeat.code, 2, "unchanged tools do not resolve a pending instruction migration");
+        assert.match(repeat.stdout, /NO FILE CHANGES/);
+        assert.deepEqual(snapshot(root), before);
+      } finally {
+        cleanup(root);
+      }
+    }
+  } finally {
+    cleanup(source);
+  }
+});
+
+test("REQ-025/AC-11 a valid framework block updates literally while project text stays byte-for-byte and a repeat is a no-op", () => {
+  const source = sourceFixture();
+  const root = projectFixture();
+  const block = currentAgents.replace("Current framework rules.", () => "Literal shell text: $& $` $'.\n\n```md\n<!-- keel:begin -->\nAn example, not another owned block.\n<!-- keel:end -->\n```");
+  const prefix = "# 项目规则\r\n业务规则必须保留。\r\n\r\n";
+  const suffix = "\r\n\r\n## API constraints\r\nKeep the existing public schema.  \r\n";
+  try {
+    put(source, "AGENTS.md", "Installer-only preface.\n" + block + "\nInstaller-only suffix.\n");
+    put(root, "AGENTS.md", prefix + currentAgents.replaceAll("\n", "\r\n") + suffix);
+    const result = runCli(["update", "--yes"], { cwd: root, source });
+    assert.equal(result.code, 0, result.stdout + result.stderr);
+    assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), prefix + block + suffix);
+    assert.equal(readFileSync(join(root, "user/data.txt"), "utf8"), "never touch me\n");
+    const before = snapshot(root);
+    const repeat = runCli(["update", "--yes"], { cwd: root, source });
+    assert.equal(repeat.code, 0, repeat.stderr);
+    assert.match(repeat.stdout, /keel update already up to date 0\.8\.0/);
+    assert.doesNotMatch(repeat.stdout, /Proceed\? \[y\/N\]/);
+    assert.deepEqual(snapshot(root), before);
+    const editedPrefix = prefix + "New project policy outside the framework.\r\n";
+    put(root, "AGENTS.md", editedPrefix + block + suffix);
+    const nextBlock = block.replace("Literal shell text:", "Updated literal shell text:");
+    put(source, "AGENTS.md", nextBlock + "\n");
+    const localEdit = runCli(["update", "--yes"], { cwd: root, source });
+    assert.equal(localEdit.code, 0, localEdit.stdout + localEdit.stderr);
+    assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), editedPrefix + nextBlock + suffix);
+    assert.match(localEdit.stdout, /only the marked framework section is replaced; project text outside it is preserved/);
+    assert.doesNotMatch(localEdit.stdout, /your edit is lost on apply/);
+  } finally {
+    cleanup(root, source);
+  }
+});
+
+test("REQ-025/AC-13 an agent-prepared framework boundary completes migration without modifying project rules", () => {
+  const source = sourceFixture();
+  const root = projectFixture();
+  const projectRules = "\n## Project rules\nDo not change the product's data model.\n";
+  try {
+    put(source, "AGENTS.md", currentAgents + "\n");
+    put(root, "AGENTS.md", "# keel\nOld framework rules.\n" + projectRules);
+    const partial = runCli(["update", "--yes"], { cwd: root, source });
+    assert.equal(partial.code, 2);
+    // The agent, not a heading heuristic in the CLI, identifies the old framework text.
+    put(root, "AGENTS.md", "<!-- keel:begin -->\n# keel\nOld framework rules.\n<!-- keel:end -->\n" + projectRules);
+    const completed = runCli(["update", "--yes"], { cwd: root, source });
+    assert.equal(completed.code, 0, completed.stdout + completed.stderr);
+    assert.doesNotMatch(completed.stdout, /PENDING|partially applied/);
+    assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), currentAgents + "\n" + projectRules);
+    assert.equal(readFileSync(join(root, "user/data.txt"), "utf8"), "never touch me\n");
+  } finally {
+    cleanup(root, source);
+  }
+});
+
+test("REQ-025/AC-11 an invalid installer framework block refuses the whole update without writes", () => {
+  const source = sourceFixture();
+  const root = projectFixture();
+  try {
+    put(source, "AGENTS.md", "<!-- keel:begin -->\nMissing end marker.\n");
+    const before = snapshot(root);
+    const result = runCli(["update", "--yes"], { cwd: root, source });
+    assert.equal(result.code, 1, result.stdout);
+    assert.match(result.stderr, /installer AGENTS\.md/);
+    assert.deepEqual(snapshot(root), before);
+  } finally {
+    cleanup(root, source);
+  }
+});
+
+test("REQ-025/AC-13 the real --yes command returns exit 2 for pending project instructions", () => {
+  const root = projectFixture();
+  const original = "# Project rules\nDo not rewrite this business policy.\n";
+  try {
+    put(root, "AGENTS.md", original);
+    const result = spawnSync(process.execPath, [join(repo, "bin/keel.js"), "update", "--yes"], {
+      cwd: root,
+      encoding: "utf8",
+      timeout: 120_000,
+    });
+    assert.equal(result.status, 2, result.stdout + result.stderr);
+    assert.match(result.stdout, /keel update partially applied/);
+    assert.match(result.stdout, /pending=AGENTS\.md/);
+    assert.doesNotMatch(result.stdout, /Proceed\? \[y\/N\]/);
+    assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), original);
+    assert.equal(readFileSync(join(root, "user/data.txt"), "utf8"), "never touch me\n");
+  } finally {
+    cleanup(root);
   }
 });

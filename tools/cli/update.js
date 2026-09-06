@@ -25,28 +25,44 @@ const AGENTS_BEGIN = "<!-- keel:begin -->";
 const AGENTS_END = "<!-- keel:end -->";
 
 function keelSection(text) {
-  const a = text.indexOf(AGENTS_BEGIN);
-  const b = text.indexOf(AGENTS_END);
-  if (a < 0 || b < 0 || b < a) return null;
-  return text.slice(a, b + AGENTS_END.length);
+  // Only one ordered pair of standalone markers establishes ownership. A quoted
+  // example or multiple blocks is not permission to replace project text.
+  const begins = [];
+  const ends = [];
+  let offset = 0;
+  let fence = "";
+  for (const line of text.split("\n")) {
+    const boundary = line.match(/^ {0,3}(`{3,}|~{3,})(.*)\r?$/);
+    if (boundary) {
+      const run = boundary[1];
+      if (!fence) fence = run;
+      else if (run[0] === fence[0] && run.length >= fence.length && !boundary[2].trim()) fence = "";
+    } else if (!fence) {
+      const marker = line.match(/^(<!-- keel:(begin|end) -->)[ \t]*\r?$/);
+      if (marker) (marker[2] === "begin" ? begins : ends).push({ start: offset, end: offset + marker[0].replace(/\r$/, "").length });
+    }
+    offset += line.length + 1;
+  }
+  if (begins.length !== 1 || ends.length !== 1) return null;
+  const start = begins[0].start;
+  const end = ends[0].end;
+  if (ends[0].start <= start) return null;
+  return { start, end, content: text.slice(start, end) };
 }
 
 function mergedAgentsMd(source, cwd) {
   const srcPath = fsPath(source, "AGENTS.md");
-  if (!existsSync(srcPath)) return { note: "" };
+  if (!existsSync(srcPath)) return {};
   const src = readFileSync(srcPath, "utf8");
   const srcSection = keelSection(src);
-  if (!srcSection) return { note: "" };
+  if (!srcSection) throw new Error("installer AGENTS.md must contain one ordered pair of standalone keel markers");
   const dstPath = fsPath(cwd, "AGENTS.md");
-  if (!existsSync(dstPath)) return { content: src, note: "" };
+  if (!existsSync(dstPath)) return { content: srcSection.content + "\n" };
   const dst = readFileSync(dstPath, "utf8");
   const dstSection = keelSection(dst);
-  if (!dstSection) {
-    return {
-      note: "AGENTS.md has no <!-- keel:begin --> / <!-- keel:end --> markers, so its keel section is not updated; wrap the keel part in them to let keel update manage it (CHG-016)",
-    };
-  }
-  return { content: dst.replace(dstSection, srcSection), note: "" };
+  if (!dstSection) return { pending: true };
+  // Slice rather than String.replace: '$&', '$`' and "$'" in instructions are literal.
+  return { content: dst.slice(0, dstSection.start) + srcSection.content + dst.slice(dstSection.end) };
 }
 
 function sha256Hex(content) {
@@ -329,8 +345,7 @@ function formatPreview(sourceVersion, targetVersion, operations) {
   const lines = [`keel update preview ${sourceVersion} -> ${targetVersion}`];
   if (operations.length === 0) lines.push("NO FILE CHANGES");
   else lines.push(...operations.map(displayOperation));
-  lines.push("Proceed? [y/N] ");
-  return lines.join("\n");
+  return lines.join("\n") + "\n";
 }
 
 export function runUpdate(cwd, source, args, io) {
@@ -377,16 +392,23 @@ export function runUpdate(cwd, source, args, io) {
     let preview = formatPreview(sourceVersion, targetVersion, operations);
     for (const op of operations) {
       if (!op.localPatch) continue;
+      const effect = op.path === "AGENTS.md"
+        ? "only the marked framework section is replaced; project text outside it is preserved"
+        : "your edit is lost on apply; copy it out or file an ISS for keel";
       preview = preview.replace(
         `OVERWRITE ${op.path}`,
-        `OVERWRITE ${op.path}  (LOCAL PATCH: differs from the installed copy — your edit is lost on apply; copy it out or file an ISS for keel)`,
+        `OVERWRITE ${op.path}  (LOCAL PATCH: differs from the installed copy — ${effect})`,
       );
     }
-    if (agents.note) preview = preview.replace("Proceed? [y/N] ", `note: ${agents.note}\nProceed? [y/N] `);
-    if (typeof io?.emitUpdatePreview === "function") io.emitUpdatePreview(preview);
     // ISS-069: an agent session has no terminal to type y into; --yes is the audited way
     // to say it. A piped "y" still does not count (REQ-025/AC-7 keeps stray input out).
     const yes = hasFlag(args, "yes");
+    if (agents.pending) {
+      preview += `PENDING AGENTS.md: no unique, ordered standalone ${AGENTS_BEGIN} / ${AGENTS_END} markers; left unchanged.\n`;
+      preview += `agent action: compare this project's AGENTS.md with ${fsPath(source, "AGENTS.md")}; migrate only clearly keel-owned instructions into one marked block, preserve project rules verbatim outside it, then rerun keel update --yes. If ownership is unclear, preserve that text and clarify only that boundary.\n`;
+    }
+    preview += yes ? "Auto-confirmed (--yes).\n" : "Proceed? [y/N] ";
+    if (typeof io?.emitUpdatePreview === "function") io.emitUpdatePreview(preview);
     let answer = yes ? "y" : null;
     if (!yes && typeof io?.confirmUpdate === "function") {
       try {
@@ -405,14 +427,18 @@ export function runUpdate(cwd, source, args, io) {
       const message = applied.error instanceof Error ? applied.error.message : String(applied.error);
       return fail(`keel update failed and rolled back: ${message}\n`);
     }
-    return ok(
-      returnedPreview +
-        "keel update applied " +
+    const state = agents.pending ? "partially applied" : operations.length ? "applied" : "already up to date";
+    const count = (action) => operations.filter((op) => op.node === "file" && op.action === action).length;
+    return {
+      code: agents.pending ? 2 : 0,
+      stdout: returnedPreview +
+        `keel update ${state} ` +
         targetVersion +
         (hasFlag(args, "force") ? " (--force)" : "") +
         (yes ? " (--yes)" : "") +
-        "\n",
-    );
+        `\nfiles: added=${count("add")} updated=${count("overwrite")} deleted=${count("delete")}; pending=${agents.pending ? "AGENTS.md (instruction migration required; installed tool version only)" : "none"}\n`,
+      stderr: "",
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return fail(`keel update refused before confirmation: ${message}; update made no changes\n`);

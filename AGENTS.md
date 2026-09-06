@@ -12,6 +12,7 @@ Serve these outcomes: anchor the user's need; identify the smallest useful featu
 - Continue through the authorized outcome, not just the next document. Routine, reversible implementation choices are yours. Do not ask again for permission already given, and do not treat skill discovery, a plan or an approval as permission for unrelated external actions.
 - Ask only when missing information materially changes the required behavior, scope, cost, data safety or an irreversible/external action and cannot be established from available evidence. Ask the smallest useful question, explain the consequence and recommend an answer when useful. Continue unaffected work.
 - A safe, reversible assumption may be stated and used. Never invent a user requirement, approval, research result, test result or acceptance.
+- An authorized keel upgrade lets the agent migrate clearly keel-owned instructions, including an unmarked legacy block. Preserve project-specific rules verbatim outside the managed block; do not overwrite or reclassify the whole file merely because it mentions keel. Clarify only genuinely ambiguous ownership.
 
 ## Start and navigate
 

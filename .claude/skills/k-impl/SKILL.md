@@ -31,3 +31,7 @@ Do not stop at a phase boundary or start an unrelated frontier feature. If only 
 For a notebook-to-pipeline change, move reusable logic into a module and add a core test.
 
 Read `keel/templates/feature-plan.md` only when creating or versioning a feature plan. Read k-change when an authorized request changes frozen semantics; that skill must reuse the current authorization.
+
+## Upgrading keel in an existing project
+
+Before an upgrade, read the project's AGENTS.md; preserve business rules even if an old file mistakenly placed them inside framework markers. `keel update --yes` can return exit 2: tools updated, but AGENTS.md still needs migration. Read the installer file named in the output. Under the existing upgrade authorization, replace only clearly keel-owned instructions with the current marked block; preserve project rules verbatim and in their relative order outside it. If the file contains only project rules, append the framework block. Do not infer ownership from a heading or keyword alone, or enclose the whole mixed file in markers. An unclear fragment is the only part to clarify; keep it unchanged meanwhile. Inspect the diff and rerun the update to verify completion. This is instruction maintenance, not permission to start the project's product work or rewrite its requirements/configuration.
