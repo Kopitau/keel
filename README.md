@@ -44,7 +44,7 @@ agent 收到升级授权后，可以识别并迁移旧文件里明确属于 keel
 
 命令行只替换 `AGENTS.md` 中唯一、顺序正确、各自独占一行的 `<!-- keel:begin -->` / `<!-- keel:end -->` 段。没有明确边界时，不猜测文件归属：先更新工具，保留 `AGENTS.md`，报告 `partially applied`、`PENDING AGENTS.md` 和安装器源文件位置，**退出码为 2**。agent 按上述边界迁移后，再运行 `keel update --yes`。不要通过整文件加标记或 `--force` 来掩盖混合内容。
 
-完整应用或已经是最新版本时退出 0；错误退出 1。未确认的取消仍是零写入。`--yes` 不再显示 `Proceed?`，重复更新没有变化时显示 `already up to date`。`keel --version` 与项目 `keel_version` 表示工具版本，不单独证明项目指令已迁移完成。
+完整应用或已经是最新版本时退出 0；错误退出 1。没有文件变化时，普通 `keel update` 就直接报告 `already up to date`，不要求确认；若仍有指令待迁移，继续报告 pending 并退出 2。实际有变化时，交互终端先预览再询问；非交互环境只预览并明确提示使用 `--yes`，不显示无法回答的问题，也不写文件。`--yes` 执行已授权的预览操作，不再显示 `Proceed?`。`keel --version` 与项目 `keel_version` 表示工具版本，不单独证明项目指令已迁移完成。
 
 ## 日常怎么用
 

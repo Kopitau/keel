@@ -69,12 +69,14 @@ export function runCli(args, opts) {
  * callers can prove EOF/non-interactive cancellation without faking a TTY.
  */
 export function terminalUpdateOptions(input = process.stdin, output = process.stdout) {
+  const canConfirmUpdate = !!input && input.isTTY === true && typeof input.fd === "number";
   return {
+    canConfirmUpdate,
     emitUpdatePreview(text) {
       output.write(text);
     },
     confirmUpdate() {
-      if (!input || input.isTTY !== true || typeof input.fd !== "number") return null;
+      if (!canConfirmUpdate) return null;
       const buffer = Buffer.alloc(1024);
       const count = readSync(input.fd, buffer, 0, buffer.length, null);
       return count > 0 ? buffer.subarray(0, count).toString("utf8") : null;

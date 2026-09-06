@@ -403,14 +403,20 @@ export function runUpdate(cwd, source, args, io) {
     // ISS-069: an agent session has no terminal to type y into; --yes is the audited way
     // to say it. A piped "y" still does not count (REQ-025/AC-7 keeps stray input out).
     const yes = hasFlag(args, "yes");
+    const hasChanges = operations.length > 0;
+    const canConfirm = io?.canConfirmUpdate !== false && typeof io?.confirmUpdate === "function";
     if (agents.pending) {
       preview += `PENDING AGENTS.md: no unique, ordered standalone ${AGENTS_BEGIN} / ${AGENTS_END} markers; left unchanged.\n`;
       preview += `agent action: compare this project's AGENTS.md with ${fsPath(source, "AGENTS.md")}; migrate only clearly keel-owned instructions into one marked block, preserve project rules verbatim outside it, then rerun keel update --yes. If ownership is unclear, preserve that text and clarify only that boundary.\n`;
     }
-    preview += yes ? "Auto-confirmed (--yes).\n" : "Proceed? [y/N] ";
+    if (hasChanges) {
+      if (yes) preview += "Auto-confirmed (--yes).\n";
+      else if (canConfirm) preview += "Proceed? [y/N] ";
+    }
     if (typeof io?.emitUpdatePreview === "function") io.emitUpdatePreview(preview);
-    let answer = yes ? "y" : null;
-    if (!yes && typeof io?.confirmUpdate === "function") {
+    // Nothing will be written: report the actual state without asking for consent.
+    let answer = !hasChanges || yes ? "y" : null;
+    if (hasChanges && !yes && canConfirm) {
       try {
         answer = io.confirmUpdate();
       } catch {
@@ -419,7 +425,9 @@ export function runUpdate(cwd, source, args, io) {
     }
     const returnedPreview = typeof io?.emitUpdatePreview === "function" ? "" : preview;
     if (!/^y$/i.test(typeof answer === "string" ? answer.trim() : "")) {
-      const hint = answer === null ? " (no terminal to confirm in? pass --yes)" : "";
+      const hint = answer === null
+        ? canConfirm ? " (no confirmation received)" : " (non-interactive; rerun keel update --yes)"
+        : "";
       return ok(returnedPreview + `keel update cancelled; no files changed${hint}\n`);
     }
     const applied = applyOperations(cwd, operations, current);

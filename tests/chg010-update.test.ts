@@ -261,7 +261,7 @@ test("DEC-173 incomplete installer source refuses before confirmation instead of
   }
 });
 
-test("REQ-025/AC-7 real noninteractive bin prints preview and y/N then cancels on EOF without writes", () => {
+test("REQ-025/AC-7 real noninteractive bin previews changes and explains --yes without asking an unanswerable question", () => {
   const root = projectFixture("0.7.0");
   try {
     const before = snapshot(root);
@@ -273,8 +273,9 @@ test("REQ-025/AC-7 real noninteractive bin prints preview and y/N then cancels o
     });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /keel update preview/);
-    assert.match(result.stdout, /Proceed\? \[y\/N\]/);
+    assert.doesNotMatch(result.stdout, /Proceed\? \[y\/N\]/);
     assert.match(result.stdout, /cancelled; no files changed/);
+    assert.match(result.stdout, /non-interactive; rerun keel update --yes/);
     assert.deepEqual(snapshot(root), before);
   } finally {
     cleanup(root);
@@ -304,9 +305,14 @@ test("ISS-069 without --yes a non-terminal session is told about the flag and no
   const source = sourceFixture();
   const root = projectFixture();
   try {
-    const result = runCli(["update"], { cwd: root, source, confirmUpdate: () => null });
+    let confirmationCalls = 0;
+    const before = snapshot(root);
+    const result = runCli(["update"], { cwd: root, source, canConfirmUpdate: false, confirmUpdate: () => { confirmationCalls++; return "y"; } });
     assert.equal(result.code, 0, result.stderr);
-    assert.match(result.stdout, /cancelled; no files changed \(no terminal to confirm in\? pass --yes\)/);
+    assert.equal(confirmationCalls, 0, "a noninteractive adapter must not request or invent confirmation");
+    assert.match(result.stdout, /cancelled; no files changed \(non-interactive; rerun keel update --yes\)/);
+    assert.doesNotMatch(result.stdout, /Proceed\? \[y\/N\]/);
+    assert.deepEqual(snapshot(root), before);
     assert.equal(existsSync(join(root, "tools", "gate", "new.txt")), false);
   } finally {
     cleanup(root, source);
@@ -346,9 +352,10 @@ test("REQ-025/AC-13 missing or ambiguous AGENTS boundaries preserve project byte
         const config = JSON.parse(readFileSync(join(root, "keel/config.json"), "utf8"));
         assert.equal(config.keel_version, "0.8.0", "version records the installed tools, not complete instruction migration");
         const before = snapshot(root);
-        const repeat = runCli(["update", "--yes"], { cwd: root, source });
+        const repeat = runCli(["update"], { cwd: root, source });
         assert.equal(repeat.code, 2, "unchanged tools do not resolve a pending instruction migration");
         assert.match(repeat.stdout, /NO FILE CHANGES/);
+        assert.doesNotMatch(repeat.stdout, /Proceed\?|cancelled/);
         assert.deepEqual(snapshot(root), before);
       } finally {
         cleanup(root);
@@ -444,6 +451,52 @@ test("REQ-025/AC-13 the real --yes command returns exit 2 for pending project in
     assert.doesNotMatch(result.stdout, /Proceed\? \[y\/N\]/);
     assert.equal(readFileSync(join(root, "AGENTS.md"), "utf8"), original);
     assert.equal(readFileSync(join(root, "user/data.txt"), "utf8"), "never touch me\n");
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("REQ-025/AC-7 an unchanged update never asks for confirmation even when an interactive adapter is available", () => {
+  const source = sourceFixture();
+  const root = projectFixture();
+  try {
+    assert.equal(runCli(["update", "--yes"], { cwd: root, source }).code, 0);
+    const before = snapshot(root);
+    let confirmationCalls = 0;
+    let preview = "";
+    const result = runCli(["update"], {
+      cwd: root,
+      source,
+      canConfirmUpdate: true,
+      emitUpdatePreview(text) { preview += text; },
+      confirmUpdate() { confirmationCalls++; return "N"; },
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.equal(confirmationCalls, 0);
+    assert.match(preview + result.stdout, /already up to date/);
+    assert.doesNotMatch(preview + result.stdout, /Proceed\?|cancelled|Auto-confirmed/);
+    assert.deepEqual(snapshot(root), before);
+  } finally {
+    cleanup(root, source);
+  }
+});
+
+test("REQ-025/AC-7 the real unchanged update succeeds without --yes or terminal input", () => {
+  const root = projectFixture();
+  try {
+    const first = spawnSync(process.execPath, [join(repo, "bin/keel.js"), "update", "--yes"], {
+      cwd: root, encoding: "utf8", timeout: 120_000,
+    });
+    assert.equal(first.status, 0, first.stdout + first.stderr);
+    const before = snapshot(root);
+    const repeat = spawnSync(process.execPath, [join(repo, "bin/keel.js"), "update"], {
+      cwd: root, encoding: "utf8", input: "", timeout: 120_000,
+    });
+    assert.equal(repeat.status, 0, repeat.stdout + repeat.stderr);
+    assert.match(repeat.stdout, /NO FILE CHANGES/);
+    assert.match(repeat.stdout, /already up to date/);
+    assert.doesNotMatch(repeat.stdout, /Proceed\?|cancelled|Auto-confirmed/);
+    assert.deepEqual(snapshot(root), before);
   } finally {
     cleanup(root);
   }

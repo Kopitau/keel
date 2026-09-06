@@ -5,7 +5,7 @@
   "records_dir": "keel",
   "enforcement_tier": "github",
   "wave": "R5-rework",
-  "keel_version": "0.12.1",
+  "keel_version": "0.12.2",
   "_comment_tier": "github | gitee | local. 2026-08-25 配置远端 github.com/Kopitau/keel（私有）后升到 github 档：分支保护 + required check + 审批目录 CODEOWNERS。权威执法在 CI 复算（C-45/C-104）。",
   "profiles": {
     "_comment": "Test profiles (C-126/C-128). Gate verify (W3) selects by touched paths.",
