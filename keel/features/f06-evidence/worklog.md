@@ -112,3 +112,4 @@
 - 主 agent 复核：实际执行 `node raw-query.mjs query 000001 2026-01-02` 退出 0，返回字符串 symbol=000001、price=12.340、volume=001200，price_adjustment / volume_unit 均为 null。原始 CSV SHA-256 仍为 7dda095053d0f59c368494eea26b0fc4a6183c3beb8fcb91deeee7c4d835a0f0；试跑证据树 6fa5af64b63e3d523e400e5b74839af080658793。该试跑使用最终 skipped 补漏前的安装快照，仅支持这次授权/未知语义场景，不是 Astra 长期成功率实验。
 - 消费兼容只读核对：以新 featureCoverageLines 读取 taotie 当前记录，F13 / REQ-033 正确报告自动行为映射 5、人工/真实环境 1（AC-1），未更新其框架或业务工作区。npm pack --dry-run 确认 0.13.0 包含正式评审参考、checklist 与版本说明。
 - 窄复核（chg019_fix_review，新的只读上下文）无 actionable findings：确认 skipped 错配公共回归真实、正常快照和 dirty 复用路径未退化，G-done 模式补充准确。当前全部优化与范围内修复完成；本地提交后只需完整 check 复用同树证据，再开始 spexcode 调研。
+- 框架交付：本地提交 62facd77b9794afd790f4881f58c6651521af9fd；提交前后内容树均为 d979f351c07dd1040f5c7ecb65974c20deef974e，未重新运行 verify，证据仍通过对账。提交后完整 check 退出 0，0 FAIL / 4 WARN：CI manual/proxy 在 X-trace/G-done/G-merge 明示，旧 APR-002/003 漂移提醒保留。没有推送/发布/更新 taotie。此后才开始 RES-911 SpexCode 调研。
