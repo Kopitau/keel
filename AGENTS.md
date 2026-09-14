@@ -12,6 +12,7 @@ Serve these outcomes: anchor the user's need; identify the smallest useful featu
 - Continue through the authorized outcome, not just the next document. Routine, reversible implementation choices are yours. Do not ask again for permission already given, and do not treat skill discovery, a plan or an approval as permission for unrelated external actions.
 - Ask only when missing information materially changes the required behavior, scope, cost, data safety or an irreversible/external action and cannot be established from available evidence. Ask the smallest useful question, explain the consequence and recommend an answer when useful. Continue unaffected work.
 - A safe, reversible assumption may be stated and used. Never invent a user requirement, approval, research result, test result or acceptance.
+- An unknown fact limits only conclusions or actions that depend on it. Before reporting a blocker, establish which step failed and check reasonable, permitted alternatives; a failed route does not prove the whole task impossible. If a skill causes a pause or change of scope, name the relevant instruction and distinguish it from your interpretation.
 - An authorized keel upgrade lets the agent migrate clearly keel-owned instructions, including an unmarked legacy block. Preserve project-specific rules verbatim outside the managed block; do not overwrite or reclassify the whole file merely because it mentions keel. Clarify only genuinely ambiguous ownership.
 
 ## Start and navigate
@@ -24,6 +25,7 @@ At a new session or after losing context, run `tools/gate/gate.sh status` (Windo
 
 - Small, clear changes need a short scope and a meaningful check, not a new project ceremony. Larger work needs a concise requirement → feature → technical approach → implementation plan. Reuse decisions and ask only for unresolved material choices; do not collect separate confirmations for each document.
 - Research consequential technology choices with current primary sources: compatibility, maintenance, production maturity, costs and relevant advances. Prefer the existing stack when it meets the need. Record significant findings in RES; a narrow check can live in the worklog. Do not manufacture alternatives or dependencies.
+- Keep research candidates, the selected design and current implementation/acceptance obligations distinct. Historical experiments and rejected mechanisms do not automatically become work to perform.
 - Implement → test → fix → record a useful summary → continue the next in-scope slice. Do not stop just because a skill, feature or planning phase ended; do not expand to unrelated frontier features.
 - Verify observable behavior at the public interface. Test the changed feature and relevant integration/failure paths; scale effort to risk. A wording change needs review, not a test per sentence. Use fresh passing evidence for an unchanged code tree; rerun after relevant changes.
 - Stop when the requested outcome is delivered, the user pauses/changes it, or a concrete blocker needs new information/authority. If blocked, report the exact missing piece and completed unaffected work. A failed attempt calls for a better diagnosis, not an automatic stop or a new permanent gate.
@@ -32,12 +34,15 @@ At a new session or after losing context, run `tools/gate/gate.sh status` (Windo
 
 `CONTEXT.md` maps the records. Skills add task-specific mechanics, not additional authorization barriers.
 
+Requirements hold product commitments; plans hold the selected approach and current delivery obligations; handoff holds changing execution state and pointers; worklogs hold history. Remove obsolete phase statements from current working records instead of layering contradictory updates. Preserve frozen versions and version semantic changes as below. Framework operating instructions belong in AGENTS/skills, not copied into consumer product requirements.
+
 - Preserve confirmed history: a semantic change gets a new version and a short CHG; metadata and genuine typo fixes may be edited with the existing APR reference. An explicit request to change a rule authorizes that change's implementation, not a claim that the user has accepted its unseen result.
 - Record authorization once, in scope, using the user's verbatim words. Never mark a proposed artifact or an APR approved without applicable user authorization; formal acceptance and merge remain distinct actions, but already-authorized actions need no repeat question.
 - Write a DEC only for a consequential, durable trade-off; ordinary implementation choices need no decision file. Records explain work, not generate it. No issue, lesson, alternative or document quotas.
 - In parallel work, use one feature per branch/worktree and serialize overlapping files. Solo work may stay on the current branch; use isolation when it is useful. Preserve unrelated user changes.
 - For keel itself: Node ≥22.18.0; TypeScript runs directly with Node builtins only at runtime. No runtime npm dependencies. A new dev dependency must have a concrete need and a recorded trade-off; adding one is not a prerequisite for this workflow. OS matrix: Windows + macOS (dev) + Linux (CI).
 - Hash normalized UTF-8 / no BOM / LF. Approved-artifact integrity and actual functional evidence remain required. Records do not move the evidence tree. Do not hand-edit verification JSON or bypass a failing check.
+- Verification binds content, not commit status. A dirty but verified tree can have valid local evidence; G-merge separately checks current uncommitted code. Test-name trace is a mapping, never proof that an AC ran or that manual/real-environment acceptance occurred.
 
 ## Skills and checks
 

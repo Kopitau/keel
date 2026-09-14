@@ -36,7 +36,7 @@ test("REQ-001 P1-5 Given-line live marker counts; backtick and 标-docs do not",
   );
 });
 
-test("REQ-006 P1-3 evidenceGaps flags missing junit and dirty", () => {
+test("REQ-006 P1-3 evidenceGaps rejects missing junit independently of dirty metadata", () => {
   const dir = mkdtempSync(join(tmpdir(), "keel-p1-ev-"));
   mkdirSync(join(dir, "keel", "evidence"), { recursive: true });
   writeFileSync(join(dir, "keel", "config.json"), JSON.stringify({ records_dir: "keel" }), "utf8");
@@ -63,7 +63,7 @@ test("REQ-006 P1-3 evidenceGaps flags missing junit and dirty", () => {
     stdout_tail_2kb: "ok",
     actor: { harness: "local", model: "unspecified", session: "local-1" },
   });
-  assert.ok(gaps.some((g) => /dirty/.test(g)), gaps.join(";"));
+  assert.ok(!gaps.some((g) => /dirty/.test(g)), gaps.join(";"));
   assert.ok(gaps.some((g) => /junit/.test(g)), gaps.join(";"));
   rmSync(dir, { recursive: true, force: true });
 });

@@ -1,6 +1,6 @@
 {
   "name": "keel",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "bin": {
@@ -15,7 +15,7 @@
     "CLAUDE.md",
     "CONTEXT.md",
     "DESIGN-v2.md",
-    "RELEASE-0.12.2.md",
+    "RELEASE-0.13.0.md",
     ".githooks",
     ".gitattributes",
     ".agents/skills"

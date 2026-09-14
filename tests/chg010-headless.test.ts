@@ -55,7 +55,9 @@ test("REQ-027/AC-7 machine-doc makes Pi use a fresh sequential session with only
 });
 
 test("REQ-027/AC-2 k-review points to the recipe page and requires the shared findings schema", () => {
-  const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+  const entry = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+  assert.match(entry, /references\/formal-review\.md/);
+  const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "references", "formal-review.md"), "utf8");
   assert.match(skill, /keel\/review\/headless\.md/);
   for (const key of ["title", "blocking", "repro", "impact", "fingerprint"]) {
     assert.match(skill, new RegExp(`\\b${key}\\b`), key);

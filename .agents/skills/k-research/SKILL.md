@@ -13,6 +13,8 @@ Start with the repository's versions, architecture and prior relevant decisions.
 
 Compare alternatives only when there is a real unresolved choice. Explain compatibility, maintenance, functional fit, operational complexity, cost and a relevant limitation. A straightforward extension of a proven stack may need only a targeted check; do not fabricate a three-candidate comparison.
 
+Keep explored candidates separate from the selected design. Record why the selected approach serves the user need, then put only its current implementation and acceptance obligations in the plan. A suggestion or experiment in an old RES does not become a task or test obligation by being recorded.
+
 Offline evidence needs a source, version/date and local path. If it cannot support a consequential selection, defer that selection, state what is missing and continue unaffected work. Do not claim freshness from memory.
 
 Independent questions may be delegated when useful and permitted. The parent checks relevant evidence and conclusions, not just an INDEX or another agent's confidence. No mandatory delegation or separate report per trivial query.

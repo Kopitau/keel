@@ -23,7 +23,7 @@ artifacts:
 
 ## 证据快照（DEC-187）
 
-`gate approve` 时若盘上有与当前树一致、退出码 0 的 `keel/evidence/verify.json`，会把 `evidence_tree_hash / evidence_commit / evidence_command / evidence_exit_code / evidence_passed / evidence_failed / evidence_skipped / evidence_recorded_at` 写进本文件前言。local 档合并、工作树删除后，G-done / G-merge / X-evidence 以该快照为证据（树必须仍一致）；github 档以 CI 复算为准。
+`gate approve` 时只有当前内容树、命令、退出码、JUnit 哈希与计数及执行者均通过对账的 `keel/evidence/verify.json` 才会被快照为 `evidence_tree_hash / evidence_commit / evidence_command / evidence_exit_code / evidence_passed / evidence_failed / evidence_skipped / evidence_recorded_at`。dirty 不否定已验证内容。local 档合并、工作树删除后可按原规则核对快照；github 档以 CI 复算为准。证据快照不改变本 APR 的授权种类，也不自动证明人工验收。
 
 ## 提交纪律（DEC-190）
 

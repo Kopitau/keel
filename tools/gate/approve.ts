@@ -6,7 +6,7 @@ import { parseFrontmatter } from "./frontmatter.ts";
 import { fail, ok, usage, type CmdResult } from "./result.ts";
 import { mdFiles } from "./walk.ts";
 import { isRegularFile } from "./changechain.ts";
-import { APPROVAL_EVIDENCE_KEYS, approvalEvidenceLines, evidenceFresh, readEvidence } from "./evidence.ts";
+import { APPROVAL_EVIDENCE_KEYS, approvalEvidenceLines, evidenceGaps, readEvidence } from "./evidence.ts";
 
 type Human = { name?: string; email?: string };
 
@@ -102,7 +102,7 @@ export function runApprove(ctx: Ctx, args: string[]): CmdResult {
   // tier keeps its evidence after the worktree (and its gitignored verify.json) is gone.
   const ev = readEvidence(ctx);
   let note = "";
-  if (ev && evidenceFresh(ctx, ev) && !ev.dirty && (ev.counts?.failed ?? 0) === 0 && (ev.counts?.passed ?? 0) > 0) {
+  if (ev && evidenceGaps(ctx, ev).length === 0) {
     next = withApprovalEvidence(next, approvalEvidenceLines(ev));
     note = `evidence snapshot written: tree ${ev.tree_hash.slice(0, 12)}… passed=${ev.counts.passed} (DEC-187)\n`;
   } else {

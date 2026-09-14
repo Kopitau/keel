@@ -1,7 +1,7 @@
 # approvals index (generated)
 
 - generator: gate index
-- count: 9
+- count: 10
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -14,3 +14,4 @@
 | APR-007 | APR-007 CHG-015（评审三问）+ 需求 v7 | approved | `APR-007-chg-015-requirements-v7.md` |
 | APR-008 | APR-008 CHG-016（第二轮试点审计）+ 需求 v8 | approved | `APR-008-chg-016-requirements-v8.md` |
 | APR-009 | APR-009 本轮指令优化范围授权 | approved | `APR-009-astra-scope.md` |
+| APR-010 | APR-010 astra-evidence-scope | approved | `APR-010-astra-evidence-scope.md` |

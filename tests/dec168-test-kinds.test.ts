@@ -83,12 +83,12 @@ test("DEC-168 X-trace: a REQ/AC marker in a comment or a fixture string is not c
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("DEC-168 X-trace: a black-box name certifies the AC", () => {
+test("DEC-168 X-trace: an acceptance name supplies a static mapping, not execution proof", () => {
   const dir = project("black", { "a.test.js": "test('REQ-001/AC-1 behaves as promised', () => {});\n" });
   const r = runCheck(makeCtx(dir), ["--quick"]);
   assert.equal(r.code, 0, r.stdout);
   assert.match(line(r.stdout, "X-trace"), /^PASS/);
-  assert.match(line(r.stdout, "X-trace"), /black-box/);
+  assert.match(line(r.stdout, "X-trace"), /test-name mappings/);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -159,7 +159,7 @@ test("DEC-168 gate trace: the matrix has a proxy column and lists white-box name
 });
 
 // Positive control (ISS-038 lesson): the judge must not punish the repo that carries it.
-test("DEC-168 this repo: X-trace is PASS or a proxy-only WARN under the new judge", () => {
+test("DEC-168 this repo: X-trace reports real manual/proxy conditions without white-box naming violations", () => {
   const l = line(runCheck(makeCtx(repo), ["--quick"]).stdout, "X-trace");
   assert.match(l, /^(PASS|WARN)/, l);
   assert.doesNotMatch(l, /white-box/, l);

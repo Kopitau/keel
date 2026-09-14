@@ -1,7 +1,7 @@
 # changes index (generated)
 
 - generator: gate index
-- count: 18
+- count: 19
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -23,3 +23,4 @@
 | CHG-016 | CHG-016 第二轮试点审计回流：草稿计划、跨工作树编号、AGENTS.md 随更新、本地补丁可见、新项目门禁口径、证据只算代码 | approved | `CHG-016-second-pilot-audit.md` |
 | CHG-017 | CHG-017 Astra 指令优化的授权范围 | approved | `CHG-017-astra-instructions.md` |
 | CHG-018 | CHG-018 安全更新框架指令 | proposed | `CHG-018-safe-framework-update.md` |
+| CHG-019 | CHG-019 Astra / taotie 审查后的优化授权范围 | approved | `CHG-019-astra-evidence-and-context.md` |

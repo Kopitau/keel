@@ -16,7 +16,9 @@ Keep it short enough to scan, usually about ten lines:
 - Relevant files: current plan, worklog/summary, evidence and open issue if needed.
 - The exact blocker or missing decision, only when there is one.
 
-History belongs in the worklog/summary. The handoff is a living pointer; rewrite it when the state materially changes, not for every tool call. The closing reply and handoff must agree on the next action.
+History belongs in the worklog/summary. Keep detailed hashes, logs and past attempts there rather than repeating them in handoff. The handoff is a living pointer; rewrite it when the state materially changes, not for every tool call. The closing reply and handoff must agree on the next action.
+
+Requirements describe product commitments and plans describe the selected approach and delivery obligations. Execution phase belongs here. Remove outdated phase claims from current working records; preserve frozen versions and version actual semantic changes. Appending a correction above contradictory current text leaves avoidable ambiguity.
 
 If a handoff is missing, the next agent rebuilds from the relevant worklogs and available task context; do not restart completed work or require a new authorization merely because the session changed.
 

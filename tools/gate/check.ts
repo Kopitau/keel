@@ -24,6 +24,7 @@ import {
   isPlanArtifact,
 } from "./changechain.ts";
 import { posixRel } from "./walk.ts";
+import { gitDirty } from "./git.ts";
 
 /**
  * The gate after CHG-011 (DEC-183): eight checks, and every one of them judges
@@ -374,6 +375,13 @@ function gDone(ctx: Ctx): CheckItem {
     return { ...warn("G-done", stale, "run k-retro: update OVERVIEW.md (能力清单 / 在途, provisional DECs) after a feature finishes"), acknowledged: true };
   }
   const evidenceNote = via === "verify" ? "evidence 对账" : `evidence via ${via} (DEC-187)`;
+  const manual = traceWarnings(ctx, claimedReqs(ctx)).manual;
+  if (manual.length > 0) {
+    return {
+      ...warn("G-done", `${evidenceNote}; manual evidence requires review: ${manual.join(", ")}`, "review the actual environment/human evidence in feature summaries; a test-name mapping does not certify it"),
+      acknowledged: true,
+    };
+  }
   return pass(
     "G-done",
     loop
@@ -383,7 +391,7 @@ function gDone(ctx: Ctx): CheckItem {
 }
 
 // X-evidence — full check only (CHG-011): judged when done or merge is claimed,
-// never in --quick, so a dirty daily tree does not redden the hook.
+// never in --quick. Content/report integrity is independent of commit state.
 function xEvidence(ctx: Ctx): CheckItem {
   const verdict = evidenceVerdict(ctx);
   if (verdict.ok) {
@@ -441,6 +449,9 @@ function gMerge(ctx: Ctx): CheckItem {
   if (!verdict.ok) {
     return fail("G-merge", `evidence: ${verdict.gaps.join("; ")}`, "run: gate verify (C-45); an approved APR snapshot for this tree also counts (DEC-187)");
   }
+  if (gitDirty(ctx)) {
+    return fail("G-merge", "delivery pending: uncommitted code; functional evidence is valid", "review and commit the verified changes before merging; preserve unrelated work; unchanged content reuses this evidence");
+  }
   const missing = uncoveredClaimed(ctx);
   if (missing.length > 0) {
     return fail("G-merge", `trace not green: ${missing.join(", ")}`, "C-45");
@@ -448,6 +459,13 @@ function gMerge(ctx: Ctx): CheckItem {
   const blocking = openIssueIds(ctx);
   if (blocking.length > 0) {
     return fail("G-merge", `open issues: ${blocking.join(", ")}`, "close or wontfix blocking ISS (C-45)");
+  }
+  const manual = traceWarnings(ctx, claimedReqs(ctx)).manual;
+  if (manual.length > 0) {
+    return {
+      ...warn("G-merge", `machine checks satisfied; manual evidence requires review: ${manual.join(", ")}`, "confirm actual evidence and applicable acceptance/merge authorization; a machine check is not user acceptance"),
+      acknowledged: true,
+    };
   }
   return pass("G-merge", `${approved} approved APR; evidence (${verdict.via}) + trace green; no open ISS`);
 }
@@ -520,7 +538,7 @@ function xBypass(ctx: Ctx): CheckItem {
 }
 
 const TRACE_FIX =
-  "only black-box acceptance tests carry REQ-nnn/AC-i; a stand-in says [proxy:<release condition>]; regression/guard names start with ISS-/DEC-/fp: (DEC-168)";
+  "map auto behavior and machine-doc checks with REQ-nnn/AC-i; inspect manual evidence separately; a stand-in says [proxy:<release condition>]; names do not prove execution or acceptance";
 
 // X-trace — every claimed acceptance criterion has a black-box test (or an honest proxy).
 function xTrace(ctx: Ctx): CheckItem {
@@ -534,7 +552,7 @@ function xTrace(ctx: Ctx): CheckItem {
       "add req: [REQ-nnn] to the feature plan front matter (ISS-044); mark black-box acceptance tests REQ-nnn/AC-i (C-32 / ISS-020 / DEC-168)",
     );
   }
-  const { proxies, whitebox, proxyNoCondition } = traceWarnings(ctx, claimed);
+  const { proxies, whitebox, proxyNoCondition, manual } = traceWarnings(ctx, claimed);
   const drafts = draftClaimedReqs(ctx);
   if (claimed.length === 0 && whitebox.length === 0 && drafts.length === 0) {
     return pass("X-trace", "no claimed-done features (C-32 scope = 验收范围)");
@@ -546,6 +564,7 @@ function xTrace(ctx: Ctx): CheckItem {
     notes.push(`plan cites requirements outside the current baseline (approve the change or fix the id): ${drafts.join(", ")}`);
   }
   if (proxies.length > 0) notes.push(`proxy coverage, WARN not PASS: ${proxies.join(", ")}`);
+  if (manual.length > 0) notes.push(`manual evidence requires review: ${manual.join(", ")}`);
   if (proxyNoCondition.length > 0) {
     notes.push(`proxy without a release condition (name the feature or record that lands the real test): ${proxyNoCondition.join(", ")}`);
   }
@@ -554,7 +573,7 @@ function xTrace(ctx: Ctx): CheckItem {
     // The reason is in the test name itself; C-103 does not escalate it (DEC-168).
     return { ...warn("X-trace", notes.join("; "), TRACE_FIX), acknowledged: true };
   }
-  return pass("X-trace", "claimed acceptance criteria covered by black-box tests in tests/");
+  return pass("X-trace", "claimed machine-check criteria have test-name mappings in tests/; not execution or acceptance");
 }
 
 const NO_WAIVE = new Set(["X-trace", "G-done", "G-merge", "X-bypass"]);

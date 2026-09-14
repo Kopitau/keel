@@ -4,9 +4,9 @@ A small glossary, read on demand. The records dir in this repo is `keel/`; consu
 
 | Term | Meaning |
 |---|---|
-| requirement / REQ | The user's needed behavior, acceptance and boundaries; numbered entries in `requirements/vN.md`. Do not invent user intent. |
+| requirement / REQ | Product behavior, acceptance and boundaries in `requirements/vN.md`; not a copy of framework operating rules or changing execution status. |
 | feature | A useful observable capability, not a quota of files or steps. A small change may stay in an existing feature. |
-| plan | The in-scope implementation and test obligations. `plan/INDEX.md` points to the current overview. |
+| plan | The selected approach and current delivery obligations, not all research candidates. `plan/INDEX.md` points to the current overview. |
 | DEC | A durable consequential trade-off. Ordinary implementation choices do not need a DEC. |
 | RES | Retrievable research for a significant choice. A small source check can be in the worklog. |
 | CHG | Why frozen semantics change and what is affected; new versions preserve the old ones. |
@@ -21,6 +21,8 @@ A small glossary, read on demand. The records dir in this repo is `keel/`; consu
 | frontier | Features without summary/claim whose recorded blockers have summaries. Structural navigation, not authority to start work or proof that blockers function. |
 | gate | `tools/gate/gate.ts`: Node ≥22.18.0, direct TypeScript, Node builtins only at runtime. |
 | evidence tree | Normalized code/config tree used to bind verification. Records are excluded except configuration; changing only records does not stale code evidence. |
+| dirty | Uncommitted code at the observation time. It does not invalidate verified content; G-merge separately checks the current worktree before delivery. |
+| trace / feature_coverage | Static test-name mappings by verification type. They do not establish per-AC execution, test quality or manual acceptance; actual evidence needs review. |
 | normalized hash | UTF-8, no BOM, LF; approval SHA-256 hashes the body. Do not hash raw disk bytes. |
 | GWT | Given/When/Then; a checklist is sufficient for simple acceptance. |
 | black-box acceptance | Assert promised behavior through its public seam (CLI, route or module API), not internal implementation choices; test name `REQ-nnn/AC-i`. |

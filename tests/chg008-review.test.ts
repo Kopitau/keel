@@ -43,14 +43,14 @@ function stubEvidence(): Evidence {
   };
 }
 
-test("REQ-028/AC-1 the reviewer answers three questions from the checklist and runs the tests at most once", () => {
+test("REQ-028/AC-1 review guidance retains the three questions without a fixed test-run limit", () => {
   const checklist = readFileSync(join(repo, "keel", "review", "checklist.md"), "utf8");
-  for (const item of ["规范与可维护", "功能是否实现", "功能测试是否写了、是否通过", "最多把项目的测试命令跑一次"]) assert.ok(checklist.includes(item), item);
+  for (const item of ["规范与可维护", "功能是否实现", "功能测试是否写了、是否通过"]) assert.ok(checklist.includes(item), item);
   const skill = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
   assert.match(skill, /Standards and maintainability/);
   assert.match(skill, /Implemented/);
   assert.match(skill, /Functional tests written and passing/);
-  assert.match(skill, /at most once/);
+  assert.doesNotMatch(skill, /at most once/);
   assert.doesNotMatch(skill, /actually run|robustness\.md|requirements\.md/);
   assert.equal(existsSync(join(repo, "keel", "review", "robustness.md")), false);
   assert.equal(existsSync(join(repo, "keel", "review", "requirements.md")), false);

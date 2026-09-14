@@ -19,6 +19,8 @@ Ask when plausible answers would materially change behavior, scope, cost, safety
 
 Reuse prior answers and authorization. State safe reversible assumptions and proceed. A blocking uncertainty is `[NEEDS-CLARIFICATION: specific question]` on the affected branch in 未决问题, not a reason to stop unrelated work. Do not invent preferences or call assumptions confirmed.
 
+Separate what is unknown from what it prevents. Data semantics may prevent a quality claim while leaving provenance-preserving ingestion possible. Establish the affected scope before asking; do not generalize a failed permitted route into impossibility or bypass a real access restriction.
+
 Research may run before all details are settled when it helps establish feasibility or explain a choice. Do not force a finished requirement document before learning whether the feature is possible.
 
 ## Close

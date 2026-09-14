@@ -70,7 +70,8 @@ function versionedIndex(
 ): string {
   const prev = readCurrent(indexPath);
   const names = existsSync(dir)
-    ? readdirSync(dir).filter((n) => pattern.test(n)).sort()
+    ? readdirSync(dir).filter((n) => pattern.test(n)).sort((a, b) =>
+      Number(a.match(/v(\d+)\.md$/)?.[1] ?? 0) - Number(b.match(/v(\d+)\.md$/)?.[1] ?? 0))
     : [];
   let current = prev.file && names.includes(prev.file) ? prev.file : "";
   if (!current && names.length > 0) current = names[names.length - 1] ?? "";

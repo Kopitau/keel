@@ -210,8 +210,10 @@ test("REQ-007/AC-6 k-impl and k-review say a finished feature moves on; the revi
   assert.match(impl, /review once after its in-scope features/);
   assert.doesNotMatch(impl, /Claiming done starts the review loop/);
   const review = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
-  assert.match(review, /disposition\.md/);
-  assert.match(review, /findings\.md/);
+  assert.match(review, /references\/formal-review\.md/);
+  const formal = readFileSync(join(repo, ".agents", "skills", "k-review", "references", "formal-review.md"), "utf8");
+  assert.match(formal, /disposition\.md/);
+  assert.match(formal, /findings\.md/);
   assert.match(review, /not per slice/);
 });
 

@@ -67,7 +67,11 @@ node tools/gate/gate.ts check
 
 开发时跑相关测试；交付代码前跑正式验证与完整检查。同一代码树已有通过的证据，就不必为了“完成、评审、合并”分别重跑全套。代码、配置、测试或验收发生相关变化后重新验证相应部分。
 
-`verify` 记录命令、退出状态、代码树和按功能的证据；`trace` 说明哪些验收有真实测试、哪些只是替身、哪些缺失。文档一致性测试只能证明文档结构，不能证明模型在真实任务中一定遵守。
+`verify` 记录命令、退出状态、代码树和报告；`trace` 与 `feature_coverage` 按功能区分自动行为映射、文档/协议映射、人工/真实环境条目、替身和机器缺项。名称映射不证明某条验收已经运行，`summary.md` 存在也不代表已验收。实际运行看 verify/JUnit，人工条目需核对实际环境、日期、结果与原始材料。
+
+未提交的内容也可以有有效功能证据。`G-done` / `X-evidence` 校验内容树和报告，`G-merge` 单列当前未提交代码并提示先整理提交；同内容提交后可复用原证据。代码变化或报告损坏仍会拒绝旧证据。人工核验以 WARN 明示，不要求伪造自动化测试来消除提醒。
+
+当前状态只放在 handoff；需求保存用户承诺，计划保存选定方案与交付义务，详细历史保留在 worklog。当前工作版中的失效阶段说明应清理，冻结版本保留。研究候选与被淘汰的机制不自动成为下一轮实施或测试任务。
 
 ## 文件该看哪里
 
@@ -79,9 +83,11 @@ node tools/gate/gate.ts check
 | 当前任务与下一步 | [keel/handoff.md](keel/handoff.md) |
 | 需求与规划版本 | `keel/requirements/INDEX.md`、`keel/plan/INDEX.md` |
 | 具体技能 | `.agents/skills/k-*/SKILL.md` |
-| 本轮审阅发现与依据 | [RES-909](keel/research/RES-909-astra-instructions.md) |
+| 本轮审阅发现与依据 | [RES-910](keel/research/RES-910-astra-instructions-and-evidence.md) |
 
-技能按任务选择，不要串行执行整个目录。初始化、迁移、正式验收保留原有显式入口；规划、实现、修复、调研和验证可自然发现。技能被调用不等于获得修改外部系统的权限。
+技能按任务选择，不要串行执行整个目录。初始化、迁移、正式验收保留原有显式入口；规划、实现、修复、调研和验证可自然发现。普通 k-review 只加载审查要求，正式验收或已有回路才读它的 `references/formal-review.md`。技能被调用不等于获得修改外部系统的权限。
+
+既有 G-done 仍在所有 active feature 都有 summary 时要求正式评审循环；普通 worklog 审阅不满足这一方案验收条件。遇到它应分别报告本轮实现结果与待满足条件，不伪称完整检查已通过，也不为此重开无关历史功能。
 
 ## 完成和批准不是一回事
 
@@ -93,6 +99,6 @@ Git hooks 提供本地防误操作；实际 CI 重跑才支持 CI 通过的声�
 
 ## 本轮取舍
 
-没有增加编排器、权限状态机、模型调用层或新依赖。保留现有 Node + TypeScript gate，重点清理相互矛盾的指令，并修正状态提示和技能调用配置。
+没有增加编排器、权限状态机、模型调用层或新依赖。保留现有 Node + TypeScript gate，修正证据/提交状态混用和验收类型汇总，并整理当前状态、研究候选及按需技能入口。
 
-针对 Astra 的调整依据是 [OpenAI 官方模型指南](https://developers.openai.com/api/docs/guides/latest-model#prompting-best-practices)：明确持续授权与完成条件、审计技能冲突、按风险控制验证。这里没有声称测得某个模型的成功率；需要在后续真实任务中继续观察效果。
+针对 Astra 的调整依据是 [OpenAI 官方模型指南](https://developers.openai.com/api/docs/guides/latest-model#prompting-best-practices)及 [9 月 11 日的技能与提示词说明](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra)：明确持续授权与完成条件、收窄技能触发、按需读取、按风险和实际变化验证。局部未知只限制依赖它的动作；实际访问限制仍需遵守。这里没有声称测得某个模型的长期成功率。
