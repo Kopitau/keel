@@ -55,6 +55,10 @@ export type TraceRow = {
   verification: string[];
   tests: string[];
   criteria: number;
+  /** Unprefixed test-name mappings, not observations that an AC ran or passed. */
+  mappedAc: number[];
+  /** Real environment/human criteria always need separate evidence review, even with a test-name hit. */
+  manualAc: number[];
   uncoveredAc: number[];
   /** ACs whose only coverage is a `[proxy:...]` name — WARN, never PASS (DEC-168). */
   proxyAc: { ac: number; note: string }[];
@@ -262,6 +266,8 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
     const mine = infos.filter((t) => t.reqs.includes(req));
     const tests = [...new Set(mine.map((t) => t.file))].sort();
     const n = protocol?.acceptance.length ?? 0;
+    const mappedAc: number[] = [];
+    const manualAc: number[] = [];
     const uncoveredAc: number[] = [];
     const proxyAc: { ac: number; note: string }[] = [];
     const whiteboxAc: { ac: number; name: string }[] = [];
@@ -271,6 +277,8 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
       const proxy = hits.filter((h) => h.kind === "proxy");
       const white = hits.filter((h) => h.kind === "whitebox");
       for (const w of white) whiteboxAc.push({ ac: i, name: w.name });
+      if (protocol?.verification[i - 1] === "manual") manualAc.push(i);
+      if (black.length > 0) mappedAc.push(i);
       if (black.length > 0) continue;
       if (proxy.length > 0) {
         proxyAc.push({ ac: i, note: proxy[0]?.proxyNote ?? "" });
@@ -278,6 +286,8 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
       }
       // Transitional (DEC-168): a white-box name still counts this version, flagged above.
       if (white.length > 0) continue;
+      // A manual condition without an automated helper is not a missing automated test.
+      if (manualAc.includes(i)) continue;
       uncoveredAc.push(i);
     }
     return {
@@ -286,6 +296,8 @@ export function buildTrace(ctx: Ctx): { rows: TraceRow[]; reqFile: string } {
       verification: protocol?.verification ?? [],
       tests,
       criteria: n,
+      mappedAc,
+      manualAc,
       uncoveredAc,
       proxyAc,
       whiteboxAc,
@@ -334,13 +346,15 @@ const PROXY_RELEASE_RE = /\b(F\d+|REQ-\d+|ISS-\d+|DEC-\d+|CHG-\d+|I-\d+)\b/;
 export function traceWarnings(
   ctx: Ctx,
   claimed: string[],
-): { proxies: string[]; whitebox: string[]; proxyNoCondition: string[] } {
+): { proxies: string[]; whitebox: string[]; proxyNoCondition: string[]; manual: string[] } {
   const { rows } = buildTrace(ctx);
   const proxies: string[] = [];
   const whitebox: string[] = [];
   const proxyNoCondition: string[] = [];
+  const manual: string[] = [];
   for (const r of rows) {
     if (claimed.includes(r.req)) {
+      for (const ac of r.manualAc) manual.push(`${r.req}/AC-${ac}`);
       for (const p of r.proxyAc) {
         proxies.push(`${r.req}/AC-${p.ac}${p.note ? ` [${p.note}]` : ""}`);
         if (!PROXY_RELEASE_RE.test(p.note)) proxyNoCondition.push(`${r.req}/AC-${p.ac}`);
@@ -348,16 +362,13 @@ export function traceWarnings(
     }
     for (const w of r.whiteboxAc) whitebox.push(`${r.req}/AC-${w.ac} <- "${w.name}"`);
   }
-  return { proxies, whitebox: [...new Set(whitebox)], proxyNoCondition };
+  return { proxies, whitebox: [...new Set(whitebox)], proxyNoCondition, manual };
 }
 
 /**
- * REQ-006/AC-10 (CHG-014): what the tests proved, by feature and in words — a
- * person reads "F17 门禁：6 条验收，黑盒 5，替身 1", never "273 passed".
- * One line per feature that has a plan: every REQ the plan claims, with its title
- * from the requirements file, how many acceptance criteria it has and how many of
- * them a black-box test covers, which are stand-ins, which are missing, and the
- * test files behind it.
+ * REQ-006/AC-10: static mappings by feature and declared verification type.
+ * Neither a name hit nor summary.md establishes execution or manual acceptance.
+ * Claims use the same bound plan scope as X-trace; an unbound newer draft cannot replace it.
  */
 export function featureCoverageLines(ctx: Ctx): string[] {
   const { rows, reqFile } = buildTrace(ctx);
@@ -376,10 +387,11 @@ export function featureCoverageLines(ctx: Ctx): string[] {
       .sort((a, b) => Number(a.slice(1, -3)) - Number(b.slice(1, -3)));
     const latest = plans[plans.length - 1];
     if (!latest) continue;
-    const text = readFileSync(join(planDir, latest), "utf8");
-    const fid = text.match(/^feature:\s*(\S+)/m)?.[1] ?? name;
-    const reqs = [...new Set((text.match(/^req:\s*(.+)$/m)?.[1] ?? "").match(/REQ-\d{3}/g) ?? [])];
     const done = existsSync(join(feats, name, "summary.md"));
+    const selected = done ? claimPlanFiles(ctx, join(feats, name)) : [join(planDir, latest)];
+    const texts = selected.map((path) => readFileSync(path, "utf8"));
+    const fid = texts[texts.length - 1]?.match(/^feature:\s*(\S+)/m)?.[1] ?? name;
+    const reqs = [...new Set(texts.flatMap(planReqs))];
     const parts: string[] = [];
     for (const req of reqs) {
       const row = rows.find((r) => r.req === req);
@@ -391,10 +403,17 @@ export function featureCoverageLines(ctx: Ctx): string[] {
       const n = row.criteria;
       const proxy = row.proxyAc.length;
       const missing = row.uncoveredAc.length;
-      const covered = Math.max(0, n - proxy - missing);
+      const auto = row.mappedAc.filter((ac) => row.verification[ac - 1] === "auto").length;
+      const docs = row.mappedAc.filter((ac) => row.verification[ac - 1] === "machine-doc").length;
+      const untyped = row.mappedAc.filter((ac) => !VERIFICATION_TYPES.includes(row.verification[ac - 1] as VerificationType)).length;
+      const white = [...new Set(row.whiteboxAc.map((entry) => entry.ac))].filter((ac) => !row.mappedAc.includes(ac) && !row.manualAc.includes(ac));
       const files = row.tests.map((t) => posixRel(ctx.root, t));
       const detail = [
-        `黑盒 ${covered}`,
+        `自动行为映射 ${auto}`,
+        docs > 0 || row.verification.includes("machine-doc") ? `文档/协议映射 ${docs}` : "",
+        row.manualAc.length > 0 ? `人工/真实环境 ${row.manualAc.length}（${row.manualAc.map((ac) => `AC-${ac}`).join(" ")}；需核验实际证据）` : "",
+        untyped > 0 ? `未声明类型映射 ${untyped}` : "",
+        white.length > 0 ? `白盒映射 ${white.length}（非验收证明）` : "",
         proxy > 0 ? `替身 ${proxy}（${row.proxyAc.map((p) => `AC-${p.ac}`).join(" ")}）` : "",
         missing > 0 ? `缺 ${missing}（${row.uncoveredAc.map((a) => `AC-${a}`).join(" ")}）` : "",
       ]
@@ -418,15 +437,16 @@ export function runTrace(ctx: Ctx): CmdResult {
     "",
     `- requirements: ${reqFile}`,
     `- generator: gate trace`,
-    `- counts black-box test names only (DEC-168); [proxy:...] is a stand-in, not coverage`,
-    `- enforcement scope: claimed means the owner feature has summary.md (DEC-174)`,
+    `- static test-name mappings by verification type, not execution or acceptance; actual runs are in verify/JUnit`,
+    `- manual criteria need separate real evidence review; [proxy:...] is a stand-in, not acceptance`,
+    `- enforcement scope: claimed means the owner feature has summary.md, not that it was accepted`,
     "",
     "## 按功能（人话，REQ-006/AC-10）",
     "",
     ...(byFeature.length > 0 ? byFeature.map((l) => `- ${l}`) : ["- （没有带计划的功能）"]),
     "",
-    "| REQ | scope | verification | tests | criteria | uncovered AC | proxy AC |",
-    "|---|---|---|---|---|---|---|",
+    "| REQ | scope | verification | tests | criteria | uncovered AC | proxy AC | manual evidence AC |",
+    "|---|---|---|---|---|---|---|---|",
   ];
   let uncovered = 0;
   let proxies = 0;
@@ -453,7 +473,7 @@ export function runTrace(ctx: Ctx): CmdResult {
       ? "—"
       : r.proxyAc.map((p) => `AC-${p.ac}${p.note ? ` [${p.note}]` : ""}`).join(", ");
     lines.push(
-      `| ${r.req} | ${r.claimed ? "claimed" : "not claimed"} | ${verification} | ${cell} | ${r.criteria} | ${ac} | ${px} |`,
+      `| ${r.req} | ${r.claimed ? "claimed" : "not claimed"} | ${verification} | ${cell} | ${r.criteria} | ${ac} | ${px} | ${r.manualAc.map((i) => `AC-${i} (review real evidence)`).join(", ") || "—"} |`,
     );
   }
   lines.push("");

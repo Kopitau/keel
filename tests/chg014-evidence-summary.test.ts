@@ -1,5 +1,4 @@
-// CHG-014 / REQ-006 AC-10: the gate says what the tests proved, by feature and in
-// words — never "N passed" alone.
+// REQ-006/AC-10: feature-level mappings stay separate from actual run results.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -54,18 +53,18 @@ function fixture(): string {
   return root;
 }
 
-test("REQ-006/AC-10 gate trace opens with a per-feature summary in words: requirement titles, criteria counted as black-box / stand-in / missing, and the test files", () => {
+test("REQ-006/AC-10 gate trace describes requirement titles, typed mappings, stand-ins, gaps and test files by feature", () => {
   const root = fixture();
   const lines = featureCoverageLines(makeCtx(root));
   assert.deepEqual(lines, [
-    "F1 f01-login（已 summary）— REQ-001 登录：2 条验收，黑盒 1，替身 1（AC-2）；测试 tests/login.test.ts",
-    "F2 f02-export（施工中）— REQ-002 导出：1 条验收，黑盒 0，缺 1（AC-1）；无测试",
+    "F1 f01-login（已 summary）— REQ-001 登录：2 条验收，自动行为映射 1，替身 1（AC-2）；测试 tests/login.test.ts",
+    "F2 f02-export（施工中）— REQ-002 导出：1 条验收，自动行为映射 0，缺 1（AC-1）；无测试",
   ]);
   const r = gate(root, ["trace"]);
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^## 按功能（人话，REQ-006\/AC-10）$/m);
-  assert.match(r.stdout, /^- F1 f01-login（已 summary）— REQ-001 登录：2 条验收，黑盒 1，替身 1（AC-2）；测试 tests\/login\.test\.ts$/m);
-  assert.match(r.stdout, /^- F2 f02-export（施工中）— REQ-002 导出：1 条验收，黑盒 0，缺 1（AC-1）；无测试$/m);
+  assert.match(r.stdout, /^- F1 f01-login（已 summary）— REQ-001 登录：2 条验收，自动行为映射 1，替身 1（AC-2）；测试 tests\/login\.test\.ts$/m);
+  assert.match(r.stdout, /^- F2 f02-export（施工中）— REQ-002 导出：1 条验收，自动行为映射 0，缺 1（AC-1）；无测试$/m);
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -75,7 +74,7 @@ test("REQ-006/AC-10 gate verify ends with the same coverage-by-feature lines nex
   assert.equal(r.status, 0, r.stderr + r.stdout);
   assert.match(r.stdout, /^counts: passed=2 failed=0 skipped=0$/m);
   assert.match(r.stdout, /^coverage by feature:$/m);
-  assert.match(r.stdout, /^  F1 f01-login（已 summary）— REQ-001 登录：2 条验收，黑盒 1，替身 1（AC-2）/m);
+  assert.match(r.stdout, /^  F1 f01-login（已 summary）— REQ-001 登录：2 条验收，自动行为映射 1，替身 1（AC-2）/m);
   rmSync(root, { recursive: true, force: true });
 });
 

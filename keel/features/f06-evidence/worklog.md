@@ -91,3 +91,25 @@
 ## 2026-09-04（CHG-016 / DEC-192：证据树只算代码；草稿计划只警告；替身须有解除条件）
 
 - `git.ts`：`gitWriteTree` 去掉整个记录目录再加回 `config.json`；`gitDirty` 同理（ISS-070 的例外被覆盖）。`trace.ts`：`claimPlanFiles` 取有 APR 绑定的最高计划版本；`draftClaimedReqs` 单列基线外的 REQ（REQ-000 除外）；`traceWarnings` 报无解除条件的替身。证据：`tests/chg016-audit-round2.test.ts`（REQ-006/AC-11、AC-12、AC-13）。
+
+## 2026-09-14（CHG-019：Astra / taotie 审查后的全面优化）
+
+- 范围与授权：见 CHG-019；新版需求 v10、总览 v6，仅修改 keel，不动 taotie 业务树。官方依据与审查来源见 RES-910。
+- 技术取舍：保留既有 evidence 字段与 Node 内置运行时；dirty 仅为观察元数据，G-merge 读当前工作区。trace 是静态映射，manual 始终另核验，不新增人工证据数据库或冒充自动验收。普通 review 与正式循环按需分开。
+- 修复前：新增 tests/chg019-evidence-types.test.ts 五场景 0/5，实际复现 dirty 误判、损坏 JUnit 被 APR 冻结、manual 被算黑盒、ac-only 不能辨别 manual、草稿覆盖绑定计划汇总。
+- 实现：evidenceGaps 不因 dirty 失败；approve 用完整对账；G-merge 独立给提交提示；trace 按类型显示映射/人工/替身/缺项，claim 汇总复用绑定范围；manual ac-only 明确待核验，不可因新增名称清除。
+- 指令与记录：AGENTS、grill/new/research/evidence/handoff/review/migrate、模板与工作说明对齐；正式循环移至 skill references；旧确认件不改，当前总览不堆叠历史“当前版本”。
+- 测试调整：旧 P1 dirty 拒绝断言由 REQ-006/AC-14 的公共命令回归替代，保留缺 JUnit 拒绝；旧“黑盒数量即证明”输出期望改为静态类型映射，保留 REQ/AC 与替身/缺失明细。不是删除功能覆盖。
+- 当前证据：新五场景转绿，增加 init/update/sync 相对参考文件集成；相关 36/36 通过，TypeScript 检查退出 0。quick 无失败，既有 GitHub 六格 proxy/manual 条件仍明示。skill-creator 校验通过，PyYAML 只装在 uv 临时工具环境，未加入项目依赖。
+- 待完成：最终全量、独立审阅、提交状态与随后 spexcode 调研；本节不是未运行检查的通过声明。
+
+- 首次全量 317 过 / 8 失败：失败来自旧文档测试要求“最多一次”或要求正式协议在主入口，以及交接路径/发布说明的约定。已将正式协议断言改为沿明确引用读取，移除已替代的次数/行数断言，保留真实协议与镜像检查；迁移的独立提交与原子停用要求保留，仅去掉 dirty=功能失败误述。
+- 导航核对：gate index 按设计保留原 current，本轮显式切换 v10 / overview-v6。同时发现无 current 时按字典排序选 v9 而不是 v10；新增 REQ-004/AC-1 公共回归先红（v9 != v10），改为按数字排序并继续保留显式 current，避免自动激活新草稿。
+- 当前完整验证：326 过 / 0 失败，含 TypeScript；tree=d2b02f9b211b31834f946268abf849fd39260227。完整 check 唯一失败为 G-merge 当前未提交代码，G-done 明示实际 CI manual 条件，X-evidence 通过；既有 APR-002/003 漂移提醒仍保留。APR-010 只绑定用户实施范围；v10/v6 未标已验收。待独立审阅与本地提交后复用本证据。
+- 独立审阅（chg019_review，新上下文、只读）发现一个 P2：新 approve 完整对账仍依赖只比较 passed/failed 的 evidenceGaps，skipped=99 与 JUnit=0 不一致也可被冻结。公共 approve 回归先红，现补齐三项计数；主入口补充普通审阅不能满足既有全 summary 的正式循环条件，未改该门禁。修复后需重新验证当前树，旧 326/0 不作为新树通过声明。
+- 修复验证：skipped 错配公共回归先红后绿，相关 APR/JUnit 12/12 通过。随后 327 项功能测试通过但 TypeScript 指出新增测试未收窄 nullable ev；改为显式缺失判断后，最终 verify 退出 0，327 过 / 0 失败 / 0 跳过，含 TypeScript，tree=d979f351c07dd1040f5c7ecb65974c20deef974e，evidenceGaps=[]。
+- 独立前向试跑（chg019_forward_trial）：在 /tmp/keel-chg019-forward.Ball3Y 的隔离 0.13.0 工作快照中，给出虚构 CSV 原值登记/查询任务并声明单位、复权未知；未提供预期答案。agent 仅用 k-impl/k-evidence，未暂停或询问、未读父任务结论，交付 raw-query.mjs 与 5 项 CLI 回归，verify/check 均退出 0；正式验收/合并条件明确跳过，未造 APR/提交/验收。
+- 主 agent 复核：实际执行 `node raw-query.mjs query 000001 2026-01-02` 退出 0，返回字符串 symbol=000001、price=12.340、volume=001200，price_adjustment / volume_unit 均为 null。原始 CSV SHA-256 仍为 7dda095053d0f59c368494eea26b0fc4a6183c3beb8fcb91deeee7c4d835a0f0；试跑证据树 6fa5af64b63e3d523e400e5b74839af080658793。该试跑使用最终 skipped 补漏前的安装快照，仅支持这次授权/未知语义场景，不是 Astra 长期成功率实验。
+- 消费兼容只读核对：以新 featureCoverageLines 读取 taotie 当前记录，F13 / REQ-033 正确报告自动行为映射 5、人工/真实环境 1（AC-1），未更新其框架或业务工作区。npm pack --dry-run 确认 0.13.0 包含正式评审参考、checklist 与版本说明。
+- 窄复核（chg019_fix_review，新的只读上下文）无 actionable findings：确认 skipped 错配公共回归真实、正常快照和 dirty 复用路径未退化，G-done 模式补充准确。当前全部优化与范围内修复完成；本地提交后只需完整 check 复用同树证据，再开始 spexcode 调研。
+- 框架交付：本地提交 62facd77b9794afd790f4881f58c6651521af9fd；提交前后内容树均为 d979f351c07dd1040f5c7ecb65974c20deef974e，未重新运行 verify，证据仍通过对账。提交后完整 check 退出 0，0 FAIL / 4 WARN：CI manual/proxy 在 X-trace/G-done/G-merge 明示，旧 APR-002/003 漂移提醒保留。没有推送/发布/更新 taotie。此后才开始 RES-911 SpexCode 调研。

@@ -510,6 +510,11 @@ export function fileFindings(
         probeCheck = `command=${command}`;
       } else {
         const cov = acCoverage(ctx, ac);
+        if (cov === "manual") {
+          deferred.push(f.title);
+          note(`- 待核实（${ac} 为 manual，须核验真实环境/人工证据；ac-only 不能用测试名解除该条件，未开自动缺测试 ISS）：${f.title}`);
+          continue;
+        }
         if (cov === "unknown") {
           deferred.push(f.title);
           note(`- 待核实（${ac} 不在当前需求基线里，未开 ISS）：${f.title}`);
@@ -793,12 +798,13 @@ export function looksLikeTestFailure(output: string): boolean {
 }
 
 /** DEC-191: does the current trace show a black-box test for `REQ-nnn/AC-i`? */
-export function acCoverage(ctx: Ctx, ac: string): "covered" | "proxy" | "missing" | "unknown" {
+export function acCoverage(ctx: Ctx, ac: string): "covered" | "proxy" | "missing" | "unknown" | "manual" {
   const m = ac.trim().match(/^(REQ-\d+)\/AC-(\d+)$/);
   if (!m) return "unknown";
   const row = buildTrace(ctx).rows.find((r) => r.req === m[1]);
   const i = Number(m[2]);
   if (!row || i < 1 || i > row.criteria) return "unknown";
+  if (row.manualAc.includes(i)) return "manual";
   if (row.uncoveredAc.includes(i)) return "missing";
   if (row.proxyAc.some((p) => p.ac === i)) return "proxy";
   return "covered";

@@ -15,4 +15,6 @@ F1–F4. Use the smallest planning artifact that makes the feature and its accep
 
 A new confirmed baseline is versioned and APR-bound using the user's actual words. Drafts are honest working artifacts, not a ban on authorized implementation. Do not call an unseen generated plan user-confirmed.
 
+Keep framework operating rules in AGENTS/skills. Product requirements contain user commitments; plans contain selected implementation and acceptance obligations, not every research candidate. Keep changing execution status in handoff so a phase transition does not leave stale "not started" claims in current requirements.
+
 If the request is plan-only, this round ends with the plan. If it includes building, fixing or optimizing and there is no material blocker, continue with k-impl in this turn. The end of a document is not the end of the task.

@@ -29,6 +29,8 @@ declare module "node:fs" {
   export function rmSync(path: string, opts?: { recursive?: boolean; force?: boolean }): void;
   export function utimesSync(path: string, atime: Date | number, mtime: Date | number): void;
   export function rmdirSync(path: string): void;
+  export function renameSync(oldPath: string, newPath: string): void;
+  export function symlinkSync(target: string, path: string, type?: "file" | "dir" | "junction"): void;
   export function mkdtempSync(prefix: string): string;
   export function cpSync(
     src: string,
@@ -46,6 +48,10 @@ declare module "node:path" {
   export function isAbsolute(p: string): boolean;
   export const sep: string;
   export const delimiter: string;
+}
+
+declare module "node:vm" {
+  export function runInNewContext(code: string, context: Record<string, unknown>): unknown;
 }
 
 declare module "node:url" {

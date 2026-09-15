@@ -8,9 +8,9 @@ keel 把需求、技术依据、功能计划与证据放进代码仓库，让强
 
 ## 当前版本和范围
 
-本轮 0.12.0 / CHG-017：审阅并优化自主性、澄清与完成指令。需求 current=v9.md、规划 current=overview-v5.md；两者标 working，新细节未宣称用户确认。APR-009 只记录用户明确给出的优化范围授权。旧 v8/v4 与原 DESIGN 保留。
+当前本地版本 0.14.0 / CHG-020：按用户从 RES-911 中指定的三项重点，加入 F25 文件级 spec 漂移治理、需求—功能—技术实现离线总览与原始意图/工作解释分层。需求 current=v11.md、规划 current=overview-v7.md，生成细节保持 working；授权见 CHG-020 / APR-011。进展与实际证据见 handoff、features/f25-spec-governance/worklog.md；选型见 RES-912。
 
-F12 状态导航、F16 技能发现/元数据/镜像及相关指令已优化，F6 索引时间戳缺陷已修复；完整验证 312 过 / 0 失败，独立审阅及增量复核无未解决问题。记录在 features/f16-platforms/worklog.md；发现与依据在 research/RES-909-astra-instructions.md。此结论限于本轮改动，不是全部历史功能的人工验收。
+本轮只修改 keel，不动 taotie、不做远端交付。F25 已实现，完整自动验证 338 过、类型检查通过，独立审阅所见问题已修并复核。用户于 2026-09-15 明确反馈搜索、Tab/Enter 切换和窄屏显示正常，界面条件以用户实测补齐；agent 可定位 Chrome 标签，但内容读取仍受限制，不宣称亲自视觉复核。F25 summary 已完成，内容复核状态为 aligned；其余 24 个历史功能仍未接入。此前 0.13.0 的优化及 RES-911 研究保持历史完成状态，不重开。
 
 ## 状态与证据边界
 

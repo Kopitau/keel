@@ -36,7 +36,15 @@ keel doctor
 node tools/gate/gate.ts status
 ```
 
-请替换示例身份，不要照抄。已有 keel 的项目使用 `keel update`，不要重新初始化；已经明确授权非交互更新时可用 `keel update --yes`。更新会保留并提示本地补丁；不要无视有意义的差异。
+请替换示例身份，不要照抄。已有 keel 的项目使用 `keel update`，不要重新初始化；已经明确授权非交互更新时可用 `keel update --yes`。预览会标出已识别的 `LOCAL PATCH`；确认覆盖会丢失这些受管文件中的本地修改，需要保留时先合并或备份。
+
+### 旧项目升级：框架可以改，项目规则保留
+
+agent 收到升级授权后，可以识别并迁移旧文件里明确属于 keel 的指令，不必让用户手工套标记。项目自身的业务规则、技术约束和需求必须保留原文，放在受管段外；不能因为文件里提到 keel 就覆盖整份文件。没有框架内容时追加框架段；只有归属确实不清楚的部分才需要澄清。
+
+命令行只替换 `AGENTS.md` 中唯一、顺序正确、各自独占一行的 `<!-- keel:begin -->` / `<!-- keel:end -->` 段。没有明确边界时，不猜测文件归属：先更新工具，保留 `AGENTS.md`，报告 `partially applied`、`PENDING AGENTS.md` 和安装器源文件位置，**退出码为 2**。agent 按上述边界迁移后，再运行 `keel update --yes`。不要通过整文件加标记或 `--force` 来掩盖混合内容。
+
+完整应用或已经是最新版本时退出 0；错误退出 1。没有文件变化时，普通 `keel update` 就直接报告 `already up to date`，不要求确认；若仍有指令待迁移，继续报告 pending 并退出 2。实际有变化时，交互终端先预览再询问；非交互环境只预览并明确提示使用 `--yes`，不显示无法回答的问题，也不写文件。`--yes` 执行已授权的预览操作，不再显示 `Proceed?`。`keel --version` 与项目 `keel_version` 表示工具版本，不单独证明项目指令已迁移完成。
 
 ## 日常怎么用
 
@@ -59,7 +67,26 @@ node tools/gate/gate.ts check
 
 开发时跑相关测试；交付代码前跑正式验证与完整检查。同一代码树已有通过的证据，就不必为了“完成、评审、合并”分别重跑全套。代码、配置、测试或验收发生相关变化后重新验证相应部分。
 
-`verify` 记录命令、退出状态、代码树和按功能的证据；`trace` 说明哪些验收有真实测试、哪些只是替身、哪些缺失。文档一致性测试只能证明文档结构，不能证明模型在真实任务中一定遵守。
+`verify` 记录命令、退出状态、代码树和报告；`trace` 与 `feature_coverage` 按功能区分自动行为映射、文档/协议映射、人工/真实环境条目、替身和机器缺项。名称映射不证明某条验收已经运行，`summary.md` 存在也不代表已验收。实际运行看 verify/JUnit，人工条目需核对实际环境、日期、结果与原始材料。
+
+未提交的内容也可以有有效功能证据。`G-done` / `X-evidence` 校验内容树和报告，`G-merge` 单列当前未提交代码并提示先整理提交；同内容提交后可复用原证据。代码变化或报告损坏仍会拒绝旧证据。人工核验以 WARN 明示，不要求伪造自动化测试来消除提醒。
+
+当前状态只放在 handoff；需求保存用户承诺，计划保存选定方案与交付义务，详细历史保留在 worklog。当前工作版中的失效阶段说明应清理，冻结版本保留。研究候选与被淘汰的机制不自动成为下一轮实施或测试任务。
+
+## 需求与实现有没有漂移
+
+功能计划可以逐步添加 `implementation: ["src/query.ts"]` 与 `related: ["docs/storage.md"]`。一个功能可以管多个文件，共享实现可以影响多个功能；旧计划没有映射时显示“未接入”，不假装已经对齐。
+
+```sh
+node tools/gate/gate.ts drift
+node tools/gate/gate.ts atlas
+```
+
+`drift` 区分需求/计划变化、代码变化、两边都变、缺失路径、尚未复核；同时改了代码与说明不会自动消警。核对真实承诺和功能证据后，才能以当前 fingerprint、理由及证据路径记录 `drift review`。它只记录内容复核，不代替审批或用户验收。`--check` 可用于需要严格复核的已接入范围；默认不增加门禁。
+
+`atlas` 生成 `keel/evidence/atlas.html`，可以离线打开，按需求、功能、路径和漂移状态浏览关系、技术说明、原始意图与工作解释。页面没有服务器或外部资源；是生成时快照，不是实时看板。测试映射、真实证据新鲜度、人工核验与替身明确分开。
+
+完整命令、记录格式和限制见 [需求实现治理说明](tools/gate/spec-governance.md)。新需求可参考 `keel/templates/requirements.md`；分层不能绕过冻结需求的版本与批准规则。
 
 ## 文件该看哪里
 
@@ -71,9 +98,11 @@ node tools/gate/gate.ts check
 | 当前任务与下一步 | [keel/handoff.md](keel/handoff.md) |
 | 需求与规划版本 | `keel/requirements/INDEX.md`、`keel/plan/INDEX.md` |
 | 具体技能 | `.agents/skills/k-*/SKILL.md` |
-| 本轮审阅发现与依据 | [RES-909](keel/research/RES-909-astra-instructions.md) |
+| 本轮审阅发现与依据 | [RES-910](keel/research/RES-910-astra-instructions-and-evidence.md) |
 
-技能按任务选择，不要串行执行整个目录。初始化、迁移、正式验收保留原有显式入口；规划、实现、修复、调研和验证可自然发现。技能被调用不等于获得修改外部系统的权限。
+技能按任务选择，不要串行执行整个目录。初始化、迁移、正式验收保留原有显式入口；规划、实现、修复、调研和验证可自然发现。普通 k-review 只加载审查要求，正式验收或已有回路才读它的 `references/formal-review.md`。技能被调用不等于获得修改外部系统的权限。
+
+既有 G-done 仍在所有 active feature 都有 summary 时要求正式评审循环；普通 worklog 审阅不满足这一方案验收条件。遇到它应分别报告本轮实现结果与待满足条件，不伪称完整检查已通过，也不为此重开无关历史功能。
 
 ## 完成和批准不是一回事
 
@@ -85,6 +114,6 @@ Git hooks 提供本地防误操作；实际 CI 重跑才支持 CI 通过的声�
 
 ## 本轮取舍
 
-没有增加编排器、权限状态机、模型调用层或新依赖。保留现有 Node + TypeScript gate，重点清理相互矛盾的指令，并修正状态提示和技能调用配置。
+没有增加编排器、权限状态机、模型调用层或新依赖。保留现有 Node + TypeScript gate，修正证据/提交状态混用和验收类型汇总，并整理当前状态、研究候选及按需技能入口。
 
-针对 Astra 的调整依据是 [OpenAI 官方模型指南](https://developers.openai.com/api/docs/guides/latest-model#prompting-best-practices)：明确持续授权与完成条件、审计技能冲突、按风险控制验证。这里没有声称测得某个模型的成功率；需要在后续真实任务中继续观察效果。
+针对 Astra 的调整依据是 [OpenAI 官方模型指南](https://developers.openai.com/api/docs/guides/latest-model#prompting-best-practices)及 [9 月 11 日的技能与提示词说明](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra)：明确持续授权与完成条件、收窄技能触发、按需读取、按风险和实际变化验证。局部未知只限制依赖它的动作；实际访问限制仍需遵守。这里没有声称测得某个模型的长期成功率。

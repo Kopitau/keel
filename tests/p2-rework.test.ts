@@ -100,8 +100,8 @@ test("REQ-005 AGENTS.md is the overhead map and stays in budget", () => {
   assert.ok(n <= 150, String(n));
 });
 
-test("REQ-007 k-review lists the five review inputs", () => {
-  const t = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+test("REQ-007 the formal review reference lists the five review inputs", () => {
+  const t = readFileSync(join(repo, ".agents", "skills", "k-review", "references", "formal-review.md"), "utf8");
   for (const k of ["Diff", "plan/vN.md", "REQ", "Evidence", "Worklog"]) {
     assert.match(t, new RegExp(k, "i"));
   }

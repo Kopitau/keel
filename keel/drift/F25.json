@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "feature": "F25",
+  "entries": [
+    {
+      "at": "2026-09-15T02:45:10.050Z",
+      "actor": "keel-agent <agent@keel.local>",
+      "commit": "f9d1bfb0b80fb8715c881e462825989274277883",
+      "reason": "REQ-029至031的公共命令、分层与客户端行为已通过338项正式验证和独立代码复核；剩余搜索、键盘切换及窄屏条件由用户明确实测正常补齐。仅记录内容复核，未声称agent直接视觉观察、整份需求批准或远端验收。",
+      "evidence": {
+        "path": "keel/features/f25-spec-governance/browser-check-2026-09-15.md",
+        "hash": "8e4e7648f0a13fa437606dc0a69a9f80c87405f6f1baee8ae7e971107f8af8a1",
+        "problem": ""
+      },
+      "specHash": "a3668967e501893a0c6b06653fefc5a8b4155f383ffbc4dffc7fe9a5b78bfc3e",
+      "codeHash": "b6848b8b10a32971b28f64eef098f838091f5ce234c8e05acddd42ae791b78d8",
+      "fingerprint": "958874f7a62f5df35f291e31c8306a597cab64553094bb87ef60e6c316812337",
+      "implementation": [
+        {
+          "path": "AGENTS.md",
+          "hash": "1b17d2a0a6f5685a808c1f853d17823e1c73c36afbfe33fe8bed9231e00884b0",
+          "problem": ""
+        },
+        {
+          "path": "keel/templates/feature-plan.md",
+          "hash": "159168ef883583f77b73b291f388c2cb053b2d62d290ae801d4ec839b5b62602",
+          "problem": ""
+        },
+        {
+          "path": "keel/templates/requirements.md",
+          "hash": "e0d62fc0974aec405a95ac1b2a81ac9be5336905f548b1fb872d4c7ea1f74c95",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/atlas-client.js",
+          "hash": "777b05374984d8de0ac961d2d93eacb31053df8a89f46c4831cde2df92108c5f",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/atlas.css",
+          "hash": "63c7c96e926b7ede7d3f697856c43f808926b00e4971ee5bfd1dd945d416533d",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/atlas.ts",
+          "hash": "b8e859f392de9ccadccd59074a41de9dd5e1454b3b1c1ed099883537c5bbac44",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/drift.ts",
+          "hash": "b1ae7d7c19c69f5abc9321f467d2ab218788879fa7c75be2eeace6c82db073fc",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/gate.ts",
+          "hash": "46b8d15e0f36f37e0bdbbf89d16dd9e8fc02fc854ff5121d3d490092450dbdac",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/spec-governance.md",
+          "hash": "0d04e1d5555a6e1b12e7e6e1e02c707264ddc7a6dfe36e91c3d049fb688a1f47",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/spec-map.ts",
+          "hash": "2cb9ba6c2a02d8df426f77687bd8943cc66e77d0de143b0aa6e2d02e806ecbbe",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/status.ts",
+          "hash": "5d43746cfa02c1f4033414ae22f235505200f1f50621093d2092141d5c806d47",
+          "problem": ""
+        }
+      ],
+      "related": [
+        {
+          "path": "tests/chg020-spec-governance.test.ts",
+          "hash": "70020f1cbe3f685c518915670405dd489959a937b93c6574bd88ba96cd58855e",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/evidence.ts",
+          "hash": "92efe97f662f4667c03aa776dcbac452488f2f97d7be91efa58b62719fd3b39c",
+          "problem": ""
+        },
+        {
+          "path": "tools/gate/trace.ts",
+          "hash": "4e497183c27d2e27607936a889dda1e32fe762a6d917870c9e825f714098c96a",
+          "problem": ""
+        }
+      ],
+      "hash": "d1071a292e2985814c1015f7a6de632a5cc587fe5f33986309aa8379026a8ae9"
+    }
+  ]
+}

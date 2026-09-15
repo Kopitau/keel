@@ -13,7 +13,7 @@ F22. Apply AGENTS.md's scope and authorization rules. The semantic mapping is th
 2. **Drafts are not a baseline** (C-131). Every migrated REQ/DEC/plan is `迁移初稿（未确认）` until the user confirms and an APR is hashed.
 3. **Do not invent** missing rationale: such DECs are `provisional`, titled `暂定·需补理由`.
 4. Deleting the old tree needs explicit user authorization. If the current request already identifies and authorizes that deletion, do not ask again; confirm exact targets and preserve recoverability.
-5. **Flattening is still a migration** (CHG-014). When the user chooses to delete the old framework and code outright, write `keel/migration-report.md` anyway (what was dropped, what survives in git history), land the deletion as its own commit — never leave 200 deleted files sitting in the working tree — and disable the old framework's SessionStart injection and skills in that same commit. A dirty tree keeps `gate verify` at `dirty: true` and G-done red for as long as it lives.
+5. **Flattening is still a migration** (CHG-014). When the user authorizes removing the old framework/code, record exact targets and recoverability in `keel/migration-report.md`. Land the authorized removal as its own commit, with the old framework's SessionStart injection and skills disabled in that commit. Keep it separate from unrelated business changes. Report pending commits as delivery state; an uncommitted but verified content tree still has valid local evidence.
 
 ## Trellis (0.6.x layout: `.trellis/{workflow.md,config.yaml,spec/,tasks/<t>/,workspace/<dev>/}`)
 

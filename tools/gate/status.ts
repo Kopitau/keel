@@ -15,6 +15,7 @@ import { computeFrontier, type Frontier } from "./frontier.ts";
 import { buildTrace } from "./trace.ts";
 import { isAtLeast } from "./node-version.ts";
 import { planComplete } from "./reviewloop.ts";
+import { driftSummary } from "./drift.ts";
 
 export type StatusShape = {
   hasBaseline: boolean;
@@ -82,6 +83,7 @@ function humanLines(ctx: Ctx, shape: StatusShape, handoff: string): string[] {
   const condense = (l: string): string =>
     l
       .replace(/^(FAIL|WARN) /, "")
+      .replace(/manual evidence requires review: ([^;]+)/, (_m, list: string) => `manual evidence: ${list.split(", ").length} AC(s) need separate review (gate trace lists them)`)
       .replace(/proxy coverage, WARN not PASS: ([^;]+)/, (_m, list: string) => `proxy coverage: ${list.split(", ").length} AC(s) are stand-ins (gate trace lists them)`);
   const humans = ((ctx.config.identities ?? {}) as { humans?: unknown[] }).humans ?? [];
   const humanNote = humans.length === 0 ? "humans: none in config identities.humans — gate approve will refuse (keel init --human)" : "";
@@ -196,6 +198,7 @@ export function runStatus(ctx: Ctx): CmdResult {
     `frontier: ${fr.frontier.join(" ")}`,
     `blocked: ${fr.blocked.map((b) => `${b.id} (by ${b.by.join(", ")})`).join("; ")}`,
     `proxy_acs: ${proxyAcs}`,
+    driftSummary(ctx),
     "branch_policy: daily→trunk; new major feature→recommend worktree; parallel→C-112 (DEC-155)",
   ];
   return ok(lines.join("\n") + "\n");

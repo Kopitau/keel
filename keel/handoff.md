@@ -1,10 +1,11 @@
 # handoff
 
-- 当前任务：按用户 2026-09-06「先推送到git hub」，把已完成的 Astra 优化分支推送至私有仓库 Kopitau/keel；不是重新开工历史功能。
-- 已有授权：CHG-017 / APR-009 仅记录本轮审阅与优化范围，授权持续；需求 v9 / 规划 v5 是 working，未冒称用户验收。
-- 已做：根契约、16 技能、模板/说明、状态导航、技能发现更新；ISS-080 哈希缺陷修复；完整验证 312 过 / 0 失败，独立审阅无未解决问题。
-- 本地交付：实施提交 5ad64aa，分支 codex/astra-instructions；干净代码树正式验证退出 0，完整检查无失败、两类既有提醒。
-- 远程交付：用户完成网页授权，workflow 已生效；2026-09-06 首次推送提交 6a670b7 至 https://github.com/Kopitau/keel，已建立 origin/codex/astra-instructions 跟踪。没有强制推送、删除工作流或绕过门禁。
-- 下一步：推送任务已完成；用真实功能任务试用新规则。远程 CI 的结果单独核对，不从推送成功推断测试通过。
-- 该读：keel/plan/overview-v5.md、keel/features/f16-platforms/worklog.md；发现依据见 keel/research/RES-909-astra-instructions.md。
-- 证据：keel/evidence/verify.json；312 项本地测试通过的同代码树证据由推送钩子复用。远端 CI 与模型 live 效果按真实证据单列，未声称用户验收。
+- 当前任务：用户新增授权本地合并当前改动并上传 GitHub，范围与原话见 APR-012；CHG-020 / F25 实现与验证已完成。
+- 范围：F25 / REQ-029～031；需求 v11、总览 v7、F25 计划均 working；不重做 F1～F24。
+- 交付分支：codex/safe-framework-update → GitHub 实际默认分支 codex/astra-instructions；版本 0.14.0，实现提交 162ae08。仓库当前公开、目标无保护规则，不改可见性或默认分支。
+- 已做：共同模型、文件级复核、离线总览、模板/根契约及独立审阅回修；正式验证 338 过 / 0 失败、类型检查通过，代码树未变，复用有效证据。
+- 界面证据：用户 2026-09-15 对搜索、Tab/Enter 切换、窄屏显示明确反馈正常；工具仅可定位 Chrome 标签，内容读取仍受 URL 限制，未绕过。按用户实测记录，不冒称 agent 直接观察。
+- 本地状态：F25 summary 已补齐、内容复核 aligned，drift --check 退出 0；其余 24 个历史功能未接入。原 CI/manual/proxy/APR 提醒保持，不等于全项目验收。
+- 下一步：按 APR-012 记录授权、完成本地合并，正常钩子推送既有分支，再核对远端 refs 与 CI 状态。不从历史 frontier 开工。
+- 该读：keel/features/f25-spec-governance/summary.md、同目录 browser-check-2026-09-15.md；需要过程再读 worklog、plan/v1.md 与 RES-912。
+- 边界：本次明确允许合并/推送；不发布发行版、不强推、不改保护设置或 taotie。需求/计划仍 working，CI 与完整人工验收不从上传成功推断。

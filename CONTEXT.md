@@ -4,9 +4,9 @@ A small glossary, read on demand. The records dir in this repo is `keel/`; consu
 
 | Term | Meaning |
 |---|---|
-| requirement / REQ | The user's needed behavior, acceptance and boundaries; numbered entries in `requirements/vN.md`. Do not invent user intent. |
+| requirement / REQ | Product behavior, acceptance and boundaries in `requirements/vN.md`; not a copy of framework operating rules or changing execution status. |
 | feature | A useful observable capability, not a quota of files or steps. A small change may stay in an existing feature. |
-| plan | The in-scope implementation and test obligations. `plan/INDEX.md` points to the current overview. |
+| plan | The selected approach and current delivery obligations, not all research candidates. `plan/INDEX.md` points to the current overview. |
 | DEC | A durable consequential trade-off. Ordinary implementation choices do not need a DEC. |
 | RES | Retrievable research for a significant choice. A small source check can be in the worklog. |
 | CHG | Why frozen semantics change and what is affected; new versions preserve the old ones. |
@@ -21,6 +21,8 @@ A small glossary, read on demand. The records dir in this repo is `keel/`; consu
 | frontier | Features without summary/claim whose recorded blockers have summaries. Structural navigation, not authority to start work or proof that blockers function. |
 | gate | `tools/gate/gate.ts`: Node ≥22.18.0, direct TypeScript, Node builtins only at runtime. |
 | evidence tree | Normalized code/config tree used to bind verification. Records are excluded except configuration; changing only records does not stale code evidence. |
+| dirty | Uncommitted code at the observation time. It does not invalidate verified content; G-merge separately checks the current worktree before delivery. |
+| trace / feature_coverage | Static test-name mappings by verification type. They do not establish per-AC execution, test quality or manual acceptance; actual evidence needs review. |
 | normalized hash | UTF-8, no BOM, LF; approval SHA-256 hashes the body. Do not hash raw disk bytes. |
 | GWT | Given/When/Then; a checklist is sufficient for simple acceptance. |
 | black-box acceptance | Assert promised behavior through its public seam (CLI, route or module API), not internal implementation choices; test name `REQ-nnn/AC-i`. |
@@ -30,7 +32,12 @@ A small glossary, read on demand. The records dir in this repo is `keel/`; consu
 | seam | The public interface through which a requirement can be observed. Prefer the highest useful stable seam, not an artificial lower-level substitute. |
 | evidence snapshot | Tool-written APR `evidence_*` fields used by local-tier gates when applicable. Never hand-edit verification data. |
 | enforcement tier | `github`, `gitee` or `local`, from config. This repo is configured `github`; that alone does not prove remote protection or CI ran. |
-| drift | An approved artifact differs from its bound body. Version a semantic change; cite the APR for a genuine typo correction. |
+| approval drift | An approved artifact differs from its bound body. Version a semantic change; cite the APR for a genuine typo correction. |
+| spec–implementation drift | Current requirement/plan or governed file content differs from an explicit per-feature review baseline. `gate drift` diagnoses both sides; matching content is not proof of semantics or acceptance. |
+| implementation / related | Exact feature-plan file relations: governed implementation versus contextual reference. Shared files may have several owners; unmapped means unknown. |
+| drift review | Append-only content snapshot with reason, actor and evidence reference/hash. Neither APR approval nor test execution; `tools/gate/spec-governance.md` defines the commands and limits. |
+| atlas | Offline, generated requirements → features → implementation view of the same records, not a new editable source of truth or a live dashboard. |
+| raw intent / working explanation | User quotation/source and agent interpretation are separate layers. Missing user text is not inferred; frozen semantics still require versioned changes. |
 | host / harness | Editor environment / executing agent tool. Host identity is not proof of approval. |
 | historical design | Frozen DESIGN / old versions / superseded DECs explain past choices. They are not an additional current checklist. |
 

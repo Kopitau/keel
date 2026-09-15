@@ -314,7 +314,7 @@ test("REQ-025/AC-11 keel update rewrites only the keel section of AGENTS.md, wri
   w(root, "AGENTS.md", "# my own file\n");
   const third = runCli(["update"], { cwd: root, source, confirmUpdate: () => null });
   assert.equal(third.code, 0, third.stderr);
-  assert.match(third.stdout, /note: AGENTS\.md has no <!-- keel:begin -->/);
+  assert.match(third.stdout, /PENDING AGENTS\.md/);
   rmSync(root, { recursive: true, force: true });
   rmSync(source, { recursive: true, force: true });
 });

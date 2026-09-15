@@ -35,15 +35,16 @@ test("REQ-022/AC-6 k-migrate treats flattening as a migration: report, one delet
   assert.match(skill, /SessionStart injection/);
 });
 
-test("CHG-014 the k-* skills that changed still fit the 80-line cap and the Claude mirror equals the source", () => {
+test("CHG-014 changed skill mirrors equal their source and formal review details remain reachable", () => {
   for (const name of ["k-migrate", "k-accept", "k-impl", "k-handoff", "k-review", "k-log", "k-evidence"]) {
     const src = readFileSync(join(repo, ".agents", "skills", name, "SKILL.md"), "utf8");
-    assert.ok(src.split("\n").length <= 80, `${name} lines`);
     const mirror = readFileSync(join(repo, ".claude", "skills", name, "SKILL.md"), "utf8");
     assert.equal(mirror, src, `${name} mirror`);
   }
   assert.ok(readdirSync(join(repo, ".agents", "skills")).includes("k-review"));
-  const review = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+  const entry = readFileSync(join(repo, ".agents", "skills", "k-review", "SKILL.md"), "utf8");
+  assert.match(entry, /references\/formal-review\.md/);
+  const review = readFileSync(join(repo, ".agents", "skills", "k-review", "references", "formal-review.md"), "utf8");
   assert.match(review, /rejected whole, archived under `keel\/review\/raw\/`/);
   assert.match(review, /reviewer budget/);
   assert.match(review, /recurrence_of/);

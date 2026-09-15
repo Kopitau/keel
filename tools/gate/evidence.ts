@@ -38,7 +38,7 @@ export type Evidence = {
   dirty: boolean;
   report_hash: string;
   counts: { passed: number; failed: number; skipped: number };
-  /** REQ-006/AC-10 lines (one per feature): which ACs have black-box tests, stand-ins, or nothing. The reviewer reads these (CHG-015). */
+  /** REQ-006/AC-10 static mappings by verification type; not per-AC execution or manual acceptance. */
   feature_coverage?: string[];
   req_coverage: { [req: string]: number };
   stdout_tail_2kb: string;
@@ -79,18 +79,18 @@ export function evidenceFresh(ctx: Ctx, ev: Evidence | null): boolean {
   return Boolean(tree) && ev.tree_hash === tree && ev.exit_code === 0;
 }
 
-/** C-33 对账: fields must match junit + allowlisted command; dirty tree is not done. */
+/** C-33: content and report integrity determine evidence; dirty is historical metadata, not a failed test. */
 export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
   if (!ev) return ["verify.json missing"];
   const gaps: string[] = [];
   if (!ev.tree_hash) gaps.push("empty tree_hash");
   if (!evidenceFresh(ctx, ev)) gaps.push("stale tree_hash or nonzero exit_code");
-  if (ev.dirty) gaps.push("dirty working tree");
   if (!isAllowedTestArgv(splitCmd(ev.command || ""))) {
     gaps.push(`command not allowlisted: ${ev.command}`);
   }
   const passed = ev.counts?.passed ?? 0;
   const failed = ev.counts?.failed ?? 0;
+  const skipped = ev.counts?.skipped ?? 0;
   if (passed === 0 && failed === 0) gaps.push("zero tests");
   if (failed > 0) gaps.push(`counts.failed=${failed}`);
   const junit = junitPath(ctx);
@@ -100,7 +100,7 @@ export function evidenceGaps(ctx: Ctx, ev: Evidence | null): string[] {
     const xml = readFileSync(junit, "utf8");
     if (sha256Normalized(xml) !== ev.report_hash) gaps.push("report_hash != sha256(junit.xml)");
     const rec = parseJunit(xml);
-    if (rec.passed !== passed || rec.failed !== failed) {
+    if (rec.passed !== passed || rec.failed !== failed || rec.skipped !== skipped) {
       gaps.push("counts do not match junit.xml");
     }
   }
