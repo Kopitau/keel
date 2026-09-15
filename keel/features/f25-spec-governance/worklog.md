@@ -38,3 +38,6 @@
 - 合并后内容树仍为 1873f7c22b207295004479753a10b3aee954c488，dirty=false，gaps=[]。正常预推送钩子确认同树新鲜证据并复用，完整 check 无失败。切换分支带来的 OVERVIEW/summary 文件时间先后提醒随后通过更新实际交付状态处理，不改功能代码或触碰时间戳伪装。
 - git push --atomic 同时成功更新既有两个远端分支：codex/astra-instructions → e59a272，codex/safe-framework-update → 72a3b74。再用 ls-remote 核对，两者与本地 SHA 一致；无强推、无分支删除、无保护/可见性修改。
 - 合并提交的 GitHub Actions 已启动，查询时 in_progress，运行地址 https://github.com/Kopitau/keel/actions/runs/34925747462。该条为查询时状态，不宣称最终 CI 通过；后续交付记录提交仍属于相同代码树，可能再次触发 Actions。
+- 上述 CI 随后失败：六个 OS/Node 单元均为 337 过 / 1 失败，唯一失败是 tests/w3-verify.test.ts 中“this repo full check fails without evidence”。合并授权 APR-012 真实保存了同树证据快照，旧测试却硬编码对开发仓库执行 check 必须失败；干净本地提交上定向实跑同样失败（实际退出 0，断言期望 1）。
+- 按 k-bugfix 修正测试前置条件：使用 miniGitRepo 创建有完成声明、无 verify.json 且无 APR 的隔离仓库，通过 gate --root ... check 仍断言 G-done 和 X-evidence 明确失败。没有删除/弱化缺证据断言、没有修改门禁或 CI 策略；有效 APR 快照的正向覆盖保留在原有证据快照测试中。本次是交付过程中暴露的测试隔离缺陷，不增加产品功能。
+- 修后定向证据测试与 APR 快照联动 9/9 通过；重新运行正式 verify：338 过 / 0 失败 / 0 skipped，类型检查通过，新证据树 4629328986122f2737cf08653868e6353df34b1a。仅 tests/w3-verify.test.ts 改变，F25 运行代码、声明映射和用户实测界面未变化；原功能复核基线不被无关测试变更重建。
