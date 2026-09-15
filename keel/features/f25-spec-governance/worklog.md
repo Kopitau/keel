@@ -51,3 +51,5 @@
 - 回归通过公开 shell 入口验证选定 master 执行而非跳过、成功后恢复候选代码及干净暂存区、原 main 用法兼容、缺失配置分支失败和主线拒绝的退出码传播。修改脚本前 1 过 / 3 失败，修改后 4 项通过。全套首轮 342 项测试通过但新测试两处 writeFileSync 缺少本仓类型声明要求的 encoding；补齐 utf8 后正式验证通过，再固定临时仓库换行配置并重新验证最终树。
 - 该联动是本次改名的最小 CI 配套；未改变冻结需求/计划、运行时依赖、远端保护或可见性。后续操作为正常提交/推送 master 并切换 GitHub 默认分支，结果以实时 refs、默认分支查询和对应 Actions 为准。
 - 最终正式 verify 退出 0：342 过 / 0 失败 / 0 skipped，类型检查通过，内容树 b545313d84ff7f36410136bded7ad97a5afacc23。完整 check 的功能证据有效；提交前仅 G-merge 因未提交代码失败，既有历史提醒保留。提交相同内容后复用证据再检查。
+- 配套提交 c3a12967d8a6630f36af05a14781fc9ea8db2b6e 使用正常钩子提交，提交后完整 check 退出 0，正常 git push -u origin master 成功创建远端主线并设置跟踪。随后 GitHub 默认分支改为 master，本地 origin/HEAD 同步为 master；GitHub API 与 ls-remote 均确认，两个旧 codex 分支 SHA 未变。没有强推、删分支或改保护/可见性。
+- 迁移配套的 Actions 34944318797 已启动，查询时 in_progress；这是当时的观察，不冒称最终 CI 通过。当前交接/总览改为 master，记录性提交保持同一代码树，后续动态结果以对应 master 提交的 Actions 为准。
