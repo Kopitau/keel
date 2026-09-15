@@ -41,3 +41,4 @@
 - 上述 CI 随后失败：六个 OS/Node 单元均为 337 过 / 1 失败，唯一失败是 tests/w3-verify.test.ts 中“this repo full check fails without evidence”。合并授权 APR-012 真实保存了同树证据快照，旧测试却硬编码对开发仓库执行 check 必须失败；干净本地提交上定向实跑同样失败（实际退出 0，断言期望 1）。
 - 按 k-bugfix 修正测试前置条件：使用 miniGitRepo 创建有完成声明、无 verify.json 且无 APR 的隔离仓库，通过 gate --root ... check 仍断言 G-done 和 X-evidence 明确失败。没有删除/弱化缺证据断言、没有修改门禁或 CI 策略；有效 APR 快照的正向覆盖保留在原有证据快照测试中。本次是交付过程中暴露的测试隔离缺陷，不增加产品功能。
 - 修后定向证据测试与 APR 快照联动 9/9 通过；重新运行正式 verify：338 过 / 0 失败 / 0 skipped，类型检查通过，新证据树 4629328986122f2737cf08653868e6353df34b1a。仅 tests/w3-verify.test.ts 改变，F25 运行代码、声明映射和用户实测界面未变化；原功能复核基线不被无关测试变更重建。
+- 修复提交 67df44027d9d0ebbd55af15c675f410fbb9daf9c 已通过正常推送钩子到达默认分支；钩子复用新树 338 项通过证据，完整 check 无失败。合并上传动作已完成，CI 的动态结果以对应提交的 Actions 为准，失败历史保留。
