@@ -1,7 +1,7 @@
 # changes index (generated)
 
 - generator: gate index
-- count: 19
+- count: 20
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -24,3 +24,4 @@
 | CHG-017 | CHG-017 Astra 指令优化的授权范围 | approved | `CHG-017-astra-instructions.md` |
 | CHG-018 | CHG-018 安全更新框架指令 | proposed | `CHG-018-safe-framework-update.md` |
 | CHG-019 | CHG-019 Astra / taotie 审查后的优化授权范围 | approved | `CHG-019-astra-evidence-and-context.md` |
+| CHG-020 | CHG-020 spec 漂移、需求实现总览与意图分层 | approved | `CHG-020-spec-drift-atlas-intent.md` |

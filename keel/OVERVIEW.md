@@ -8,9 +8,9 @@ keel 把需求、技术依据、功能计划与证据放进代码仓库，让强
 
 ## 当前版本和范围
 
-当前本地 0.13.0 / CHG-019：修复证据与提交状态混用、按验收类型的静态映射、绑定计划汇总和 APR 对账；精简正式评审入口，并整理当前状态、研究候选与局部不确定性的处理。需求 current=v10.md、规划 current=overview-v6.md，保持 working。进展与本轮实际验证见 handoff、features/f06-evidence/worklog.md；依据见 RES-910。
+当前本地版本 0.14.0 / CHG-020：按用户从 RES-911 中指定的三项重点，加入 F25 文件级 spec 漂移治理、需求—功能—技术实现离线总览与原始意图/工作解释分层。需求 current=v11.md、规划 current=overview-v7.md，生成细节保持 working；授权见 CHG-020 / APR-011。进展与实际证据见 handoff、features/f25-spec-governance/worklog.md；选型见 RES-912。
 
-本轮只修改 keel，taotie 活跃工作区不动。优化已通过 327 项测试、类型检查与独立复核，随后完成 RES-911 SpexCode 源码/文档调研，只给引入建议。框架本地提交 62facd7，未声明远端交付、消费者升级或用户验收。
+本轮只修改 keel，不动 taotie、不做远端交付。F25 命令、模板与客户端逻辑已实现，完整自动验证 338 过、类型检查通过，独立审阅所见问题已修并复核；真实浏览器键盘、布局与窄屏验证受本地 URL 限制未完成，F25 保留 unreviewed 且未写完成 summary。此前 0.13.0 的证据/验收类型优化及 RES-911 研究已完成，不因本轮重新开工。
 
 ## 状态与证据边界
 

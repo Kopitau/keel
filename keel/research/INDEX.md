@@ -1,7 +1,7 @@
 # research index (generated)
 
 - generator: gate index
-- count: 19
+- count: 20
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -24,3 +24,4 @@
 | RES-909 | Astra 指令冲突审阅与优化依据 |  | `RES-909-astra-instructions.md` |
 | RES-910 | Astra 指令精简与 taotie 证据问题 |  | `RES-910-astra-instructions-and-evidence.md` |
 | RES-911 | SpexCode 可借鉴机制评估 | research-only | `RES-911-spexcode-reuse-assessment.md` |
+| RES-912 | SpexCode 漂移、总览与意图分层适配 | selected-approach | `RES-912-spexcode-drift-atlas-design.md` |

@@ -19,6 +19,8 @@ import { runReview } from "./review.ts";
 import { runLoop } from "./reviewloop.ts";
 import { runVerify } from "./verify.ts";
 import { runWorktree } from "./worktree.ts";
+import { runDrift } from "./drift.ts";
+import { runAtlas } from "./atlas.ts";
 
 function writeOut(text: string): void {
   if (text) process.stdout.write(text);
@@ -69,6 +71,8 @@ function help(): CmdResult {
       "  new <kind> <title>      allocate id and copy a template",
       "  index                   regenerate INDEX.md files",
       "  trace                   REQ ↔ test matrix (C-32)",
+      "  drift [--json] [--check]  spec/implementation changes; review records explicit disposition",
+      "  atlas [--out path.html]  offline requirements → features → implementation view",
       "  sync                    copy .agents/skills -> .claude/skills (DEC-147)",
       "  worktree add|rm Fnn     one feature, one branch, one worktree (C-112)",
       "  approve APR-nnn         hash artifacts; human identity only (C-107)",
@@ -97,6 +101,8 @@ function dispatch(root: string, args: string[]): CmdResult {
   if (cmd === "new") return runNew(ctx, rest);
   if (cmd === "index") return runIndex(ctx);
   if (cmd === "trace") return runTrace(ctx);
+  if (cmd === "drift") return runDrift(ctx, rest);
+  if (cmd === "atlas") return runAtlas(ctx, rest);
   if (cmd === "sync") return runSync(ctx);
   if (cmd === "worktree") return runWorktree(ctx, rest);
   if (cmd === "approve") return runApprove(ctx, rest);

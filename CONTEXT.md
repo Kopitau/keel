@@ -32,7 +32,12 @@ A small glossary, read on demand. The records dir in this repo is `keel/`; consu
 | seam | The public interface through which a requirement can be observed. Prefer the highest useful stable seam, not an artificial lower-level substitute. |
 | evidence snapshot | Tool-written APR `evidence_*` fields used by local-tier gates when applicable. Never hand-edit verification data. |
 | enforcement tier | `github`, `gitee` or `local`, from config. This repo is configured `github`; that alone does not prove remote protection or CI ran. |
-| drift | An approved artifact differs from its bound body. Version a semantic change; cite the APR for a genuine typo correction. |
+| approval drift | An approved artifact differs from its bound body. Version a semantic change; cite the APR for a genuine typo correction. |
+| spec–implementation drift | Current requirement/plan or governed file content differs from an explicit per-feature review baseline. `gate drift` diagnoses both sides; matching content is not proof of semantics or acceptance. |
+| implementation / related | Exact feature-plan file relations: governed implementation versus contextual reference. Shared files may have several owners; unmapped means unknown. |
+| drift review | Append-only content snapshot with reason, actor and evidence reference/hash. Neither APR approval nor test execution; `tools/gate/spec-governance.md` defines the commands and limits. |
+| atlas | Offline, generated requirements → features → implementation view of the same records, not a new editable source of truth or a live dashboard. |
+| raw intent / working explanation | User quotation/source and agent interpretation are separate layers. Missing user text is not inferred; frozen semantics still require versioned changes. |
 | host / harness | Editor environment / executing agent tool. Host identity is not proof of approval. |
 | historical design | Frozen DESIGN / old versions / superseded DECs explain past choices. They are not an additional current checklist. |
 

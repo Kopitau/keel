@@ -15,6 +15,7 @@ import { computeFrontier, type Frontier } from "./frontier.ts";
 import { buildTrace } from "./trace.ts";
 import { isAtLeast } from "./node-version.ts";
 import { planComplete } from "./reviewloop.ts";
+import { driftSummary } from "./drift.ts";
 
 export type StatusShape = {
   hasBaseline: boolean;
@@ -197,6 +198,7 @@ export function runStatus(ctx: Ctx): CmdResult {
     `frontier: ${fr.frontier.join(" ")}`,
     `blocked: ${fr.blocked.map((b) => `${b.id} (by ${b.by.join(", ")})`).join("; ")}`,
     `proxy_acs: ${proxyAcs}`,
+    driftSummary(ctx),
     "branch_policy: daily→trunk; new major feature→recommend worktree; parallel→C-112 (DEC-155)",
   ];
   return ok(lines.join("\n") + "\n");

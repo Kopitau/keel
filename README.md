@@ -73,6 +73,21 @@ node tools/gate/gate.ts check
 
 当前状态只放在 handoff；需求保存用户承诺，计划保存选定方案与交付义务，详细历史保留在 worklog。当前工作版中的失效阶段说明应清理，冻结版本保留。研究候选与被淘汰的机制不自动成为下一轮实施或测试任务。
 
+## 需求与实现有没有漂移
+
+功能计划可以逐步添加 `implementation: ["src/query.ts"]` 与 `related: ["docs/storage.md"]`。一个功能可以管多个文件，共享实现可以影响多个功能；旧计划没有映射时显示“未接入”，不假装已经对齐。
+
+```sh
+node tools/gate/gate.ts drift
+node tools/gate/gate.ts atlas
+```
+
+`drift` 区分需求/计划变化、代码变化、两边都变、缺失路径、尚未复核；同时改了代码与说明不会自动消警。核对真实承诺和功能证据后，才能以当前 fingerprint、理由及证据路径记录 `drift review`。它只记录内容复核，不代替审批或用户验收。`--check` 可用于需要严格复核的已接入范围；默认不增加门禁。
+
+`atlas` 生成 `keel/evidence/atlas.html`，可以离线打开，按需求、功能、路径和漂移状态浏览关系、技术说明、原始意图与工作解释。页面没有服务器或外部资源；是生成时快照，不是实时看板。测试映射、真实证据新鲜度、人工核验与替身明确分开。
+
+完整命令、记录格式和限制见 [需求实现治理说明](tools/gate/spec-governance.md)。新需求可参考 `keel/templates/requirements.md`；分层不能绕过冻结需求的版本与批准规则。
+
 ## 文件该看哪里
 
 | 需要 | 入口 |
