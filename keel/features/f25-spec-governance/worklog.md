@@ -42,3 +42,12 @@
 - 按 k-bugfix 修正测试前置条件：使用 miniGitRepo 创建有完成声明、无 verify.json 且无 APR 的隔离仓库，通过 gate --root ... check 仍断言 G-done 和 X-evidence 明确失败。没有删除/弱化缺证据断言、没有修改门禁或 CI 策略；有效 APR 快照的正向覆盖保留在原有证据快照测试中。本次是交付过程中暴露的测试隔离缺陷，不增加产品功能。
 - 修后定向证据测试与 APR 快照联动 9/9 通过；重新运行正式 verify：338 过 / 0 失败 / 0 skipped，类型检查通过，新证据树 4629328986122f2737cf08653868e6353df34b1a。仅 tests/w3-verify.test.ts 改变，F25 运行代码、声明映射和用户实测界面未变化；原功能复核基线不被无关测试变更重建。
 - 修复提交 67df44027d9d0ebbd55af15c675f410fbb9daf9c 已通过正常推送钩子到达默认分支；钩子复用新树 338 项通过证据，完整 check 无失败。合并上传动作已完成，CI 的动态结果以对应提交的 Actions 为准，失败历史保留。
+
+## 2026-09-15 主线统一为 master
+
+- 本次用户原话：“主线统一叫 master”。范围为把本地主线和 GitHub 默认分支统一为 master，并同步必要 CI 配置；不是整份需求批准、发布发行版或删除历史分支的授权。
+- 操作前 GitHub 默认分支为 codex/astra-instructions、没有远端 master，本地 master 是其祖先。最新交付提交 49eb13e 对应 Actions 34926374071 的 Windows/macOS/Linux × Node 22/24 六格及 gate-ok 均通过。本地 master 已从 03b9120 快进至 49eb13e，未改写历史；两个旧 codex 分支保留。
+- 联动检查发现 ci-trunk.sh 写死 origin/main，当前仓库一直跳过主线门禁。为使改名后的 CI 真正检查 master，仅增加 KEEL_TRUNK_REF 参数并在本仓 workflow 指定 origin/master；无参数的消费项目仍保持 origin/main 默认行为。明确指定的分支不存在时失败，不能静默跳过。
+- 回归通过公开 shell 入口验证选定 master 执行而非跳过、成功后恢复候选代码及干净暂存区、原 main 用法兼容、缺失配置分支失败和主线拒绝的退出码传播。修改脚本前 1 过 / 3 失败，修改后 4 项通过。全套首轮 342 项测试通过但新测试两处 writeFileSync 缺少本仓类型声明要求的 encoding；补齐 utf8 后正式验证通过，再固定临时仓库换行配置并重新验证最终树。
+- 该联动是本次改名的最小 CI 配套；未改变冻结需求/计划、运行时依赖、远端保护或可见性。后续操作为正常提交/推送 master 并切换 GitHub 默认分支，结果以实时 refs、默认分支查询和对应 Actions 为准。
+- 最终正式 verify 退出 0：342 过 / 0 失败 / 0 skipped，类型检查通过，内容树 b545313d84ff7f36410136bded7ad97a5afacc23。完整 check 的功能证据有效；提交前仅 G-merge 因未提交代码失败，既有历史提醒保留。提交相同内容后复用证据再检查。

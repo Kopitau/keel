@@ -23,6 +23,8 @@ jobs:
         run: npm ci
       - name: Trunk gate (DEC-138)
         shell: bash
+        env:
+          KEEL_TRUNK_REF: origin/master
         run: bash tools/gate/ci-trunk.sh
       - name: Tests (not via config)
         run: node --test
