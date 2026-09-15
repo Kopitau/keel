@@ -34,3 +34,7 @@
 - 用户新增的合并/推送授权见 APR-012。Git 远端 HEAD 与 GitHub API 均确认默认分支为 codex/astra-instructions；其当前 f45dcc9 是源分支祖先，不能把未关联远端的旧 master 当作默认分支。
 - 仓库当前公开、未归档、身份有 push 权限，目标 protected=false，规则查询为空；已向用户说明。只推代码/项目记录，不提交本地派生 atlas.html，不调整这些设置。
 - 合并前重新确认 338 项正式证据和类型检查仍绑定代码树 1873f7c22b207295004479753a10b3aee954c488；gaps=[]，完整 check 退出 0、保留 4 项历史提醒。相关树不变时复用，不机械重跑。
+- APR-012 通过 gate approve 绑定本轮合并范围，并自动保存真实的同树证据快照；授权记录提交 72a3b74。切换到实际默认分支 codex/astra-instructions，用 --no-ff --no-commit 合并后正常 git commit，生成两父提交 e59a272e5b61b043cb3a1adc64c2c58bc6ddd995，无冲突、未跳过钩子。
+- 合并后内容树仍为 1873f7c22b207295004479753a10b3aee954c488，dirty=false，gaps=[]。正常预推送钩子确认同树新鲜证据并复用，完整 check 无失败。切换分支带来的 OVERVIEW/summary 文件时间先后提醒随后通过更新实际交付状态处理，不改功能代码或触碰时间戳伪装。
+- git push --atomic 同时成功更新既有两个远端分支：codex/astra-instructions → e59a272，codex/safe-framework-update → 72a3b74。再用 ls-remote 核对，两者与本地 SHA 一致；无强推、无分支删除、无保护/可见性修改。
+- 合并提交的 GitHub Actions 已启动，查询时 in_progress，运行地址 https://github.com/Kopitau/keel/actions/runs/34925747462。该条为查询时状态，不宣称最终 CI 通过；后续交付记录提交仍属于相同代码树，可能再次触发 Actions。
