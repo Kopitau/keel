@@ -1,7 +1,7 @@
 # approvals index (generated)
 
 - generator: gate index
-- count: 11
+- count: 12
 
 | ID | title | status | file |
 |---|---|---|---|
@@ -16,3 +16,4 @@
 | APR-009 | APR-009 本轮指令优化范围授权 | approved | `APR-009-astra-scope.md` |
 | APR-010 | APR-010 astra-evidence-scope | approved | `APR-010-astra-evidence-scope.md` |
 | APR-011 | APR-011 本轮实施范围授权 | approved | `APR-011-spec-governance-scope.md` |
+| APR-012 | APR-012 merge-and-github-delivery | approved | `APR-012-merge-and-github-delivery.md` |
